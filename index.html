@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="寶寶飲食紀錄">
+  <meta name="theme-color" content="#FF7E5F">
+  <title>Luka's 小王子飲食紀錄 </title>
+  
+	<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/sushiro-queue/refs/heads/main/sushiro-icon.png">
+	<meta property="og:type" content="website">
+	<meta property="og:title" content="Luka's 小王子飲食紀錄 ">
+	<meta property="og:description" content="Luka's 小王子飲食紀錄 ！">
+	<meta property="og:image" content="https://raw.githubusercontent.com/keliguru/sushiro-queue/refs/heads/main/sushiro-icon.png"> 
+	<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/keliguru/sushiro-queue/refs/heads/main/sushiro-icon.png">
+
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="apple-mobile-web-app-title" content="Luka's 小王子飲食紀錄 ">
+  
+  <style>
+    :root {
+      --bg-color: #f0f4f9;
+      --card-bg: #f8fafc;
+      --text-main: #2d3748;
+      --text-sub: #64748b;
+      
+      /* 3D 浮雕陰影 */
+      --shadow-out: 10px 10px 20px #cbd5e1, -10px -10px 20px #ffffff;
+      --shadow-out-sm: 5px 5px 12px #d1dbe8, -5px -5px 12px #ffffff;
+      --shadow-in: inset 3px 3px 6px #cbd5e1, inset -3px -3px 6px #ffffff;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body { 
+      background: linear-gradient(135deg, #eef2ff 0%, #fef2f2 50%, #f0fdf4 100%);
+      background-attachment: fixed;
+      padding: 16px 12px; 
+      color: var(--text-main); 
+      margin: 0; 
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* 3D 主卡片 */
+    .card { 
+      width: 100%;
+      max-width: 440px; 
+      background: #f8fafc; 
+      padding: 22px 18px; 
+      border-radius: 28px; 
+      box-shadow: var(--shadow-out);
+      border: 2px solid rgba(255, 255, 255, 0.9);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .header h2 { 
+      margin: 0; 
+      font-size: 21px; 
+      background: linear-gradient(45deg, #4f46e5, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 800;
+    }
+
+    /* 📊 繽紛 3D 頂部摘要 */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    /* 奶油黃 奶量卡片 */
+    .stat-box-milk {
+      background: linear-gradient(145deg, #fffbeb, #fef3c7);
+      border: 1px solid #fde68a;
+      box-shadow: 4px 4px 10px rgba(217, 119, 6, 0.15), -4px -4px 10px #ffffff;
+      border-radius: 20px;
+      padding: 12px 10px;
+      text-align: center;
+    }
+
+    .stat-box-milk .stat-label { color: #b45309; }
+    .stat-box-milk .stat-value { color: #d97706; }
+
+    /* 薄荷綠 用餐卡片 */
+    .stat-box-meal {
+      background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+      border: 1px solid #a7f3d0;
+      box-shadow: 4px 4px 10px rgba(16, 185, 129, 0.15), -4px -4px 10px #ffffff;
+      border-radius: 20px;
+      padding: 12px 10px;
+      text-align: center;
+    }
+
+    .stat-box-meal .stat-label { color: #047857; }
+    .stat-box-meal .stat-value { color: #059669; }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      margin-top: 2px;
+      text-shadow: 1px 1px 0px #fff;
+    }
+
+    /* 📑 3D 切換 Tab */
+    .tab-group {
+      display: flex;
+      background: #e2e8f0;
+      box-shadow: var(--shadow-in);
+      border-radius: 18px;
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: #ffffff;
+      color: #4f46e5;
+      box-shadow: 3px 3px 8px rgba(0,0,0,0.1), -2px -2px 6px #ffffff;
+    }
+
+    .form-group { 
+      margin-bottom: 16px; 
+    }
+
+    label { 
+      display: block; 
+      margin-bottom: 6px; 
+      font-weight: 700; 
+      font-size: 13px; 
+      color: #334155; 
+    }
+
+    /* 凹陷感輸入框 */
+    input, select, textarea { 
+      width: 100%; 
+      padding: 12px 14px; 
+      border: 1px solid rgba(255,255,255,0.8); 
+      border-radius: 16px; 
+      font-size: 15px; 
+      background: #f1f5f9;
+      box-shadow: var(--shadow-in);
+      color: var(--text-main);
+      outline: none; 
+      transition: all 0.2s ease;
+      -webkit-appearance: none;
+    }
+
+    input:focus, select:focus, textarea:focus { 
+      border-color: #6366f1; 
+      background: #ffffff;
+    }
+
+    /* 🍼 繽紛 3D 按鈕列 */
+    .quick-title { 
+      font-size: 12px; 
+      color: var(--text-sub); 
+      margin-top: 12px; 
+      margin-bottom: 8px; 
+      font-weight: 700;
+    }
+
+    .chips-container { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 8px; 
+    }
+
+    .chip { 
+      padding: 8px 14px; 
+      border-radius: 16px; 
+      font-size: 13px; 
+      font-weight: 800;
+      cursor: pointer; 
+      user-select: none;
+      transition: all 0.15s ease;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 3px 3px 8px rgba(0,0,0,0.08), -3px -3px 8px #ffffff;
+    }
+
+    .chip:active { 
+      box-shadow: var(--shadow-in);
+      transform: translateY(2px);
+    }
+
+    /* 彩色快捷按鈕配色 */
+    .chip-c1 { background: #ffe4e6; color: #e11d48; border-color: #fecdd3; } /* 120ml 粉紅 */
+    .chip-c2 { background: #ffedd5; color: #ea580c; border-color: #fed7aa; } /* 150ml 活力橘 */
+    .chip-c3 { background: #fef9c3; color: #ca8a04; border-color: #fef08a; } /* 180ml 陽光黃 */
+    .chip-c4 { background: #dcfce7; color: #16a34a; border-color: #bbf7d0; } /* 210ml 清新綠 */
+    .chip-c5 { background: #e0e7ff; color: #4f46e5; border-color: #c7d2fe; } /* 240ml 羅蘭紫 */
+
+    .chip-item { background: #f0f9ff; color: #0284c7; border-color: #bae6fd; } /* 常用食物 */
+
+    /* 🚀 活力珊瑚橘 3D 實體按鈕 */
+    .submit-btn { 
+      width: 100%; 
+      padding: 16px; 
+      background: linear-gradient(145deg, #ff7e5f, #feb47b); 
+      color: white; 
+      border: none; 
+      border-radius: 20px; 
+      font-size: 17px; 
+      font-weight: bold; 
+      cursor: pointer; 
+      margin-top: 12px; 
+      box-shadow: 0 6px 0 #d9532f, 0 10px 15px rgba(255, 126, 95, 0.4);
+      transition: all 0.1s ease;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .submit-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #d9532f, 0 4px 8px rgba(255, 126, 95, 0.3);
+    }
+
+    .submit-btn:disabled { 
+      background: #cbd5e1; 
+      box-shadow: none;
+      transform: none;
+    }
+
+    #msg { 
+      margin-top: 14px; 
+      text-align: center; 
+      font-weight: bold; 
+      font-size: 13px; 
+      padding: 10px;
+      border-radius: 14px;
+      box-shadow: var(--shadow-in);
+    }
+    .success { color: #15803d; background-color: #dcfce7; }
+    .error { color: #b91c1c; background-color: #fee2e2; }
+
+    /* 📋 歷史清單 */
+    .filter-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .filter-box input, .filter-box select {
+      padding: 8px 10px;
+      font-size: 12px;
+      border-radius: 12px;
+    }
+
+    .log-item {
+      background: #ffffff;
+      box-shadow: 4px 4px 10px #e2e8f0, -4px -4px 10px #ffffff;
+      border-radius: 18px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      position: relative;
+      border-left: 5px solid #6366f1;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      padding-right: 24px;
+    }
+
+    .log-date {
+      font-size: 11px;
+      color: var(--text-sub);
+      font-weight: 700;
+    }
+
+    .log-meal {
+      background: #e0e7ff;
+      color: #4338ca;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 10px;
+    }
+
+    .log-food {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .log-meta {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .btn-delete {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      width: auto;
+      padding: 2px;
+      margin: 0;
+      font-size: 14px;
+      cursor: pointer;
+      opacity: 0.6;
+    }
+
+    .no-logs {
+      text-align: center;
+      color: var(--text-sub);
+      font-size: 13px;
+      padding: 20px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <h2 id="appTitle">👦 小王子飲食紀錄 🚗</h2>
+  </div>
+
+  <!-- 📊 繽紛 3D 頂部摘要 -->
+  <div class="dashboard">
+    <div class="stat-box-milk">
+      <div class="stat-label">🍼 今日總奶量</div>
+      <div class="stat-value" id="statMilk">0 ml</div>
+    </div>
+    <div class="stat-box-meal">
+      <div class="stat-label">🥣 今日用餐數</div>
+      <div class="stat-value" id="statCount">0 次</div>
+    </div>
+  </div>
+
+  <!-- 📑 切換 Tab -->
+  <div class="tab-group">
+    <button class="tab-btn active" id="tabAddBtn" onclick="switchTab('add')">📝 新增紀錄</button>
+    <button class="tab-btn" id="tabListBtn" onclick="switchTab('list')">📋 過往紀錄</button>
+  </div>
+
+  <!-- ＝分頁 1：新增紀錄＝ -->
+  <div id="sectionAdd">
+    <form id="foodForm">
+      <div class="form-group">
+        <label for="date">📅 日期</label>
+        <input type="date" id="date" required>
+      </div>
+
+      <div class="form-group">
+        <label for="meal">⏰ 餐別 (已按時間預設)</label>
+        <select id="meal" required>
+          <option value="配方奶">🍼 配方奶</option>
+          <option value="早餐">🥣 早餐 / 早奶</option>
+          <option value="午餐">🍜 午餐 (副食品/正餐)</option>
+          <option value="下午茶">🍎 下午茶 / 水果小食</option>
+          <option value="晚餐">🍲 晚餐 (副食品/正餐)</option>
+          <option value="睡前奶/宵夜">🌙 睡前奶 / 宵夜</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="food">🥦 食物 / 奶量內容</label>
+        <input type="text" id="food" list="foodList" placeholder="例：牛肉番茄粥 1碗 / 210ml" autocomplete="off" required>
+        <datalist id="foodList"></datalist>
+
+        <!-- 🍼 繽紛飲奶快捷鍵 -->
+        <div class="quick-title">🍼 飲奶快捷鍵：</div>
+        <div class="chips-container">
+          <div class="chip chip-c1" onclick="setQuickFood('配方奶 120ml')">120ml</div>
+          <div class="chip chip-c2" onclick="setQuickFood('配方奶 150ml')">150ml</div>
+          <div class="chip chip-c3" onclick="setQuickFood('配方奶 180ml')">180ml</div>
+          <div class="chip chip-c4" onclick="setQuickFood('配方奶 210ml')">210ml</div>
+          <div class="chip chip-c5" onclick="setQuickFood('配方奶 240ml')">240ml</div>
+        </div>
+
+        <!-- 🥣 常用食物 -->
+        <div id="quickSection" style="display:none;">
+          <div class="quick-title">⚡ 常用食物快捷鍵：</div>
+          <div id="quickChips" class="chips-container"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="calories">📏 份量 / 飽肚情況 (選填)</label>
+        <input type="text" id="calories" placeholder="例：食咗 8 成 / 180ml">
+      </div>
+
+      <div class="form-group">
+        <label for="notes">📝 備註 (選填)</label>
+        <textarea id="notes" rows="2" placeholder="例：精神好、便便正常..."></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn" class="submit-btn">🚀 儲存紀錄 🚀</button>
+    </form>
+    <div id="msg"></div>
+  </div>
+
+  <!-- ＝分頁 2：過往紀錄＝ -->
+  <div id="sectionList" style="display:none;">
+    <div class="filter-box">
+      <input type="date" id="filterDate" onchange="loadPastLogs()">
+      <select id="filterMeal" onchange="loadPastLogs()">
+        <option value="全部">所有餐別</option>
+        <option value="配方奶">配方奶</option>
+        <option value="早餐">早餐</option>
+        <option value="午餐">午餐</option>
+        <option value="下午茶">下午茶</option>
+        <option value="晚餐">晚餐</option>
+        <option value="睡前奶/宵夜">睡前奶</option>
+      </select>
+    </div>
+
+    <div id="logsContainer">
+      <div class="no-logs">載入過往紀錄中...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbys27VeeErb2tlxvyvX2Sf8SpweE4cxWHKZeSPmcPYieP1rYHS0-G5fslfPOBSc7ABy8w/exec";
+
+  // 預設訊息文字 (若未能讀取到 Config 則使用此備用文字)
+  let customMsgs = {
+    success_msg: "🎉 紀錄成功儲存囉！",
+    error_msg: "❌ 傳送失敗，請再試一次！"
+  };
+
+  document.getElementById('date').valueAsDate = new Date();
+
+  window.onload = function() {
+    autoSelectMealByTime();
+    loadConfigs();
+    loadRecentFoods();
+    loadStats();
+  };
+
+  // ⚙️ 讀取 Google Sheet 的 Config 設定
+  function loadConfigs() {
+    fetch(GAS_URL + "?action=getConfigs")
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          if (data.title_text) document.getElementById('appTitle').innerText = data.title_text;
+          if (data.success_msg) customMsgs.success_msg = data.success_msg;
+          if (data.error_msg) customMsgs.error_msg = data.error_msg;
+        }
+      })
+      .catch(err => console.log('讀取設定檔失敗', err));
+  }
+
+  function autoSelectMealByTime() {
+    const hour = new Date().getHours();
+    const mealSelect = document.getElementById('meal');
+    
+    if (hour >= 6 && hour < 10) {
+      mealSelect.value = "早餐";
+    } else if (hour >= 10 && hour < 14) {
+      mealSelect.value = "午餐";
+    } else if (hour >= 14 && hour < 17) {
+      mealSelect.value = "下午茶";
+    } else if (hour >= 17 && hour < 21) {
+      mealSelect.value = "晚餐";
+    } else {
+      mealSelect.value = "睡前奶/宵夜";
+    }
+  }
+
+  function switchTab(tab) {
+    const sectionAdd = document.getElementById('sectionAdd');
+    const sectionList = document.getElementById('sectionList');
+    const tabAddBtn = document.getElementById('tabAddBtn');
+    const tabListBtn = document.getElementById('tabListBtn');
+
+    if (tab === 'add') {
+      sectionAdd.style.display = 'block';
+      sectionList.style.display = 'none';
+      tabAddBtn.classList.add('active');
+      tabListBtn.classList.remove('active');
+    } else {
+      sectionAdd.style.display = 'none';
+      sectionList.style.display = 'block';
+      tabAddBtn.classList.remove('active');
+      tabListBtn.classList.add('active');
+      loadPastLogs();
+    }
+  }
+
+  function setQuickFood(text) {
+    document.getElementById('food').value = text;
+  }
+
+  function loadStats() {
+    fetch(GAS_URL + "?action=getStats")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('statMilk').innerText = (data.totalMilk || 0) + " ml";
+        document.getElementById('statCount').innerText = (data.mealCount || 0) + " 次";
+      })
+      .catch(err => console.log('載入統計失敗', err));
+  }
+
+  function loadRecentFoods() {
+    fetch(GAS_URL + "?action=getRecent")
+      .then(res => res.json())
+      .then(foods => {
+        if (foods && foods.length > 0) {
+          const datalist = document.getElementById('foodList');
+          const chipsContainer = document.getElementById('quickChips');
+          datalist.innerHTML = '';
+          chipsContainer.innerHTML = '';
+
+          foods.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item;
+            datalist.appendChild(opt);
+
+            const chip = document.createElement('div');
+            chip.className = 'chip chip-item';
+            chip.innerText = item;
+            chip.onclick = function() { setQuickFood(item); };
+            chipsContainer.appendChild(chip);
+          });
+
+          document.getElementById('quickSection').style.display = 'block';
+        }
+      })
+      .catch(err => console.log('載入常用紀錄失敗', err));
+  }
+
+  function loadPastLogs() {
+    const fDate = document.getElementById('filterDate').value;
+    const fMeal = document.getElementById('filterMeal').value;
+
+    let queryUrl = GAS_URL + "?action=getLogs";
+    if (fDate) queryUrl += "&date=" + encodeURIComponent(fDate);
+    if (fMeal) queryUrl += "&meal=" + encodeURIComponent(fMeal);
+
+    const container = document.getElementById('logsContainer');
+    container.innerHTML = '<div class="no-logs">搜尋中...</div>';
+
+    fetch(queryUrl)
+      .then(res => res.json())
+      .then(logs => {
+        if (!logs || logs.length === 0) {
+          container.innerHTML = '<div class="no-logs">沒有符合條件的飲食紀錄</div>';
+          return;
+        }
+
+        container.innerHTML = '';
+        logs.forEach(log => {
+          const item = document.createElement('div');
+          item.className = 'log-item';
+          
+          let metaText = '';
+          if (log.calories) metaText += `份量：${log.calories} `;
+          if (log.notes) metaText += `| 備註：${log.notes}`;
+
+          item.innerHTML = `
+            <button class="btn-delete" onclick="deleteLog(${log.rowIndex})" title="刪除此紀錄">🗑️</button>
+            <div class="log-header">
+              <span class="log-date">📅 ${log.date}</span>
+              <span class="log-meal">${log.meal}</span>
+            </div>
+            <div class="log-food">🥣 ${log.food}</div>
+            ${metaText ? `<div class="log-meta">${metaText}</div>` : ''}
+          `;
+          container.appendChild(item);
+        });
+      })
+      .catch(() => {
+        container.innerHTML = '<div class="no-logs">載入紀錄失敗</div>';
+      });
+  }
+
+  function deleteLog(rowIndex) {
+    if (!confirm("確定要刪除這筆飲食紀錄嗎？")) return;
+
+    fetch(GAS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", rowIndex: rowIndex })
+    })
+    .then(() => {
+      alert("已刪除紀錄！");
+      setTimeout(() => {
+        loadPastLogs();
+        loadStats();
+      }, 800);
+    })
+    .catch(() => alert("刪除失敗，請再試一次！"));
+  }
+
+  document.getElementById('foodForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const msg = document.getElementById('msg');
+
+    btn.disabled = true;
+    btn.innerText = '儲存中...';
+    msg.className = '';
+    msg.innerText = '';
+
+    const payload = {
+      action: "add",
+      date: document.getElementById('date').value,
+      meal: document.getElementById('meal').value,
+      food: document.getElementById('food').value,
+      calories: document.getElementById('calories').value,
+      notes: document.getElementById('notes').value
+    };
+
+    fetch(GAS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .then(() => {
+      btn.disabled = false;
+      btn.innerText = '🚀 儲存紀錄 🚀';
+      msg.className = 'success';
+      msg.innerText = customMsgs.success_msg; // 讀取自訂提示文字
+
+      document.getElementById('food').value = '';
+      document.getElementById('calories').value = '';
+      document.getElementById('notes').value = '';
+
+      setTimeout(() => {
+        autoSelectMealByTime();
+        loadRecentFoods();
+        loadStats();
+      }, 1000);
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.innerText = '🚀 儲存紀錄 🚀';
+      msg.className = 'error';
+      msg.innerText = customMsgs.error_msg; // 讀取自訂提示文字
+    });
+  });
+</script>
+
+</body>
+</html>

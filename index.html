@@ -21,6 +21,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Short+Stack&display=swap" rel="stylesheet">
 
+  <!-- 載入 Chart.js 圖表庫 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root {
       /* 手繪紙張與色彩變數 */
@@ -104,14 +107,14 @@
     .top-controls {
       display: flex;
       justify-content: flex-end;
-      gap: 10px;
+      gap: 6px;
       margin-bottom: 12px;
     }
 
     .control-btn {
       background: var(--card-bg);
       border: 2.5px solid var(--pencil-color);
-      padding: 6px 12px;
+      padding: 6px 10px;
       border-radius: 20px 8px 16px 10px;
       font-size: 13px;
       font-weight: bold;
@@ -263,6 +266,50 @@
       box-shadow: 2px 2px 0px var(--shadow-color);
     }
 
+    .view-toggle-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .view-btn {
+      flex: 1;
+      padding: 8px;
+      border: 2.5px solid var(--pencil-color);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-weight: bold;
+      font-size: 13px;
+      border-radius: 16px 6px 14px 8px;
+      cursor: pointer;
+      box-shadow: 2px 2px 0px var(--shadow-color);
+      transition: all 0.15s ease;
+    }
+
+    .view-btn.active {
+      background: var(--accent-yellow);
+      color: #2c2825;
+      box-shadow: 3px 3px 0px var(--shadow-color);
+    }
+
+    .chart-card {
+      background: var(--log-bg);
+      border: 2.5px solid var(--pencil-color);
+      box-shadow: 4px 4px 0px var(--shadow-color);
+      border-radius: 20px 8px 18px 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .chart-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 0;
+      margin-bottom: 10px;
+      text-align: center;
+      color: var(--text-main);
+    }
+
     .form-group { 
       margin-bottom: 16px; 
     }
@@ -345,7 +392,6 @@
     .chip-item { background: #e8e8e8; } 
     body.dark-mode .chip-item { background: #d0c8bf; }
 
-    /* 手繪塗鴉提交按鈕 */
     .submit-btn { 
       width: 100%; 
       padding: 15px; 
@@ -486,6 +532,76 @@
       font-size: 14px;
       padding: 20px 0;
     }
+
+    /* 📸 截圖模式專用樣式 */
+    .screenshot-card {
+      background: var(--card-bg);
+      border: 3.5px solid var(--pencil-color);
+      border-radius: 25px;
+      padding: 20px;
+      box-shadow: 6px 6px 0px var(--shadow-color);
+    }
+
+    .shot-header {
+      text-align: center;
+      border-bottom: 2.5px dashed var(--pencil-color);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    .shot-title {
+      font-family: 'Fredoka', cursive, sans-serif;
+      font-size: 20px;
+      font-weight: bold;
+      margin: 0 0 6px 0;
+      color: var(--text-main);
+    }
+
+    .shot-sub {
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--text-sub);
+    }
+
+    .shot-item {
+      background: var(--input-bg);
+      border: 2px solid var(--pencil-color);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+
+    .shot-meal-tag {
+      display: inline-block;
+      background: var(--accent-pink);
+      color: #2c2825;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 8px;
+      border: 1.5px solid var(--pencil-color);
+      margin-bottom: 4px;
+    }
+
+    .shot-food-name {
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--text-main);
+    }
+
+    .shot-details {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .shot-footer-hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 16px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -500,116 +616,168 @@
   </defs>
 </svg>
 
-<div class="card">
+<div class="card" id="mainCard">
   <div class="top-controls">
+    <button class="control-btn" id="shotModeBtn" onclick="toggleScreenshotMode()">📸 截圖</button>
     <button class="control-btn" id="langBtn" onclick="toggleLanguage()">🌐 EN</button>
     <button class="control-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
   </div>
 
-  <div class="header">
-    <h2 id="appTitle">👦 小王子成長紀錄 🚗</h2>
-  </div>
-
-  <div class="hw-banner">
-    <div>
-      <div class="hw-title" id="hwTitle">📏 最新身材紀錄</div>
-      <div class="hw-values" id="hwValues">-- cm | -- kg</div>
+  <!-- 標準應用程式介面 -->
+  <div id="normalView">
+    <div class="header">
+      <h2 id="appTitle">👦 小王子成長紀錄 🚗</h2>
     </div>
-    <div class="hw-date" id="hwDate">📅 --</div>
-  </div>
 
-  <div class="dashboard">
-    <div class="stat-box-milk">
-      <div class="stat-label" id="statMilkLabel">🍼 今日總奶量</div>
-      <div class="stat-value" id="statMilk">0 ml</div>
-    </div>
-    <div class="stat-box-meal">
-      <div class="stat-label" id="statCountLabel">🥣 今日用餐數</div>
-      <div class="stat-value" id="statCount">0 次</div>
-    </div>
-  </div>
-
-  <div class="tab-group">
-    <button class="tab-btn active" id="tabAddBtn" onclick="switchTab('add')">📝 新增紀錄</button>
-    <button class="tab-btn" id="tabListBtn" onclick="switchTab('list')">📋 過往紀錄</button>
-  </div>
-
-  <div id="sectionAdd">
-    <form id="foodForm">
-      <div class="form-group">
-        <label for="date" id="labelDate">📅 日期</label>
-        <input type="date" id="date" required>
+    <div class="hw-banner">
+      <div>
+        <div class="hw-title" id="hwTitle">📏 最新身材紀錄</div>
+        <div class="hw-values" id="hwValues">-- cm | -- kg</div>
       </div>
+      <div class="hw-date" id="hwDate">📅 --</div>
+    </div>
 
-      <div class="form-row">
+    <div class="dashboard">
+      <div class="stat-box-milk">
+        <div class="stat-label" id="statMilkLabel">🍼 今日總奶量</div>
+        <div class="stat-value" id="statMilk">0 ml</div>
+      </div>
+      <div class="stat-box-meal">
+        <div class="stat-label" id="statCountLabel">🥣 今日用餐數</div>
+        <div class="stat-value" id="statCount">0 次</div>
+      </div>
+    </div>
+
+    <div class="tab-group">
+      <button class="tab-btn active" id="tabAddBtn" onclick="switchTab('add')">📝 新增紀錄</button>
+      <button class="tab-btn" id="tabListBtn" onclick="switchTab('list')">📋 過往紀錄</button>
+    </div>
+
+    <div id="sectionAdd">
+      <form id="foodForm">
         <div class="form-group">
-          <label for="height" id="labelHeight">📏 身高 (cm)</label>
-          <select id="height">
-            <option value="">-- 請選擇身高 --</option>
-          </select>
+          <label for="date" id="labelDate">📅 日期</label>
+          <input type="date" id="date" required>
         </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="height" id="labelHeight">📏 身高 (cm)</label>
+            <select id="height">
+              <option value="">-- 請選擇身高 --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="weight" id="labelWeight">⚖️ 體重 (kg)</label>
+            <select id="weight">
+              <option value="">-- 請選擇體重 --</option>
+            </select>
+          </div>
+        </div>
+
         <div class="form-group">
-          <label for="weight" id="labelWeight">⚖️ 體重 (kg)</label>
-          <select id="weight">
-            <option value="">-- 請選擇體重 --</option>
-          </select>
+          <label for="meal" id="labelMeal">⏰ 餐別 (有飲食時選擇)</label>
+          <select id="meal"></select>
+        </div>
+
+        <div class="form-group">
+          <label for="food" id="labelFood">🥦 食物 / 奶量內容 (選填)</label>
+          <input type="text" id="food" list="foodList" placeholder="例：牛肉番茄粥 1碗 / 210ml" autocomplete="off">
+          <datalist id="foodList"></datalist>
+
+          <div class="quick-title" id="quickMilkTitle">🍼 飲奶快捷鍵：</div>
+          <div class="chips-container">
+            <div class="chip chip-c1" onclick="setQuickMilk('120ml')">120ml</div>
+            <div class="chip chip-c2" onclick="setQuickMilk('150ml')">150ml</div>
+            <div class="chip chip-c3" onclick="setQuickMilk('180ml')">180ml</div>
+            <div class="chip chip-c4" onclick="setQuickMilk('210ml')">210ml</div>
+            <div class="chip chip-c5" onclick="setQuickMilk('240ml')">240ml</div>
+          </div>
+
+          <div id="quickSection" style="display:none;">
+            <div class="quick-title" id="quickFoodTitle">⚡ 常用食物快捷鍵：</div>
+            <div id="quickChips" class="chips-container"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="calories" id="labelCalories">📏 份量 / 飽肚情況 (選填)</label>
+          <input type="text" id="calories" placeholder="例：食咗 8 成 / 180ml">
+        </div>
+
+        <div class="form-group">
+          <label for="notes" id="labelNotes">📝 備註 (選填)</label>
+          <textarea id="notes" rows="2" placeholder="例：精神好、便便正常..."></textarea>
+        </div>
+
+        <button type="submit" id="submitBtn" class="submit-btn">🚀 儲存紀錄 🚀</button>
+      </form>
+      <div id="msg"></div>
+    </div>
+
+    <!-- 過往紀錄頁面 -->
+    <div id="sectionList" style="display:none;">
+      <div class="view-toggle-group">
+        <button class="view-btn active" id="viewListBtn" onclick="switchHistoryView('list')">📋 列表檢視</button>
+        <button class="view-btn" id="viewChartBtn" onclick="switchHistoryView('chart')">📊 圖表統計</button>
+      </div>
+
+      <div id="historyListView">
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <button class="control-btn" style="flex: 1; justify-content: center;" onclick="setFilterDate(0)" id="filterTodayBtn">📅 今天</button>
+          <button class="control-btn" style="flex: 1; justify-content: center;" onclick="setFilterDate(-1)" id="filterYesterdayBtn">📅 昨天</button>
+        </div>
+        <div class="filter-box">
+          <input type="date" id="filterDate" onchange="loadPastLogs()">
+          <select id="filterMeal" onchange="loadPastLogs()"></select>
+        </div>
+
+        <div id="logsContainer">
+          <div class="no-logs" id="loadingLogsMsg">載入過往紀錄中...</div>
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="meal" id="labelMeal">⏰ 餐別 (有飲食時選擇)</label>
-        <select id="meal"></select>
-      </div>
-
-      <div class="form-group">
-        <label for="food" id="labelFood">🥦 食物 / 奶量內容 (選填)</label>
-        <input type="text" id="food" list="foodList" placeholder="例：牛肉番茄粥 1碗 / 210ml" autocomplete="off">
-        <datalist id="foodList"></datalist>
-
-        <div class="quick-title" id="quickMilkTitle">🍼 飲奶快捷鍵：</div>
-        <div class="chips-container">
-          <div class="chip chip-c1" onclick="setQuickMilk('120ml')">120ml</div>
-          <div class="chip chip-c2" onclick="setQuickMilk('150ml')">150ml</div>
-          <div class="chip chip-c3" onclick="setQuickMilk('180ml')">180ml</div>
-          <div class="chip chip-c4" onclick="setQuickMilk('210ml')">210ml</div>
-          <div class="chip chip-c5" onclick="setQuickMilk('240ml')">240ml</div>
+      <div id="historyChartView" style="display:none;">
+        <div class="chart-card">
+          <h3 class="chart-title" id="chartMilkTitle">🍼 每日飲奶量趨勢 (ml)</h3>
+          <canvas id="milkChart"></canvas>
         </div>
 
-        <div id="quickSection" style="display:none;">
-          <div class="quick-title" id="quickFoodTitle">⚡ 常用食物快捷鍵：</div>
-          <div id="quickChips" class="chips-container"></div>
+        <div class="chart-card">
+          <h3 class="chart-title" id="chartMealTitle">🥣 餐別飲食比例</h3>
+          <canvas id="mealPieChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title" id="chartGrowthTitle">📈 身高體重成長曲線</h3>
+          <canvas id="growthChart"></canvas>
         </div>
       </div>
-
-      <div class="form-group">
-        <label for="calories" id="labelCalories">📏 份量 / 飽肚情況 (選填)</label>
-        <input type="text" id="calories" placeholder="例：食咗 8 成 / 180ml">
-      </div>
-
-      <div class="form-group">
-        <label for="notes" id="labelNotes">📝 備註 (選填)</label>
-        <textarea id="notes" rows="2" placeholder="例：精神好、便便正常..."></textarea>
-      </div>
-
-      <button type="submit" id="submitBtn" class="submit-btn">🚀 儲存紀錄 🚀</button>
-    </form>
-    <div id="msg"></div>
+    </div>
   </div>
 
-  <div id="sectionList" style="display:none;">
-    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-      <button class="control-btn" style="flex: 1; justify-content: center;" onclick="setFilterDate(0)" id="filterTodayBtn">📅 今天</button>
-      <button class="control-btn" style="flex: 1; justify-content: center;" onclick="setFilterDate(-1)" id="filterYesterdayBtn">📅 昨天</button>
-    </div>
-    <div class="filter-box">
-      <input type="date" id="filterDate" onchange="loadPastLogs()">
-      <select id="filterMeal" onchange="loadPastLogs()"></select>
+  <!-- 📸 截圖模式專用圖卡介面 -->
+  <div id="screenshotView" style="display: none;">
+    <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+      <input type="date" id="shotDate" style="flex: 1; padding: 8px;" onchange="renderScreenshotCard()">
+      <button class="control-btn" onclick="toggleScreenshotMode()" style="background: var(--accent-pink); color: #2c2825;" id="exitShotBtn">✖ 離開截圖</button>
     </div>
 
-    <div id="logsContainer">
-      <div class="no-logs" id="loadingLogsMsg">載入過往紀錄中...</div>
+    <div class="screenshot-card" id="captureCard">
+      <div class="shot-header">
+        <h3 class="shot-title" id="shotCardTitle">👦 小王子單日飲食卡 🚗</h3>
+        <div class="shot-sub" id="shotDateText">📅 2026-04-18</div>
+        <div class="shot-sub" id="shotStatsText" style="margin-top: 4px;">🍼 總奶量: 0ml | 🥣 正餐: 0次</div>
+      </div>
+
+      <div id="shotListContainer">
+        <!-- 動態渲染當天飲食清單 -->
+      </div>
+
+      <div class="shot-footer-hint" id="shotFooterHint">✨ 截圖保存 · 陪伴寶寶健康成長 ✨</div>
     </div>
   </div>
+
 </div>
 
 <script>
@@ -618,11 +786,20 @@
   const i18n = {
     zh: {
       appTitle: "👦 小王子成長紀錄 🚗",
+      shotModeBtn: "📸 截圖",
+      exitShotBtn: "✖ 離開截圖",
+      shotCardTitle: "👦 小王子單日飲食卡 🚗",
+      shotFooterHint: "✨ 截圖保存 · 陪伴寶寶健康成長 ✨",
       hwTitle: "📏 最新身材紀錄",
       statMilkLabel: "🍼 今日總奶量",
       statCountLabel: "🥣 今日用餐數",
       tabAddBtn: "📝 新增紀錄",
       tabListBtn: "📋 過往紀錄",
+      viewListBtn: "📋 列表檢視",
+      viewChartBtn: "📊 圖表統計",
+      chartMilkTitle: "🍼 每日飲奶量趨勢 (ml)",
+      chartMealTitle: "🥣 餐別飲食比例",
+      chartGrowthTitle: "📈 身高體重成長曲線",
       labelDate: "📅 日期",
       labelMeal: "⏰ 餐別 (有飲食時選擇)",
       labelFood: "🥦 食物 / 奶量內容 (選填)",
@@ -642,14 +819,12 @@
       allMeals: "所有餐別",
       loadingLogs: "載入過往紀錄中...",
       searching: "搜尋中...",
-      noLogsFound: "沒有符合條件的飲食紀錄",
+      noLogsFound: "該日期尚無飲食紀錄",
       failLogs: "載入紀錄失敗",
       confirmDelete: "確定要刪除這筆飲食紀錄嗎？",
       deleteSuccess: "已刪除紀錄！",
       deleteFail: "刪除失敗，請再試一次！",
       emptyNotice: "⚠️ 請至少輸入「食物」或「身高/體重」其中一項！",
-      invalidHeight: "⚠️ 請選擇合理的身高數值！",
-      invalidWeight: "⚠️ 請選擇合理的體重數值！",
       unitTimes: " 次",
       formulaPrefix: "配方奶",
       portionText: "份量",
@@ -671,11 +846,20 @@
     },
     en: {
       appTitle: "👦 Growth Tracker 🚗",
+      shotModeBtn: "📸 Shot",
+      exitShotBtn: "✖ Exit Shot",
+      shotCardTitle: "👦 Daily Food Summary 🚗",
+      shotFooterHint: "✨ Captured with love · Growing up happy ✨",
       hwTitle: "📏 Latest Growth Stats",
       statMilkLabel: "🍼 Today's Milk",
       statCountLabel: "🥣 Meals Today",
       tabAddBtn: "📝 Add Record",
       tabListBtn: "📋 History",
+      viewListBtn: "📋 List View",
+      viewChartBtn: "📊 Charts",
+      chartMilkTitle: "🍼 Daily Milk Trend (ml)",
+      chartMealTitle: "🥣 Meal Distribution",
+      chartGrowthTitle: "📈 Height & Weight Growth",
       labelDate: "📅 Date",
       labelMeal: "⏰ Meal Time",
       labelFood: "🥦 Food / Milk Intake (Optional)",
@@ -695,14 +879,12 @@
       allMeals: "All Meals",
       loadingLogs: "Loading history logs...",
       searching: "Searching...",
-      noLogsFound: "No matching records found",
+      noLogsFound: "No records found for this date",
       failLogs: "Failed to load logs",
       confirmDelete: "Are you sure you want to delete this record?",
       deleteSuccess: "Record deleted!",
       deleteFail: "Failed to delete, please try again!",
       emptyNotice: "⚠️ Please enter at least 'Food' or 'Height/Weight'!",
-      invalidHeight: "⚠️ Please select a valid height!",
-      invalidWeight: "⚠️ Please select a valid weight!",
       unitTimes: " meals",
       formulaPrefix: "Formula Milk",
       portionText: "Portion",
@@ -726,6 +908,12 @@
 
   let currentLang = localStorage.getItem('app_lang') || 'zh';
   let currentTheme = localStorage.getItem('app_theme') || 'light';
+  let currentHistoryView = 'list';
+  let isScreenshotMode = false;
+
+  let milkChartInstance = null;
+  let mealPieChartInstance = null;
+  let growthChartInstance = null;
 
   let customMsgs = {
     success_msg: i18n[currentLang].success_msg,
@@ -733,6 +921,7 @@
   };
 
   document.getElementById('date').valueAsDate = new Date();
+  document.getElementById('shotDate').valueAsDate = new Date();
 
   window.onload = function() {
     applyTheme(currentTheme);
@@ -778,6 +967,9 @@
     currentTheme = currentTheme === 'light' ? 'dark' : 'light';
     localStorage.setItem('app_theme', currentTheme);
     applyTheme(currentTheme);
+    if (currentHistoryView === 'chart' && !isScreenshotMode) {
+      renderCharts();
+    }
   }
 
   function applyTheme(theme) {
@@ -796,7 +988,13 @@
     localStorage.setItem('app_lang', currentLang);
     applyLanguage(currentLang);
     initHWDropdowns();
-    loadPastLogs();
+    if (isScreenshotMode) {
+      renderScreenshotCard();
+    } else if (currentHistoryView === 'chart') {
+      renderCharts();
+    } else {
+      loadPastLogs();
+    }
   }
 
   function applyLanguage(lang) {
@@ -804,11 +1002,22 @@
     document.getElementById('langBtn').innerText = lang === 'zh' ? "🌐 EN" : "🌐 中文";
 
     document.getElementById('appTitle').innerText = t.appTitle;
+    document.getElementById('shotModeBtn').innerText = t.shotModeBtn;
+    document.getElementById('exitShotBtn').innerText = t.exitShotBtn;
+    document.getElementById('shotCardTitle').innerText = t.shotCardTitle;
+    document.getElementById('shotFooterHint').innerText = t.shotFooterHint;
+
     document.getElementById('hwTitle').innerText = t.hwTitle;
     document.getElementById('statMilkLabel').innerText = t.statMilkLabel;
     document.getElementById('statCountLabel').innerText = t.statCountLabel;
     document.getElementById('tabAddBtn').innerText = t.tabAddBtn;
     document.getElementById('tabListBtn').innerText = t.tabListBtn;
+
+    document.getElementById('viewListBtn').innerText = t.viewListBtn;
+    document.getElementById('viewChartBtn').innerText = t.viewChartBtn;
+    document.getElementById('chartMilkTitle').innerText = t.chartMilkTitle;
+    document.getElementById('chartMealTitle').innerText = t.chartMealTitle;
+    document.getElementById('chartGrowthTitle').innerText = t.chartGrowthTitle;
 
     document.getElementById('labelDate').innerText = t.labelDate;
     document.getElementById('labelMeal').innerText = t.labelMeal;
@@ -923,8 +1132,256 @@
       sectionList.style.display = 'block';
       tabAddBtn.classList.remove('active');
       tabListBtn.classList.add('active');
-      setFilterDate(0);
+      if (currentHistoryView === 'chart') {
+        renderCharts();
+      } else {
+        setFilterDate(0);
+      }
     }
+  }
+
+  function switchHistoryView(view) {
+    currentHistoryView = view;
+    const listView = document.getElementById('historyListView');
+    const chartView = document.getElementById('historyChartView');
+    const listBtn = document.getElementById('viewListBtn');
+    const chartBtn = document.getElementById('viewChartBtn');
+
+    if (view === 'chart') {
+      listView.style.display = 'none';
+      chartView.style.display = 'block';
+      listBtn.classList.remove('active');
+      chartBtn.classList.add('active');
+      renderCharts();
+    } else {
+      listView.style.display = 'block';
+      chartView.style.display = 'none';
+      listBtn.classList.add('active');
+      chartBtn.classList.remove('active');
+      loadPastLogs();
+    }
+  }
+
+  /* 📸 開啟 / 關閉 截圖模式 */
+  function toggleScreenshotMode() {
+    isScreenshotMode = !isScreenshotMode;
+    const normalView = document.getElementById('normalView');
+    const screenshotView = document.getElementById('screenshotView');
+    const shotModeBtn = document.getElementById('shotModeBtn');
+
+    if (isScreenshotMode) {
+      normalView.style.display = 'none';
+      screenshotView.style.display = 'block';
+      shotModeBtn.style.background = 'var(--accent-yellow)';
+      renderScreenshotCard();
+    } else {
+      normalView.style.display = 'block';
+      screenshotView.style.display = 'none';
+      shotModeBtn.style.background = 'var(--card-bg)';
+    }
+  }
+
+  /* 渲染截圖卡片資料 */
+  function renderScreenshotCard() {
+    const targetDate = document.getElementById('shotDate').value;
+    const container = document.getElementById('shotListContainer');
+    const t = i18n[currentLang];
+
+    document.getElementById('shotDateText').innerText = `📅 ${targetDate}`;
+    container.innerHTML = `<div class="no-logs">${t.searching}</div>`;
+
+    fetch(GAS_URL + "?action=getLogs&date=" + encodeURIComponent(targetDate))
+      .then(res => res.json())
+      .then(logs => {
+        let totalMilk = 0;
+        let mealCount = 0;
+
+        if (!logs || logs.length === 0) {
+          container.innerHTML = `<div class="no-logs">${t.noLogsFound}</div>`;
+          document.getElementById('shotStatsText').innerText = `🍼 ${t.statMilkLabel.replace('今日總奶量','奶量')}: 0ml | 🥣 ${t.statCountLabel.replace('今日用餐數','用餐')}: 0${t.unitTimes}`;
+          return;
+        }
+
+        container.innerHTML = '';
+        logs.forEach(log => {
+          const milkVal = parseMilkAmount(log.food) || parseMilkAmount(log.calories);
+          totalMilk += milkVal;
+          if (log.food) mealCount++;
+
+          const matchedMeal = t.meals.find(m => m.value === log.meal);
+          const displayMeal = matchedMeal ? matchedMeal.text : log.meal;
+
+          const item = document.createElement('div');
+          item.className = 'shot-item';
+
+          let details = [];
+          if (log.calories) details.push(`${t.portionText}: ${log.calories}`);
+          if (log.notes) details.push(`${t.notesText}: ${log.notes}`);
+
+          item.innerHTML = `
+            <div class="shot-meal-tag">${displayMeal}</div>
+            <div class="shot-food-name">🥣 ${log.food || '--'}</div>
+            ${details.length > 0 ? `<div class="shot-details">${details.join(' | ')}</div>` : ''}
+          `;
+          container.appendChild(item);
+        });
+
+        document.getElementById('shotStatsText').innerText = `🍼 總奶量: ${totalMilk}ml | 🥣 用餐數: ${mealCount}${t.unitTimes}`;
+      })
+      .catch(() => {
+        container.innerHTML = `<div class="no-logs">${t.failLogs}</div>`;
+      });
+  }
+
+  function parseMilkAmount(str) {
+    if (!str) return 0;
+    const match = str.match(/(\d+)\s*ml/i);
+    return match ? parseInt(match[1], 10) : 0;
+  }
+
+  function renderCharts() {
+    fetch(GAS_URL + "?action=getLogs")
+      .then(res => res.json())
+      .then(logs => {
+        if (!logs || logs.length === 0) return;
+
+        const isDark = currentTheme === 'dark';
+        const textColor = isDark ? '#f3ece4' : '#2c2825';
+        const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+
+        Chart.defaults.font.family = "'Short Stack', 'Fredoka', cursive, sans-serif";
+        Chart.defaults.color = textColor;
+
+        const milkByDate = {};
+        const mealCounts = {};
+        const growthLogs = [];
+
+        const sortedLogs = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        sortedLogs.forEach(log => {
+          const milkVal = parseMilkAmount(log.food) || parseMilkAmount(log.calories);
+          if (!milkByDate[log.date]) milkByDate[log.date] = 0;
+          milkByDate[log.date] += milkVal;
+
+          const mealName = log.meal || '其他';
+          mealCounts[mealName] = (mealCounts[mealName] || 0) + 1;
+
+          if (log.height || log.weight) {
+            growthLogs.push({
+              date: log.date,
+              height: log.height ? parseFloat(log.height) : null,
+              weight: log.weight ? parseFloat(log.weight) : null
+            });
+          }
+        });
+
+        const dates = Object.keys(milkByDate);
+        const milkValues = dates.map(d => milkByDate[d]);
+
+        if (milkChartInstance) milkChartInstance.destroy();
+        const ctxMilk = document.getElementById('milkChart').getContext('2d');
+        milkChartInstance = new Chart(ctxMilk, {
+          type: 'bar',
+          data: {
+            labels: dates,
+            datasets: [{
+              label: '奶量 (ml)',
+              data: milkValues,
+              backgroundColor: '#9bf6ff',
+              borderColor: '#2c2825',
+              borderWidth: 2,
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: { grid: { color: gridColor }, ticks: { color: textColor } },
+              y: { grid: { color: gridColor }, ticks: { color: textColor }, beginAtZero: true }
+            }
+          }
+        });
+
+        const mealLabels = Object.keys(mealCounts);
+        const mealValues = Object.values(mealCounts);
+
+        if (mealPieChartInstance) mealPieChartInstance.destroy();
+        const ctxMeal = document.getElementById('mealPieChart').getContext('2d');
+        mealPieChartInstance = new Chart(ctxMeal, {
+          type: 'doughnut',
+          data: {
+            labels: mealLabels,
+            datasets: [{
+              data: mealValues,
+              backgroundColor: ['#ff8b94', '#ffe66d', '#a8e6cf', '#9bf6ff', '#bdb2ff', '#ffc6ff'],
+              borderColor: '#2c2825',
+              borderWidth: 2.5
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom', labels: { color: textColor } }
+            }
+          }
+        });
+
+        const gDates = growthLogs.map(g => g.date);
+        const gHeights = growthLogs.map(g => g.height);
+        const gWeights = growthLogs.map(g => g.weight);
+
+        if (growthChartInstance) growthChartInstance.destroy();
+        const ctxGrowth = document.getElementById('growthChart').getContext('2d');
+        growthChartInstance = new Chart(ctxGrowth, {
+          type: 'line',
+          data: {
+            labels: gDates.length > 0 ? gDates : ['無資料'],
+            datasets: [
+              {
+                label: '身高 (cm)',
+                data: gHeights.length > 0 ? gHeights : [0],
+                borderColor: '#ff8b94',
+                backgroundColor: '#ff8b94',
+                borderWidth: 3,
+                tension: 0.3,
+                yAxisID: 'y'
+              },
+              {
+                label: '體重 (kg)',
+                data: gWeights.length > 0 ? gWeights : [0],
+                borderColor: '#a8e6cf',
+                backgroundColor: '#a8e6cf',
+                borderWidth: 3,
+                tension: 0.3,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: { grid: { color: gridColor }, ticks: { color: textColor } },
+              y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: { display: true, text: 'cm', color: textColor },
+                grid: { color: gridColor },
+                ticks: { color: textColor }
+              },
+              y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: { display: true, text: 'kg', color: textColor },
+                grid: { drawOnChartArea: false },
+                ticks: { color: textColor }
+              }
+            }
+          }
+        });
+      })
+      .catch(err => console.log('載入圖表數據失敗', err));
   }
 
   function setFilterDate(daysOffset) {
@@ -1086,7 +1543,11 @@
     .then(() => {
       alert(t.deleteSuccess);
       setTimeout(() => {
-        loadPastLogs();
+        if (currentHistoryView === 'chart') {
+          renderCharts();
+        } else {
+          loadPastLogs();
+        }
         loadStats();
       }, 800);
     })

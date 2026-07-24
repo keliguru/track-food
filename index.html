@@ -27,7 +27,6 @@
       --input-focus-bg: #ffffff;
       --label-color: #334155;
       
-      /* 3D 浮雕陰影 (Light Mode) */
       --shadow-out: 10px 10px 20px #cbd5e1, -10px -10px 20px #ffffff;
       --shadow-out-sm: 5px 5px 12px #d1dbe8, -5px -5px 12px #ffffff;
       --shadow-in: inset 3px 3px 6px #cbd5e1, inset -3px -3px 6px #ffffff;
@@ -38,7 +37,6 @@
       --log-shadow: 4px 4px 10px #e2e8f0, -4px -4px 10px #ffffff;
     }
 
-    /* 🌙 深色模式 (Dark Mode) */
     body.dark-mode {
       --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #022c22 100%);
       --card-bg: #1e293b;
@@ -49,7 +47,6 @@
       --input-focus-bg: #1e293b;
       --label-color: #cbd5e1;
 
-      /* 3D 浮雕陰影 (Dark Mode) */
       --shadow-out: 10px 10px 25px #090d16, -10px -10px 25px #2d3748;
       --shadow-out-sm: 5px 5px 12px #090d16, -5px -5px 12px #2d3748;
       --shadow-in: inset 3px 3px 6px #090d16, inset -3px -3px 6px #2d3748;
@@ -79,7 +76,6 @@
       transition: background 0.3s ease, color 0.3s ease;
     }
 
-    /* 3D 主卡片 */
     .card { 
       width: 100%;
       max-width: 440px; 
@@ -137,7 +133,6 @@
       font-weight: 800;
     }
 
-    /* 📊 最新身材資訊卡片 */
     .hw-banner {
       background: linear-gradient(145deg, #eff6ff, #dbeafe);
       border: 1px solid #bfdbfe;
@@ -178,7 +173,6 @@
     }
     body.dark-mode .hw-values { color: #60a5fa; }
 
-    /* 📊 頂部飲食摘要 */
     .dashboard {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -238,7 +232,6 @@
       text-shadow: 1px 1px 0px #fff;
     }
 
-    /* 📑 切換 Tab */
     .tab-group {
       display: flex;
       background: var(--tab-bg);
@@ -381,16 +374,33 @@
     }
 
     #msg { 
-      margin-top: 14px; 
       text-align: center; 
       font-weight: bold; 
       font-size: 13px; 
+    }
+
+    /* 當 #msg 沒有內容時，自動完全隱藏，不佔空間與顯示方格 */
+    #msg:empty {
+      display: none;
+    }
+
+    #msg.success { 
+      margin-top: 14px; 
+      color: #15803d; 
+      background-color: #dcfce7; 
       padding: 10px;
       border-radius: 14px;
       box-shadow: var(--shadow-in);
     }
-    .success { color: #15803d; background-color: #dcfce7; }
-    .error { color: #b91c1c; background-color: #fee2e2; }
+    
+    #msg.error { 
+      margin-top: 14px; 
+      color: #b91c1c; 
+      background-color: #fee2e2; 
+      padding: 10px;
+      border-radius: 14px;
+      box-shadow: var(--shadow-in);
+    }
 
     body.dark-mode .success { color: #86efac; background-color: #14532d; }
     body.dark-mode .error { color: #fca5a5; background-color: #7f1d1d; }
@@ -483,7 +493,6 @@
 <body>
 
 <div class="card">
-  <!-- 🌐 / 🌙 功能切換按鈕列 -->
   <div class="top-controls">
     <button class="control-btn" id="langBtn" onclick="toggleLanguage()">🌐 EN</button>
     <button class="control-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
@@ -493,7 +502,6 @@
     <h2 id="appTitle">👦 小王子成長紀錄 🚗</h2>
   </div>
 
-  <!-- 📏 ⚖️ 최신 身高體重頂部欄 -->
   <div class="hw-banner">
     <div>
       <div class="hw-title" id="hwTitle">📏 最新身材紀錄</div>
@@ -502,7 +510,6 @@
     <div class="hw-date" id="hwDate">📅 --</div>
   </div>
 
-  <!-- 📊 飲食摘要 -->
   <div class="dashboard">
     <div class="stat-box-milk">
       <div class="stat-label" id="statMilkLabel">🍼 今日總奶量</div>
@@ -514,13 +521,11 @@
     </div>
   </div>
 
-  <!-- 📑 切換 Tab -->
   <div class="tab-group">
     <button class="tab-btn active" id="tabAddBtn" onclick="switchTab('add')">📝 新增紀錄</button>
     <button class="tab-btn" id="tabListBtn" onclick="switchTab('list')">📋 過往紀錄</button>
   </div>
 
-  <!-- ＝分頁 1：新增紀錄＝ -->
   <div id="sectionAdd">
     <form id="foodForm">
       <div class="form-group">
@@ -528,7 +533,6 @@
         <input type="date" id="date" required>
       </div>
 
-      <!-- 📏 ⚖️ 身高與體重 (小數點後2位) -->
       <div class="form-row">
         <div class="form-group">
           <label for="height" id="labelHeight">📏 身高 (cm)</label>
@@ -550,7 +554,6 @@
         <input type="text" id="food" list="foodList" placeholder="例：牛肉番茄粥 1碗 / 210ml" autocomplete="off">
         <datalist id="foodList"></datalist>
 
-        <!-- 🍼 飲奶快捷鍵 -->
         <div class="quick-title" id="quickMilkTitle">🍼 飲奶快捷鍵：</div>
         <div class="chips-container">
           <div class="chip chip-c1" onclick="setQuickMilk('120ml')">120ml</div>
@@ -560,7 +563,6 @@
           <div class="chip chip-c5" onclick="setQuickMilk('240ml')">240ml</div>
         </div>
 
-        <!-- 🥣 常用食物 -->
         <div id="quickSection" style="display:none;">
           <div class="quick-title" id="quickFoodTitle">⚡ 常用食物快捷鍵：</div>
           <div id="quickChips" class="chips-container"></div>
@@ -582,7 +584,6 @@
     <div id="msg"></div>
   </div>
 
-  <!-- ＝分頁 2：過往紀錄＝ -->
   <div id="sectionList" style="display:none;">
     <div class="filter-box">
       <input type="date" id="filterDate" onchange="loadPastLogs()">
@@ -598,7 +599,6 @@
 <script>
   const GAS_URL = "https://script.google.com/macros/s/AKfycbys27VeeErb2tlxvyvX2Sf8SpweE4cxWHKZeSPmcPYieP1rYHS0-G5fslfPOBSc7ABy8w/exec";
 
-  // 🌐 多語言字典
   const i18n = {
     zh: {
       appTitle: "👦 小王子成長紀錄 🚗",
@@ -998,7 +998,6 @@
     const heightVal = document.getElementById('height').value.trim();
     const weightVal = document.getElementById('weight').value.trim();
 
-    // 檢查：食物與身高體重不能同時為空
     if (!foodVal && !heightVal && !weightVal) {
       msg.className = 'error';
       msg.innerText = t.emptyNotice;

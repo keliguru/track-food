@@ -3547,7 +3547,7 @@
 
 
 
-  /* 渲染截圖卡片資料 */
+  /* 渲染截圖卡片資料 (按輸入時間排序：最新在上) */
 
 
   function renderScreenshotCard() {
@@ -3610,10 +3610,19 @@
 
 
 
+        // 依據 rowIndex (輸入順序) 由大到小排序（最新輸入的在最上面）
+
+
+        const sortedLogs = [...logs].sort((a, b) => (b.rowIndex || 0) - (a.rowIndex || 0));
+
+
+
+
+
         container.innerHTML = '';
 
 
-        logs.forEach(log => {
+        sortedLogs.forEach(log => {
 
 
           const milkVal = parseMilkAmount(log.food) || parseMilkAmount(log.calories);
@@ -4363,6 +4372,9 @@
 
 
 
+  /* 載入過往紀錄 (按輸入時間排序：最新在上) */
+
+
   function loadPastLogs() {
 
 
@@ -4423,10 +4435,19 @@
 
 
 
+        // 依據 rowIndex (輸入順序) 由大到小排序（最新輸入的在最上面）
+
+
+        const sortedLogs = [...logs].sort((a, b) => (b.rowIndex || 0) - (a.rowIndex || 0));
+
+
+
+
+
         container.innerHTML = '';
 
 
-        logs.forEach(log => {
+        sortedLogs.forEach(log => {
 
 
           const item = document.createElement('div');

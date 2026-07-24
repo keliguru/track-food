@@ -591,7 +591,6 @@
     <div style="display: flex; gap: 8px; margin-bottom: 8px;">
       <button class="control-btn" style="flex: 1; justify-content: center;" onclick="setFilterDate(0)" id="filterTodayBtn">📅 今天</button>
       <button class="control-btn" style="flex: 1; justify-content: center;" onclick="setFilterDate(-1)" id="filterYesterdayBtn">📅 昨天</button>
-      <button class="control-btn" style="flex: 1; justify-content: center;" onclick="clearFilterDate()" id="filterAllDateBtn">🔄 全部日期</button>
     </div>
     <div class="filter-box">
       <input type="date" id="filterDate" onchange="loadPastLogs()">
@@ -652,7 +651,6 @@
       error_msg: "❌ 傳送失敗，請再試一次！",
       filterToday: "📅 今天",
       filterYesterday: "📅 昨天",
-      filterAllDate: "🔄 全部日期",
       meals: [
         { value: "配方奶", text: "🍼 配方奶" },
         { value: "早餐", text: "🥣 早餐" },
@@ -706,7 +704,6 @@
       error_msg: "❌ Failed to send, please try again!",
       filterToday: "📅 Today",
       filterYesterday: "📅 Yesterday",
-      filterAllDate: "🔄 All Dates",
       meals: [
         { value: "配方奶", text: "🍼 Formula Milk" },
         { value: "早餐", text: "🥣 Breakfast" },
@@ -825,7 +822,6 @@
 
     document.getElementById('filterTodayBtn').innerText = t.filterToday;
     document.getElementById('filterYesterdayBtn').innerText = t.filterYesterday;
-    document.getElementById('filterAllDateBtn').innerText = t.filterAllDate;
 
     updateMealOptions();
   }
@@ -929,11 +925,6 @@
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     document.getElementById('filterDate').value = `${year}-${month}-${day}`;
-    loadPastLogs();
-  }
-
-  function clearFilterDate() {
-    document.getElementById('filterDate').value = '';
     loadPastLogs();
   }
 

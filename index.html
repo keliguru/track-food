@@ -21,9 +21,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Short+Stack&display=swap" rel="stylesheet">
 
-  <!-- 載入 Chart.js 圖表庫與 html2canvas 繪圖庫 -->
+  <!-- 載入 Chart.js 圖表庫 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <style>
     :root {
@@ -756,14 +755,13 @@
   <div id="screenshotView" style="display: none;">
     <div style="display: flex; gap: 8px; margin-bottom: 14px;">
       <input type="date" id="shotDate" style="flex: 1; padding: 8px;" onchange="renderScreenshotCard()">
-      <button class="control-btn" onclick="downloadScreenshotImage()" style="background: var(--accent-green); color: #2c2825;" id="downloadShotBtn">💾 下載圖片</button>
-      <button class="control-btn" onclick="toggleScreenshotMode()" style="background: var(--accent-pink); color: #2c2825;" id="exitShotBtn">✖ 離開截圖</button>
+      <button class="control-btn" onclick="toggleScreenshotMode()" style="background: var(--accent-pink); color: #2c2825; flex: 1; justify-content: center;" id="exitShotBtn">✖ 離開截圖</button>
     </div>
 
     <div class="screenshot-card" id="captureCard">
       <div class="shot-header">
         <h3 class="shot-title" id="shotCardTitle">👦 小王子單日飲食卡 🚗</h3>
-        <div class="shot-sub" id="shotDateText">📅 2026-04-18</div>
+        <div class="shot-sub" id="shotDateText">📅 --</div>
         <div class="shot-sub" id="shotStatsText" style="margin-top: 4px;">🍼 總奶量: 0ml | 🥣 正餐: 0次</div>
       </div>
 
@@ -785,7 +783,6 @@
       appTitle: "👦 小王子成長紀錄 🚗",
       shotModeBtn: "📸 截圖",
       exitShotBtn: "✖ 離開截圖",
-      downloadShotBtn: "💾 下載圖片",
       shotCardTitle: "👦 小王子單日飲食卡 🚗",
       shotFooterHint: "✨ 截圖保存 · 陪伴寶寶健康成長 ✨",
       hwTitle: "📏 最新身材紀錄",
@@ -846,7 +843,6 @@
       appTitle: "👦 Growth Tracker 🚗",
       shotModeBtn: "📸 Shot",
       exitShotBtn: "✖ Exit Shot",
-      downloadShotBtn: "💾 Download",
       shotCardTitle: "👦 Daily Food Summary 🚗",
       shotFooterHint: "✨ Captured with love · Growing up happy ✨",
       hwTitle: "📏 Latest Growth Stats",
@@ -919,10 +915,26 @@
     error_msg: i18n[currentLang].error_msg
   };
 
-  document.getElementById('date').valueAsDate = new Date();
-  document.getElementById('shotDate').valueAsDate = new Date();
+  /* 取得本地日期的 YYYY-MM-DD 字串（與 history 日期邏輯完全相同） */
+  function getLocalDateString(daysOffset = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + daysOffset);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /* 初始化所有頁面的日期為「今天」 */
+  function initDefaultDates() {
+    const todayStr = getLocalDateString(0);
+    document.getElementById('date').value = todayStr;
+    document.getElementById('shotDate').value = todayStr;
+    document.getElementById('filterDate').value = todayStr;
+  }
 
   window.onload = function() {
+    initDefaultDates();
     applyTheme(currentTheme);
     applyLanguage(currentLang);
     initHWDropdowns();
@@ -1003,7 +1015,6 @@
     document.getElementById('appTitle').innerText = t.appTitle;
     document.getElementById('shotModeBtn').innerText = t.shotModeBtn;
     document.getElementById('exitShotBtn').innerText = t.exitShotBtn;
-    document.getElementById('downloadShotBtn').innerText = t.downloadShotBtn;
     document.getElementById('shotCardTitle').innerText = t.shotCardTitle;
     document.getElementById('shotFooterHint').innerText = t.shotFooterHint;
 
@@ -1179,23 +1190,6 @@
       screenshotView.style.display = 'none';
       shotModeBtn.style.background = 'var(--card-bg)';
     }
-  }
-
-  /* 下載截圖圖卡為 PNG 圖片 */
-  function downloadScreenshotImage() {
-    const card = document.getElementById('captureCard');
-    const dateStr = document.getElementById('shotDate').value || 'daily-summary';
-
-    html2canvas(card, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: null
-    }).then(canvas => {
-      const link = document.createElement('a');
-      link.download = `luka-food-log-${dateStr}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    });
   }
 
   /* 安全性處理：建立 DOM 節點避免 XSS 漏洞 */
@@ -1416,12 +1410,7 @@
   }
 
   function setFilterDate(daysOffset) {
-    const d = new Date();
-    d.setDate(d.getDate() + daysOffset);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    document.getElementById('filterDate').value = `${year}-${month}-${day}`;
+    document.getElementById('filterDate').value = getLocalDateString(daysOffset);
     loadPastLogs();
   }
 
@@ -1549,7 +1538,6 @@
           item.appendChild(foodDiv);
 
           if (metaText) {
-
             const metaDiv = document.createElement('div');
             metaDiv.className = 'log-meta';
             metaDiv.textContent = metaText;

@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="寶寶成長紀錄">
-  <meta name="theme-color" content="#FF7E5F">
+  <meta name="theme-color" content="#FF8B94">
   <title>Luka's 小王子飲食成長紀錄</title>
   
 	<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/food-icon.png">
@@ -16,56 +16,61 @@
 	<meta property="og:image" content="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/food-icon.png"> 
 	<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/food-icon.png">
 
+  <!-- 載入 Google Fonts 兒童童趣字型 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Short+Stack&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg-gradient: linear-gradient(135deg, #eef2ff 0%, #fef2f2 50%, #f0fdf4 100%);
-      --card-bg: #f8fafc;
-      --card-border: rgba(255, 255, 255, 0.9);
-      --text-main: #2d3748;
-      --text-sub: #64748b;
-      --input-bg: #f1f5f9;
+      /* 手繪紙張與色彩變數 */
+      --bg-gradient: #fcf8f2;
+      --card-bg: #ffffff;
+      --pencil-color: #2c2825;
+      --text-main: #2c2825;
+      --text-sub: #786f68;
+      --input-bg: #fbf9f4;
       --input-focus-bg: #ffffff;
-      --label-color: #334155;
+      --label-color: #4a423a;
       
-      --shadow-out: 10px 10px 20px #cbd5e1, -10px -10px 20px #ffffff;
-      --shadow-out-sm: 5px 5px 12px #d1dbe8, -5px -5px 12px #ffffff;
-      --shadow-in: inset 3px 3px 6px #cbd5e1, inset -3px -3px 6px #ffffff;
-      --tab-bg: #e2e8f0;
+      --accent-yellow: #ffe66d;
+      --accent-pink: #ff8b94;
+      --accent-green: #a8e6cf;
+      --accent-blue: #9bf6ff;
+      --accent-purple: #bdb2ff;
+
+      --shadow-color: #2c2825;
+      --tab-bg: #f0eae1;
       --tab-active-bg: #ffffff;
-      --tab-active-color: #4f46e5;
+      --tab-active-color: #d94e67;
       --log-bg: #ffffff;
-      --log-shadow: 4px 4px 10px #e2e8f0, -4px -4px 10px #ffffff;
     }
 
     body.dark-mode {
-      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #022c22 100%);
-      --card-bg: #1e293b;
-      --card-border: rgba(255, 255, 255, 0.1);
-      --text-main: #f8fafc;
-      --text-sub: #94a3b8;
-      --input-bg: #0f172a;
-      --input-focus-bg: #1e293b;
-      --label-color: #cbd5e1;
+      --bg-gradient: #1c1a19;
+      --card-bg: #2a2624;
+      --pencil-color: #f3ece4;
+      --text-main: #f3ece4;
+      --text-sub: #b3a89e;
+      --input-bg: #1f1c1b;
+      --input-focus-bg: #2a2624;
+      --label-color: #dfd5c9;
 
-      --shadow-out: 10px 10px 25px #090d16, -10px -10px 25px #2d3748;
-      --shadow-out-sm: 5px 5px 12px #090d16, -5px -5px 12px #2d3748;
-      --shadow-in: inset 3px 3px 6px #090d16, inset -3px -3px 6px #2d3748;
-      --tab-bg: #0f172a;
-      --tab-active-bg: #334155;
-      --tab-active-color: #38bdf8;
-      --log-bg: #0f172a;
-      --log-shadow: 4px 4px 10px #090d16, -4px -4px 10px #1e293b;
+      --shadow-color: #000000;
+      --tab-bg: #1f1c1b;
+      --tab-active-bg: #38322e;
+      --tab-active-color: #ff8b94;
+      --log-bg: #25211f;
     }
 
     * { 
       box-sizing: border-box; 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      font-family: 'Short Stack', 'Fredoka', "粉圓", "芫荽", -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
 
     body { 
-      background: var(--bg-gradient);
-      background-attachment: fixed;
+      background-color: var(--bg-gradient);
       padding: 16px 12px; 
       color: var(--text-main); 
       margin: 0; 
@@ -76,102 +81,108 @@
       transition: background 0.3s ease, color 0.3s ease;
     }
 
+    /* 隱藏 SVG 濾鏡容器 */
+    .svg-filters {
+      position: absolute;
+      width: 0;
+      height: 0;
+    }
+
+    /* 手繪質感主卡片 */
     .card { 
       width: 100%;
       max-width: 440px; 
       background: var(--card-bg); 
       padding: 22px 18px; 
-      border-radius: 28px; 
-      box-shadow: var(--shadow-out);
-      border: 2px solid var(--card-border);
-      transition: background 0.3s ease, box-shadow 0.3s ease;
+      border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+      border: 3.5px solid var(--pencil-color);
+      box-shadow: 6px 6px 0px var(--shadow-color);
+      filter: url('#hand-drawn-stroke');
+      transition: background 0.3s ease;
     }
 
     .top-controls {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
 
     .control-btn {
       background: var(--card-bg);
-      border: 1px solid var(--card-border);
+      border: 2.5px solid var(--pencil-color);
       padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 12px;
+      border-radius: 20px 8px 16px 10px;
+      font-size: 13px;
       font-weight: bold;
       color: var(--text-main);
-      box-shadow: var(--shadow-out-sm);
+      box-shadow: 3px 3px 0px var(--shadow-color);
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 4px;
-      transition: all 0.2s ease;
+      transition: all 0.1s ease;
     }
 
     .control-btn:active {
-      box-shadow: var(--shadow-in);
-      transform: translateY(1px);
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px var(--shadow-color);
     }
 
     .header {
       text-align: center;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .header h2 { 
       margin: 0; 
-      font-size: 21px; 
-      background: linear-gradient(45deg, #38bdf8, #818cf8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-family: 'Fredoka', cursive, sans-serif;
+      font-size: 23px; 
+      color: var(--text-main);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       font-weight: 800;
+      letter-spacing: 0.5px;
     }
 
+    /* 身高體重手繪橫幅 */
     .hw-banner {
-      background: linear-gradient(145deg, #eff6ff, #dbeafe);
-      border: 1px solid #bfdbfe;
-      box-shadow: 4px 4px 10px rgba(59, 130, 246, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.5);
-      border-radius: 18px;
+      background: var(--accent-yellow);
+      color: #2c2825;
+      border: 3px solid var(--pencil-color);
+      box-shadow: 4px 4px 0px var(--shadow-color);
+      border-radius: 18px 25px 16px 20px;
       padding: 10px 14px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     body.dark-mode .hw-banner {
-      background: linear-gradient(145deg, #1e3a8a, #1e40af);
-      border-color: #3b82f6;
-      box-shadow: 4px 4px 10px #090d16;
+      background: #8e7d23;
+      color: #f3ece4;
     }
 
     .hw-title {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
-      color: #1e40af;
     }
-    body.dark-mode .hw-title { color: #bfdbfe; }
 
     .hw-date {
-      font-size: 11px;
-      color: #3b82f6;
+      font-size: 12px;
       font-weight: bold;
+      opacity: 0.85;
     }
-    body.dark-mode .hw-date { color: #93c5fd; }
 
     .hw-values {
-      font-size: 14px;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 16px;
       font-weight: 800;
-      color: #1d4ed8;
       margin-top: 2px;
     }
-    body.dark-mode .hw-values { color: #60a5fa; }
 
     .dashboard {
       display: grid;
@@ -181,62 +192,53 @@
     }
 
     .stat-box-milk {
-      background: linear-gradient(145deg, #fffbeb, #fef3c7);
-      border: 1px solid #fde68a;
-      box-shadow: 4px 4px 10px rgba(217, 119, 6, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.5);
-      border-radius: 20px;
+      background: var(--accent-blue);
+      color: #2c2825;
+      border: 3px solid var(--pencil-color);
+      box-shadow: 4px 4px 0px var(--shadow-color);
+      border-radius: 20px 10px 22px 12px;
       padding: 12px 10px;
       text-align: center;
     }
 
     body.dark-mode .stat-box-milk {
-      background: linear-gradient(145deg, #451a03, #78350f);
-      border-color: #92400e;
-      box-shadow: 4px 4px 10px #090d16;
+      background: #236c74;
+      color: #f3ece4;
     }
 
-    .stat-box-milk .stat-label { color: #b45309; }
-    body.dark-mode .stat-box-milk .stat-label { color: #fde68a; }
-    .stat-box-milk .stat-value { color: #d97706; }
-    body.dark-mode .stat-box-milk .stat-value { color: #fef08a; text-shadow: none; }
-
     .stat-box-meal {
-      background: linear-gradient(145deg, #ecfdf5, #d1fae5);
-      border: 1px solid #a7f3d0;
-      box-shadow: 4px 4px 10px rgba(16, 185, 129, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.5);
-      border-radius: 20px;
+      background: var(--accent-green);
+      color: #2c2825;
+      border: 3px solid var(--pencil-color);
+      box-shadow: 4px 4px 0px var(--shadow-color);
+      border-radius: 12px 22px 10px 20px;
       padding: 12px 10px;
       text-align: center;
     }
 
     body.dark-mode .stat-box-meal {
-      background: linear-gradient(145deg, #064e3b, #047857);
-      border-color: #059669;
-      box-shadow: 4px 4px 10px #090d16;
+      background: #27624b;
+      color: #f3ece4;
     }
 
-    .stat-box-meal .stat-label { color: #047857; }
-    body.dark-mode .stat-box-meal .stat-label { color: #a7f3d0; }
-    .stat-box-meal .stat-value { color: #059669; }
-    body.dark-mode .stat-box-meal .stat-value { color: #6ee7b7; text-shadow: none; }
-
     .stat-label {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
     }
 
     .stat-value {
-      font-size: 20px;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 22px;
       font-weight: 800;
       margin-top: 2px;
-      text-shadow: 1px 1px 0px #fff;
     }
 
     .tab-group {
       display: flex;
       background: var(--tab-bg);
-      box-shadow: var(--shadow-in);
-      border-radius: 18px;
+      border: 3px solid var(--pencil-color);
+      box-shadow: 3px 3px 0px var(--shadow-color);
+      border-radius: 22px 12px 20px 14px;
       padding: 4px;
       margin-bottom: 20px;
     }
@@ -249,7 +251,7 @@
       color: var(--text-sub);
       font-weight: 700;
       font-size: 14px;
-      border-radius: 14px;
+      border-radius: 16px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
@@ -257,7 +259,8 @@
     .tab-btn.active {
       background: var(--tab-active-bg);
       color: var(--tab-active-color);
-      box-shadow: 3px 3px 8px rgba(0,0,0,0.15), -2px -2px 6px rgba(255,255,255,0.1);
+      border: 2px solid var(--pencil-color);
+      box-shadow: 2px 2px 0px var(--shadow-color);
     }
 
     .form-group { 
@@ -277,18 +280,17 @@
       display: block; 
       margin-bottom: 6px; 
       font-weight: 700; 
-      font-size: 13px; 
+      font-size: 14px; 
       color: var(--label-color); 
     }
 
     input, select, textarea { 
       width: 100%; 
       padding: 12px 14px; 
-      border: 1px solid var(--card-border); 
-      border-radius: 16px; 
+      border: 2.5px solid var(--pencil-color); 
+      border-radius: 18px 8px 16px 10px; 
       font-size: 15px; 
       background: var(--input-bg);
-      box-shadow: var(--shadow-in);
       color: var(--text-main);
       outline: none; 
       transition: all 0.2s ease;
@@ -296,14 +298,14 @@
     }
 
     input:focus, select:focus, textarea:focus { 
-      border-color: #6366f1; 
       background: var(--input-focus-bg);
+      box-shadow: 3px 3px 0px var(--shadow-color);
     }
 
     .quick-title { 
-      font-size: 12px; 
+      font-size: 13px; 
       color: var(--text-sub); 
-      margin-top: 12px; 
+      margin-top: 14px; 
       margin-bottom: 8px; 
       font-weight: 700;
     }
@@ -315,56 +317,58 @@
     }
 
     .chip { 
-      padding: 8px 14px; 
-      border-radius: 16px; 
+      padding: 7px 13px; 
+      border-radius: 16px 6px 14px 8px; 
       font-size: 13px; 
       font-weight: 800;
       cursor: pointer; 
       user-select: none;
       transition: all 0.15s ease;
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      box-shadow: 3px 3px 8px rgba(0,0,0,0.1), -3px -3px 8px rgba(255,255,255,0.1);
+      border: 2px solid var(--pencil-color);
+      box-shadow: 2px 2px 0px var(--shadow-color);
+      color: #2c2825;
     }
 
     .chip:active { 
-      box-shadow: var(--shadow-in);
-      transform: translateY(2px);
+      transform: translate(2px, 2px);
+      box-shadow: 0px 0px 0px var(--shadow-color);
     }
 
-    .chip-c1 { background: #ffe4e6; color: #e11d48; border-color: #fecdd3; } 
-    .chip-c2 { background: #ffedd5; color: #ea580c; border-color: #fed7aa; } 
-    .chip-c3 { background: #fef9c3; color: #ca8a04; border-color: #fef08a; } 
-    .chip-c4 { background: #dcfce7; color: #16a34a; border-color: #bbf7d0; } 
-    .chip-c5 { background: #e0e7ff; color: #4f46e5; border-color: #c7d2fe; } 
+    .chip-c1 { background: #ffc6ff; } 
+    .chip-c2 { background: #ffd6a5; } 
+    .chip-c3 { background: #fdffb6; } 
+    .chip-c4 { background: #caffbf; } 
+    .chip-c5 { background: #9bf6ff; } 
 
-    body.dark-mode .chip-c1 { background: #881337; color: #fecdd3; }
-    body.dark-mode .chip-c2 { background: #7c2d12; color: #fed7aa; }
-    body.dark-mode .chip-c3 { background: #713f12; color: #fef08a; }
-    body.dark-mode .chip-c4 { background: #14532d; color: #bbf7d0; }
-    body.dark-mode .chip-c5 { background: #312e81; color: #c7d2fe; }
+    body.dark-mode .chip { color: #2c2825; }
 
-    .chip-item { background: #f0f9ff; color: #0284c7; border-color: #bae6fd; } 
-    body.dark-mode .chip-item { background: #0c4a6e; color: #bae6fd; border-color: #0369a1; }
+    .chip-item { background: #e8e8e8; } 
+    body.dark-mode .chip-item { background: #d0c8bf; }
 
+    /* 手繪塗鴉提交按鈕 */
     .submit-btn { 
       width: 100%; 
-      padding: 16px; 
-      background: linear-gradient(145deg, #ff7e5f, #feb47b); 
-      color: white; 
-      border: none; 
-      border-radius: 20px; 
-      font-size: 17px; 
+      padding: 15px; 
+      background: var(--accent-pink); 
+      color: #2c2825; 
+      border: 3px solid var(--pencil-color); 
+      border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; 
+      font-size: 18px; 
+      font-family: 'Fredoka', cursive, sans-serif;
       font-weight: bold; 
       cursor: pointer; 
-      margin-top: 12px; 
-      box-shadow: 0 6px 0 #d9532f, 0 10px 15px rgba(255, 126, 95, 0.4);
+      margin-top: 14px; 
+      box-shadow: 5px 5px 0px var(--shadow-color);
       transition: all 0.1s ease;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    body.dark-mode .submit-btn {
+      color: #2c2825;
     }
 
     .submit-btn:active {
-      transform: translateY(4px);
-      box-shadow: 0 2px 0 #d9532f, 0 4px 8px rgba(255, 126, 95, 0.3);
+      transform: translate(3px, 3px);
+      box-shadow: 2px 2px 0px var(--shadow-color);
     }
 
     .submit-btn:disabled { 
@@ -376,7 +380,7 @@
     #msg { 
       text-align: center; 
       font-weight: bold; 
-      font-size: 13px; 
+      font-size: 14px; 
     }
 
     #msg:empty {
@@ -385,24 +389,23 @@
 
     #msg.success { 
       margin-top: 14px; 
-      color: #15803d; 
-      background-color: #dcfce7; 
+      color: #1e6b36; 
+      background-color: var(--accent-green); 
+      border: 2.5px solid var(--pencil-color);
       padding: 10px;
-      border-radius: 14px;
-      box-shadow: var(--shadow-in);
+      border-radius: 16px;
+      box-shadow: 3px 3px 0px var(--shadow-color);
     }
     
     #msg.error { 
       margin-top: 14px; 
-      color: #b91c1c; 
-      background-color: #fee2e2; 
+      color: #8c1d1d; 
+      background-color: var(--accent-pink); 
+      border: 2.5px solid var(--pencil-color);
       padding: 10px;
-      border-radius: 14px;
-      box-shadow: var(--shadow-in);
+      border-radius: 16px;
+      box-shadow: 3px 3px 0px var(--shadow-color);
     }
-
-    body.dark-mode .success { color: #86efac; background-color: #14532d; }
-    body.dark-mode .error { color: #fca5a5; background-color: #7f1d1d; }
 
     .filter-box {
       display: flex;
@@ -412,18 +415,18 @@
 
     .filter-box input, .filter-box select {
       padding: 8px 10px;
-      font-size: 12px;
+      font-size: 13px;
       border-radius: 12px;
     }
 
     .log-item {
       background: var(--log-bg);
-      box-shadow: var(--log-shadow);
-      border-radius: 18px;
+      border: 2.5px solid var(--pencil-color);
+      box-shadow: 4px 4px 0px var(--shadow-color);
+      border-radius: 20px 8px 18px 10px;
       padding: 12px 14px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       position: relative;
-      border-left: 5px solid #6366f1;
     }
 
     .log-header {
@@ -435,34 +438,30 @@
     }
 
     .log-date {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--text-sub);
       font-weight: 700;
     }
 
     .log-meal {
-      background: #e0e7ff;
-      color: #4338ca;
-      font-size: 11px;
+      background: var(--accent-yellow);
+      color: #2c2825;
+      border: 2px solid var(--pencil-color);
+      font-size: 12px;
       font-weight: bold;
-      padding: 3px 8px;
+      padding: 2px 8px;
       border-radius: 10px;
     }
 
-    body.dark-mode .log-meal {
-      background: #312e81;
-      color: #c7d2fe;
-    }
-
     .log-food {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: bold;
       color: var(--text-main);
       margin-bottom: 4px;
     }
 
     .log-meta {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--text-sub);
     }
 
@@ -476,20 +475,30 @@
       width: auto;
       padding: 2px;
       margin: 0;
-      font-size: 14px;
+      font-size: 16px;
       cursor: pointer;
-      opacity: 0.6;
+      opacity: 0.7;
     }
 
     .no-logs {
       text-align: center;
       color: var(--text-sub);
-      font-size: 13px;
+      font-size: 14px;
       padding: 20px 0;
     }
   </style>
 </head>
 <body>
+
+<!-- SVG 粗糙手繪線條濾鏡 -->
+<svg class="svg-filters">
+  <defs>
+    <filter id="hand-drawn-stroke">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="1" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </defs>
+</svg>
 
 <div class="card">
   <div class="top-controls">
@@ -914,7 +923,7 @@
       sectionList.style.display = 'block';
       tabAddBtn.classList.remove('active');
       tabListBtn.classList.add('active');
-      setFilterDate(0); // 預設切換過去時顯示今天紀錄
+      setFilterDate(0);
     }
   }
 

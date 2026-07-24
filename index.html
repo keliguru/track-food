@@ -535,11 +535,15 @@
       <div class="form-row">
         <div class="form-group">
           <label for="height" id="labelHeight">📏 身高 (cm)</label>
-          <input type="number" step="0.1" min="30" max="150" id="height" placeholder="例：90.5">
+          <select id="height">
+            <option value="">-- 請選擇身高 --</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="weight" id="labelWeight">⚖️ 體重 (kg)</label>
-          <input type="number" step="0.01" min="1" max="40" id="weight" placeholder="例：10.25">
+          <select id="weight">
+            <option value="">-- 請選擇體重 --</option>
+          </select>
         </div>
       </div>
 
@@ -584,6 +588,11 @@
   </div>
 
   <div id="sectionList" style="display:none;">
+    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+      <button class="control-btn" style="flex: 1; justify-content: center;" onclick="setFilterDate(0)" id="filterTodayBtn">📅 今天</button>
+      <button class="control-btn" style="flex: 1; justify-content: center;" onclick="setFilterDate(-1)" id="filterYesterdayBtn">📅 昨天</button>
+      <button class="control-btn" style="flex: 1; justify-content: center;" onclick="clearFilterDate()" id="filterAllDateBtn">🔄 全部日期</button>
+    </div>
     <div class="filter-box">
       <input type="date" id="filterDate" onchange="loadPastLogs()">
       <select id="filterMeal" onchange="loadPastLogs()"></select>
@@ -613,9 +622,9 @@
       quickMilkTitle: "🍼 飲奶快捷鍵：",
       quickFoodTitle: "⚡ 常用食物快捷鍵：",
       labelHeight: "📏 身高 (cm)",
-      placeholderHeight: "例：90.5",
+      defaultHeight: "-- 請選擇身高 --",
       labelWeight: "⚖️ 體重 (kg)",
-      placeholderWeight: "例：10.25",
+      defaultWeight: "-- 請選擇體重 --",
       labelCalories: "📏 份量 / 飽肚情況 (選填)",
       placeholderCalories: "例：食咗 8 成 / 180ml",
       labelNotes: "📝 備註 (選填)",
@@ -631,8 +640,8 @@
       deleteSuccess: "已刪除紀錄！",
       deleteFail: "刪除失敗，請再試一次！",
       emptyNotice: "⚠️ 請至少輸入「食物」或「身高/體重」其中一項！",
-      invalidHeight: "⚠️ 身高數值不合理，請重新輸入！",
-      invalidWeight: "⚠️ 體重數值不合理，請重新輸入！",
+      invalidHeight: "⚠️ 請選擇合理的身高數值！",
+      invalidWeight: "⚠️ 請選擇合理的體重數值！",
       unitTimes: " 次",
       formulaPrefix: "配方奶",
       portionText: "份量",
@@ -641,6 +650,9 @@
       weightText: "體重",
       success_msg: "🎉 紀錄成功儲存囉！",
       error_msg: "❌ 傳送失敗，請再試一次！",
+      filterToday: "📅 今天",
+      filterYesterday: "📅 昨天",
+      filterAllDate: "🔄 全部日期",
       meals: [
         { value: "配方奶", text: "🍼 配方奶" },
         { value: "早餐", text: "🥣 早餐" },
@@ -664,9 +676,9 @@
       quickMilkTitle: "🍼 Milk Quick Buttons:",
       quickFoodTitle: "⚡ Frequent Food Shortcuts:",
       labelHeight: "📏 Height (cm)",
-      placeholderHeight: "e.g. 90.5",
+      defaultHeight: "-- Select Height --",
       labelWeight: "⚖️ Weight (kg)",
-      placeholderWeight: "e.g. 10.25",
+      defaultWeight: "-- Select Weight --",
       labelCalories: "📏 Portion / Appetite (Optional)",
       placeholderCalories: "e.g. Ate 80% / 180ml",
       labelNotes: "📝 Notes (Optional)",
@@ -682,8 +694,8 @@
       deleteSuccess: "Record deleted!",
       deleteFail: "Failed to delete, please try again!",
       emptyNotice: "⚠️ Please enter at least 'Food' or 'Height/Weight'!",
-      invalidHeight: "⚠️ Invalid height value, please check!",
-      invalidWeight: "⚠️ Invalid weight value, please check!",
+      invalidHeight: "⚠️ Please select a valid height!",
+      invalidWeight: "⚠️ Please select a valid weight!",
       unitTimes: " meals",
       formulaPrefix: "Formula Milk",
       portionText: "Portion",
@@ -692,6 +704,9 @@
       weightText: "Weight",
       success_msg: "🎉 Saved successfully!",
       error_msg: "❌ Failed to send, please try again!",
+      filterToday: "📅 Today",
+      filterYesterday: "📅 Yesterday",
+      filterAllDate: "🔄 All Dates",
       meals: [
         { value: "配方奶", text: "🍼 Formula Milk" },
         { value: "早餐", text: "🥣 Breakfast" },
@@ -716,12 +731,42 @@
   window.onload = function() {
     applyTheme(currentTheme);
     applyLanguage(currentLang);
+    initHWDropdowns();
     autoSelectMealByTime();
     loadConfigs();
     loadRecentFoods();
     loadStats();
     loadLatestHW();
   };
+
+  function initHWDropdowns() {
+    const heightSelect = document.getElementById('height');
+    const weightSelect = document.getElementById('weight');
+    const t = i18n[currentLang];
+
+    const currentHeight = heightSelect.value;
+    const currentWeight = weightSelect.value;
+
+    heightSelect.innerHTML = `<option value="">${t.defaultHeight}</option>`;
+    for (let h = 60.0; h <= 130.0; h += 0.5) {
+      const val = h.toFixed(1);
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.innerText = val + " cm";
+      heightSelect.appendChild(opt);
+    }
+    if (currentHeight) heightSelect.value = currentHeight;
+
+    weightSelect.innerHTML = `<option value="">${t.defaultWeight}</option>`;
+    for (let w = 5.0; w <= 30.0; w += 0.1) {
+      const val = w.toFixed(1);
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.innerText = val + " kg";
+      weightSelect.appendChild(opt);
+    }
+    if (currentWeight) weightSelect.value = currentWeight;
+  }
 
   function toggleTheme() {
     currentTheme = currentTheme === 'light' ? 'dark' : 'light';
@@ -744,6 +789,7 @@
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
     localStorage.setItem('app_lang', currentLang);
     applyLanguage(currentLang);
+    initHWDropdowns();
     loadPastLogs();
   }
 
@@ -764,9 +810,7 @@
     document.getElementById('food').placeholder = t.placeholderFood;
 
     document.getElementById('labelHeight').innerText = t.labelHeight;
-    document.getElementById('height').placeholder = t.placeholderHeight;
     document.getElementById('labelWeight').innerText = t.labelWeight;
-    document.getElementById('weight').placeholder = t.placeholderWeight;
 
     document.getElementById('quickMilkTitle').innerText = t.quickMilkTitle;
     document.getElementById('quickFoodTitle').innerText = t.quickFoodTitle;
@@ -778,6 +822,10 @@
     document.getElementById('notes').placeholder = t.placeholderNotes;
 
     document.getElementById('submitBtn').innerText = t.submitBtn;
+
+    document.getElementById('filterTodayBtn').innerText = t.filterToday;
+    document.getElementById('filterYesterdayBtn').innerText = t.filterYesterday;
+    document.getElementById('filterAllDateBtn').innerText = t.filterAllDate;
 
     updateMealOptions();
   }
@@ -809,7 +857,6 @@
     if (selectedFilterVal) filterMealSelect.value = selectedFilterVal;
   }
 
-  // 優化：加入 localStorage 快取設定檔，減少不必要的重複請求
   function loadConfigs() {
     const cachedConfig = localStorage.getItem('app_config');
     if (cachedConfig) {
@@ -871,8 +918,23 @@
       sectionList.style.display = 'block';
       tabAddBtn.classList.remove('active');
       tabListBtn.classList.add('active');
-      loadPastLogs();
+      setFilterDate(0); // 預設切換過去時顯示今天紀錄
     }
+  }
+
+  function setFilterDate(daysOffset) {
+    const d = new Date();
+    d.setDate(d.getDate() + daysOffset);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    document.getElementById('filterDate').value = `${year}-${month}-${day}`;
+    loadPastLogs();
+  }
+
+  function clearFilterDate() {
+    document.getElementById('filterDate').value = '';
+    loadPastLogs();
   }
 
   function setQuickFood(text) {
@@ -934,7 +996,6 @@
       .catch(err => console.log('載入常用紀錄失敗', err));
   }
 
-  // 優化：使用 DOM 節點建立（textContent）取代 innerHTML，防止 XSS 攻擊
   function loadPastLogs() {
     const fDate = document.getElementById('filterDate').value;
     const fMeal = document.getElementById('filterMeal').value;
@@ -970,7 +1031,6 @@
           const matchedMeal = t.meals.find(m => m.value === log.meal);
           const displayMeal = matchedMeal ? matchedMeal.text : log.meal;
 
-          // 建立刪除按鈕
           const delBtn = document.createElement('button');
           delBtn.className = 'btn-delete';
           delBtn.title = 'Delete';
@@ -978,7 +1038,6 @@
           delBtn.onclick = () => deleteLog(log.rowIndex);
           item.appendChild(delBtn);
 
-          // 建立 Header
           const headerDiv = document.createElement('div');
           headerDiv.className = 'log-header';
           
@@ -994,13 +1053,11 @@
           headerDiv.appendChild(mealSpan);
           item.appendChild(headerDiv);
 
-          // 建立食物內容
           const foodDiv = document.createElement('div');
           foodDiv.className = 'log-food';
           foodDiv.textContent = `🥣 ${log.food}`;
           item.appendChild(foodDiv);
 
-          // 建立 Meta 內容
           if (metaText) {
             const metaDiv = document.createElement('div');
             metaDiv.className = 'log-meta';
@@ -1043,33 +1100,13 @@
     const t = i18n[currentLang];
 
     const foodVal = document.getElementById('food').value.trim();
-    const heightVal = document.getElementById('height').value.trim();
-    const weightVal = document.getElementById('weight').value.trim();
+    const heightVal = document.getElementById('height').value;
+    const weightVal = document.getElementById('weight').value;
 
-    // 1. 空值防呆
     if (!foodVal && !heightVal && !weightVal) {
       msg.className = 'error';
       msg.innerText = t.emptyNotice;
       return;
-    }
-
-    // 2. 身高體重數值極值驗證防呆
-    if (heightVal !== "") {
-      const h = parseFloat(heightVal);
-      if (isNaN(h) || h < 30 || h > 150) {
-        msg.className = 'error';
-        msg.innerText = t.invalidHeight;
-        return;
-      }
-    }
-
-    if (weightVal !== "") {
-      const w = parseFloat(weightVal);
-      if (isNaN(w) || w < 1 || w > 40) {
-        msg.className = 'error';
-        msg.innerText = t.invalidWeight;
-        return;
-      }
     }
 
     btn.disabled = true;

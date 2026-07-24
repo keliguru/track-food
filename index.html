@@ -379,7 +379,6 @@
       font-size: 13px; 
     }
 
-    /* 當 #msg 沒有內容時，自動完全隱藏，不佔空間與顯示方格 */
     #msg:empty {
       display: none;
     }
@@ -536,11 +535,11 @@
       <div class="form-row">
         <div class="form-group">
           <label for="height" id="labelHeight">📏 身高 (cm)</label>
-          <input type="number" step="0.1" id="height" placeholder="例：68.5">
+          <input type="number" step="0.1" min="30" max="150" id="height" placeholder="例：68.5">
         </div>
         <div class="form-group">
           <label for="weight" id="labelWeight">⚖️ 體重 (kg)</label>
-          <input type="number" step="0.01" id="weight" placeholder="例：7.25">
+          <input type="number" step="0.01" min="1" max="40" id="weight" placeholder="例：7.25">
         </div>
       </div>
 
@@ -632,6 +631,8 @@
       deleteSuccess: "已刪除紀錄！",
       deleteFail: "刪除失敗，請再試一次！",
       emptyNotice: "⚠️ 請至少輸入「食物」或「身高/體重」其中一項！",
+      invalidHeight: "⚠️ 身高數值不合理，請重新輸入！",
+      invalidWeight: "⚠️ 體重數值不合理，請重新輸入！",
       unitTimes: " 次",
       formulaPrefix: "配方奶",
       portionText: "份量",
@@ -681,6 +682,8 @@
       deleteSuccess: "Record deleted!",
       deleteFail: "Failed to delete, please try again!",
       emptyNotice: "⚠️ Please enter at least 'Food' or 'Height/Weight'!",
+      invalidHeight: "⚠️ Invalid height value, please check!",
+      invalidWeight: "⚠️ Invalid weight value, please check!",
       unitTimes: " meals",
       formulaPrefix: "Formula Milk",
       portionText: "Portion",
@@ -806,17 +809,33 @@
     if (selectedFilterVal) filterMealSelect.value = selectedFilterVal;
   }
 
+  // 優化：加入 localStorage 快取設定檔，減少不必要的重複請求
   function loadConfigs() {
+    const cachedConfig = localStorage.getItem('app_config');
+    if (cachedConfig) {
+      try {
+        const data = JSON.parse(cachedConfig);
+        applyConfigData(data);
+      } catch (e) {
+        localStorage.removeItem('app_config');
+      }
+    }
+
     fetch(GAS_URL + "?action=getConfigs")
       .then(res => res.json())
       .then(data => {
         if (data) {
-          if (data.title_text && currentLang === 'zh') document.getElementById('appTitle').innerText = data.title_text;
-          if (data.success_msg) customMsgs.success_msg = data.success_msg;
-          if (data.error_msg) customMsgs.error_msg = data.error_msg;
+          localStorage.setItem('app_config', JSON.stringify(data));
+          applyConfigData(data);
         }
       })
       .catch(err => console.log('讀取設定檔失敗', err));
+  }
+
+  function applyConfigData(data) {
+    if (data.title_text && currentLang === 'zh') document.getElementById('appTitle').innerText = data.title_text;
+    if (data.success_msg) customMsgs.success_msg = data.success_msg;
+    if (data.error_msg) customMsgs.error_msg = data.error_msg;
   }
 
   function autoSelectMealByTime() {
@@ -915,6 +934,7 @@
       .catch(err => console.log('載入常用紀錄失敗', err));
   }
 
+  // 優化：使用 DOM 節點建立（textContent）取代 innerHTML，防止 XSS 攻擊
   function loadPastLogs() {
     const fDate = document.getElementById('filterDate').value;
     const fMeal = document.getElementById('filterMeal').value;
@@ -947,19 +967,47 @@
           if (log.notes) metaParts.push(`${t.notesText}：${log.notes}`);
 
           const metaText = metaParts.join(' | ');
-
           const matchedMeal = t.meals.find(m => m.value === log.meal);
           const displayMeal = matchedMeal ? matchedMeal.text : log.meal;
 
-          item.innerHTML = `
-            <button class="btn-delete" onclick="deleteLog(${log.rowIndex})" title="Delete">🗑️</button>
-            <div class="log-header">
-              <span class="log-date">📅 ${log.date}</span>
-              <span class="log-meal">${displayMeal}</span>
-            </div>
-            <div class="log-food">🥣 ${log.food}</div>
-            ${metaText ? `<div class="log-meta">${metaText}</div>` : ''}
-          `;
+          // 建立刪除按鈕
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn-delete';
+          delBtn.title = 'Delete';
+          delBtn.textContent = '🗑️';
+          delBtn.onclick = () => deleteLog(log.rowIndex);
+          item.appendChild(delBtn);
+
+          // 建立 Header
+          const headerDiv = document.createElement('div');
+          headerDiv.className = 'log-header';
+          
+          const dateSpan = document.createElement('span');
+          dateSpan.className = 'log-date';
+          dateSpan.textContent = `📅 ${log.date}`;
+          
+          const mealSpan = document.createElement('span');
+          mealSpan.className = 'log-meal';
+          mealSpan.textContent = displayMeal;
+          
+          headerDiv.appendChild(dateSpan);
+          headerDiv.appendChild(mealSpan);
+          item.appendChild(headerDiv);
+
+          // 建立食物內容
+          const foodDiv = document.createElement('div');
+          foodDiv.className = 'log-food';
+          foodDiv.textContent = `🥣 ${log.food}`;
+          item.appendChild(foodDiv);
+
+          // 建立 Meta 內容
+          if (metaText) {
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'log-meta';
+            metaDiv.textContent = metaText;
+            item.appendChild(metaDiv);
+          }
+
           container.appendChild(item);
         });
       })
@@ -998,10 +1046,30 @@
     const heightVal = document.getElementById('height').value.trim();
     const weightVal = document.getElementById('weight').value.trim();
 
+    // 1. 空值防呆
     if (!foodVal && !heightVal && !weightVal) {
       msg.className = 'error';
       msg.innerText = t.emptyNotice;
       return;
+    }
+
+    // 2. 身高體重數值極值驗證防呆
+    if (heightVal !== "") {
+      const h = parseFloat(heightVal);
+      if (isNaN(h) || h < 30 || h > 150) {
+        msg.className = 'error';
+        msg.innerText = t.invalidHeight;
+        return;
+      }
+    }
+
+    if (weightVal !== "") {
+      const w = parseFloat(weightVal);
+      if (isNaN(w) || w < 1 || w > 40) {
+        msg.className = 'error';
+        msg.innerText = t.invalidWeight;
+        return;
+      }
     }
 
     btn.disabled = true;

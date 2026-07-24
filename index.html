@@ -5,32 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="寶寶飲食紀錄">
+  <meta name="apple-mobile-web-app-title" content="寶寶成長紀錄">
   <meta name="theme-color" content="#FF7E5F">
-  <title>Luka's 小王子飲食紀錄 </title>
+  <title>Luka's 小王子飲食成長紀錄</title>
   
 	<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/food-icon.png">
 	<meta property="og:type" content="website">
-	<meta property="og:title" content="Luka's 小王子飲食紀錄 ">
-	<meta property="og:description" content="Luka's 小王子飲食紀錄 ！">
+	<meta property="og:title" content="Luka's 小王子飲食成長紀錄">
+	<meta property="og:description" content="Luka's 小王子飲食成長紀錄！">
 	<meta property="og:image" content="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/food-icon.png"> 
 	<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/food-icon.png">
 
-	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-status-bar-style" content="default">
-	<meta name="apple-mobile-web-app-title" content="Luka's 小王子飲食紀錄 ">
-  
   <style>
     :root {
-      --bg-color: #f0f4f9;
+      --bg-gradient: linear-gradient(135deg, #eef2ff 0%, #fef2f2 50%, #f0fdf4 100%);
       --card-bg: #f8fafc;
+      --card-border: rgba(255, 255, 255, 0.9);
       --text-main: #2d3748;
       --text-sub: #64748b;
+      --input-bg: #f1f5f9;
+      --input-focus-bg: #ffffff;
+      --label-color: #334155;
       
-      /* 3D 浮雕陰影 */
+      /* 3D 浮雕陰影 (Light Mode) */
       --shadow-out: 10px 10px 20px #cbd5e1, -10px -10px 20px #ffffff;
       --shadow-out-sm: 5px 5px 12px #d1dbe8, -5px -5px 12px #ffffff;
       --shadow-in: inset 3px 3px 6px #cbd5e1, inset -3px -3px 6px #ffffff;
+      --tab-bg: #e2e8f0;
+      --tab-active-bg: #ffffff;
+      --tab-active-color: #4f46e5;
+      --log-bg: #ffffff;
+      --log-shadow: 4px 4px 10px #e2e8f0, -4px -4px 10px #ffffff;
+    }
+
+    /* 🌙 深色模式 (Dark Mode) */
+    body.dark-mode {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #022c22 100%);
+      --card-bg: #1e293b;
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --input-bg: #0f172a;
+      --input-focus-bg: #1e293b;
+      --label-color: #cbd5e1;
+
+      /* 3D 浮雕陰影 (Dark Mode) */
+      --shadow-out: 10px 10px 25px #090d16, -10px -10px 25px #2d3748;
+      --shadow-out-sm: 5px 5px 12px #090d16, -5px -5px 12px #2d3748;
+      --shadow-in: inset 3px 3px 6px #090d16, inset -3px -3px 6px #2d3748;
+      --tab-bg: #0f172a;
+      --tab-active-bg: #334155;
+      --tab-active-color: #38bdf8;
+      --log-bg: #0f172a;
+      --log-shadow: 4px 4px 10px #090d16, -4px -4px 10px #1e293b;
     }
 
     * { 
@@ -40,7 +67,7 @@
     }
 
     body { 
-      background: linear-gradient(135deg, #eef2ff 0%, #fef2f2 50%, #f0fdf4 100%);
+      background: var(--bg-gradient);
       background-attachment: fixed;
       padding: 16px 12px; 
       color: var(--text-main); 
@@ -49,28 +76,58 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
+      transition: background 0.3s ease, color 0.3s ease;
     }
 
     /* 3D 主卡片 */
     .card { 
       width: 100%;
       max-width: 440px; 
-      background: #f8fafc; 
+      background: var(--card-bg); 
       padding: 22px 18px; 
       border-radius: 28px; 
       box-shadow: var(--shadow-out);
-      border: 2px solid rgba(255, 255, 255, 0.9);
+      border: 2px solid var(--card-border);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .top-controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .control-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--text-main);
+      box-shadow: var(--shadow-out-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .control-btn:active {
+      box-shadow: var(--shadow-in);
+      transform: translateY(1px);
     }
 
     .header {
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .header h2 { 
       margin: 0; 
       font-size: 21px; 
-      background: linear-gradient(45deg, #4f46e5, #06b6d4);
+      background: linear-gradient(45deg, #38bdf8, #818cf8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       display: flex;
@@ -80,7 +137,48 @@
       font-weight: 800;
     }
 
-    /* 📊 繽紛 3D 頂部摘要 */
+    /* 📊 最新身材資訊卡片 */
+    .hw-banner {
+      background: linear-gradient(145deg, #eff6ff, #dbeafe);
+      border: 1px solid #bfdbfe;
+      box-shadow: 4px 4px 10px rgba(59, 130, 246, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.5);
+      border-radius: 18px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    body.dark-mode .hw-banner {
+      background: linear-gradient(145deg, #1e3a8a, #1e40af);
+      border-color: #3b82f6;
+      box-shadow: 4px 4px 10px #090d16;
+    }
+
+    .hw-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #1e40af;
+    }
+    body.dark-mode .hw-title { color: #bfdbfe; }
+
+    .hw-date {
+      font-size: 11px;
+      color: #3b82f6;
+      font-weight: bold;
+    }
+    body.dark-mode .hw-date { color: #93c5fd; }
+
+    .hw-values {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1d4ed8;
+      margin-top: 2px;
+    }
+    body.dark-mode .hw-values { color: #60a5fa; }
+
+    /* 📊 頂部飲食摘要 */
     .dashboard {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -88,31 +186,45 @@
       margin-bottom: 18px;
     }
 
-    /* 奶油黃 奶量卡片 */
     .stat-box-milk {
       background: linear-gradient(145deg, #fffbeb, #fef3c7);
       border: 1px solid #fde68a;
-      box-shadow: 4px 4px 10px rgba(217, 119, 6, 0.15), -4px -4px 10px #ffffff;
+      box-shadow: 4px 4px 10px rgba(217, 119, 6, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.5);
       border-radius: 20px;
       padding: 12px 10px;
       text-align: center;
+    }
+
+    body.dark-mode .stat-box-milk {
+      background: linear-gradient(145deg, #451a03, #78350f);
+      border-color: #92400e;
+      box-shadow: 4px 4px 10px #090d16;
     }
 
     .stat-box-milk .stat-label { color: #b45309; }
+    body.dark-mode .stat-box-milk .stat-label { color: #fde68a; }
     .stat-box-milk .stat-value { color: #d97706; }
+    body.dark-mode .stat-box-milk .stat-value { color: #fef08a; text-shadow: none; }
 
-    /* 薄荷綠 用餐卡片 */
     .stat-box-meal {
       background: linear-gradient(145deg, #ecfdf5, #d1fae5);
       border: 1px solid #a7f3d0;
-      box-shadow: 4px 4px 10px rgba(16, 185, 129, 0.15), -4px -4px 10px #ffffff;
+      box-shadow: 4px 4px 10px rgba(16, 185, 129, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.5);
       border-radius: 20px;
       padding: 12px 10px;
       text-align: center;
     }
 
+    body.dark-mode .stat-box-meal {
+      background: linear-gradient(145deg, #064e3b, #047857);
+      border-color: #059669;
+      box-shadow: 4px 4px 10px #090d16;
+    }
+
     .stat-box-meal .stat-label { color: #047857; }
+    body.dark-mode .stat-box-meal .stat-label { color: #a7f3d0; }
     .stat-box-meal .stat-value { color: #059669; }
+    body.dark-mode .stat-box-meal .stat-value { color: #6ee7b7; text-shadow: none; }
 
     .stat-label {
       font-size: 12px;
@@ -126,10 +238,10 @@
       text-shadow: 1px 1px 0px #fff;
     }
 
-    /* 📑 3D 切換 Tab */
+    /* 📑 切換 Tab */
     .tab-group {
       display: flex;
-      background: #e2e8f0;
+      background: var(--tab-bg);
       box-shadow: var(--shadow-in);
       border-radius: 18px;
       padding: 4px;
@@ -150,13 +262,22 @@
     }
 
     .tab-btn.active {
-      background: #ffffff;
-      color: #4f46e5;
-      box-shadow: 3px 3px 8px rgba(0,0,0,0.1), -2px -2px 6px #ffffff;
+      background: var(--tab-active-bg);
+      color: var(--tab-active-color);
+      box-shadow: 3px 3px 8px rgba(0,0,0,0.15), -2px -2px 6px rgba(255,255,255,0.1);
     }
 
     .form-group { 
       margin-bottom: 16px; 
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
     }
 
     label { 
@@ -164,17 +285,16 @@
       margin-bottom: 6px; 
       font-weight: 700; 
       font-size: 13px; 
-      color: #334155; 
+      color: var(--label-color); 
     }
 
-    /* 凹陷感輸入框 */
     input, select, textarea { 
       width: 100%; 
       padding: 12px 14px; 
-      border: 1px solid rgba(255,255,255,0.8); 
+      border: 1px solid var(--card-border); 
       border-radius: 16px; 
       font-size: 15px; 
-      background: #f1f5f9;
+      background: var(--input-bg);
       box-shadow: var(--shadow-in);
       color: var(--text-main);
       outline: none; 
@@ -184,10 +304,9 @@
 
     input:focus, select:focus, textarea:focus { 
       border-color: #6366f1; 
-      background: #ffffff;
+      background: var(--input-focus-bg);
     }
 
-    /* 🍼 繽紛 3D 按鈕列 */
     .quick-title { 
       font-size: 12px; 
       color: var(--text-sub); 
@@ -210,8 +329,8 @@
       cursor: pointer; 
       user-select: none;
       transition: all 0.15s ease;
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 3px 3px 8px rgba(0,0,0,0.08), -3px -3px 8px #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 3px 3px 8px rgba(0,0,0,0.1), -3px -3px 8px rgba(255,255,255,0.1);
     }
 
     .chip:active { 
@@ -219,16 +338,21 @@
       transform: translateY(2px);
     }
 
-    /* 彩色快捷按鈕配色 */
-    .chip-c1 { background: #ffe4e6; color: #e11d48; border-color: #fecdd3; } /* 120ml 粉紅 */
-    .chip-c2 { background: #ffedd5; color: #ea580c; border-color: #fed7aa; } /* 150ml 活力橘 */
-    .chip-c3 { background: #fef9c3; color: #ca8a04; border-color: #fef08a; } /* 180ml 陽光黃 */
-    .chip-c4 { background: #dcfce7; color: #16a34a; border-color: #bbf7d0; } /* 210ml 清新綠 */
-    .chip-c5 { background: #e0e7ff; color: #4f46e5; border-color: #c7d2fe; } /* 240ml 羅蘭紫 */
+    .chip-c1 { background: #ffe4e6; color: #e11d48; border-color: #fecdd3; } 
+    .chip-c2 { background: #ffedd5; color: #ea580c; border-color: #fed7aa; } 
+    .chip-c3 { background: #fef9c3; color: #ca8a04; border-color: #fef08a; } 
+    .chip-c4 { background: #dcfce7; color: #16a34a; border-color: #bbf7d0; } 
+    .chip-c5 { background: #e0e7ff; color: #4f46e5; border-color: #c7d2fe; } 
 
-    .chip-item { background: #f0f9ff; color: #0284c7; border-color: #bae6fd; } /* 常用食物 */
+    body.dark-mode .chip-c1 { background: #881337; color: #fecdd3; }
+    body.dark-mode .chip-c2 { background: #7c2d12; color: #fed7aa; }
+    body.dark-mode .chip-c3 { background: #713f12; color: #fef08a; }
+    body.dark-mode .chip-c4 { background: #14532d; color: #bbf7d0; }
+    body.dark-mode .chip-c5 { background: #312e81; color: #c7d2fe; }
 
-    /* 🚀 活力珊瑚橘 3D 實體按鈕 */
+    .chip-item { background: #f0f9ff; color: #0284c7; border-color: #bae6fd; } 
+    body.dark-mode .chip-item { background: #0c4a6e; color: #bae6fd; border-color: #0369a1; }
+
     .submit-btn { 
       width: 100%; 
       padding: 16px; 
@@ -268,7 +392,9 @@
     .success { color: #15803d; background-color: #dcfce7; }
     .error { color: #b91c1c; background-color: #fee2e2; }
 
-    /* 📋 歷史清單 */
+    body.dark-mode .success { color: #86efac; background-color: #14532d; }
+    body.dark-mode .error { color: #fca5a5; background-color: #7f1d1d; }
+
     .filter-box {
       display: flex;
       gap: 8px;
@@ -282,8 +408,8 @@
     }
 
     .log-item {
-      background: #ffffff;
-      box-shadow: 4px 4px 10px #e2e8f0, -4px -4px 10px #ffffff;
+      background: var(--log-bg);
+      box-shadow: var(--log-shadow);
       border-radius: 18px;
       padding: 12px 14px;
       margin-bottom: 12px;
@@ -314,16 +440,21 @@
       border-radius: 10px;
     }
 
+    body.dark-mode .log-meal {
+      background: #312e81;
+      color: #c7d2fe;
+    }
+
     .log-food {
       font-size: 14px;
       font-weight: bold;
-      color: #1e293b;
+      color: var(--text-main);
       margin-bottom: 4px;
     }
 
     .log-meta {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-sub);
     }
 
     .btn-delete {
@@ -352,18 +483,33 @@
 <body>
 
 <div class="card">
-  <div class="header">
-    <h2 id="appTitle">👦 小王子飲食紀錄 🚗</h2>
+  <!-- 🌐 / 🌙 功能切換按鈕列 -->
+  <div class="top-controls">
+    <button class="control-btn" id="langBtn" onclick="toggleLanguage()">🌐 EN</button>
+    <button class="control-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
   </div>
 
-  <!-- 📊 繽紛 3D 頂部摘要 -->
+  <div class="header">
+    <h2 id="appTitle">👦 小王子成長紀錄 🚗</h2>
+  </div>
+
+  <!-- 📏 ⚖️ 최신 身高體重頂部欄 -->
+  <div class="hw-banner">
+    <div>
+      <div class="hw-title" id="hwTitle">📏 最新身材紀錄</div>
+      <div class="hw-values" id="hwValues">-- cm | -- kg</div>
+    </div>
+    <div class="hw-date" id="hwDate">📅 --</div>
+  </div>
+
+  <!-- 📊 飲食摘要 -->
   <div class="dashboard">
     <div class="stat-box-milk">
-      <div class="stat-label">🍼 今日總奶量</div>
+      <div class="stat-label" id="statMilkLabel">🍼 今日總奶量</div>
       <div class="stat-value" id="statMilk">0 ml</div>
     </div>
     <div class="stat-box-meal">
-      <div class="stat-label">🥣 今日用餐數</div>
+      <div class="stat-label" id="statCountLabel">🥣 今日用餐數</div>
       <div class="stat-value" id="statCount">0 次</div>
     </div>
   </div>
@@ -378,51 +524,56 @@
   <div id="sectionAdd">
     <form id="foodForm">
       <div class="form-group">
-        <label for="date">📅 日期</label>
+        <label for="date" id="labelDate">📅 日期</label>
         <input type="date" id="date" required>
       </div>
 
-      <div class="form-group">
-        <label for="meal">⏰ 餐別 (已按時間預設)</label>
-        <select id="meal" required>
-          <option value="配方奶">🍼 配方奶</option>
-          <option value="早餐">🥣 早餐</option>
-          <option value="午餐">🍜 午餐 (副食品/正餐)</option>
-          <option value="下午茶">🍎 下午茶 / 水果小食</option>
-          <option value="晚餐">🍲 晚餐 (副食品/正餐)</option>
-          <option value="睡前奶/宵夜">🌙 睡前奶 / 宵夜</option>
-        </select>
+      <!-- 📏 ⚖️ 身高與體重 (小數點後2位) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="height" id="labelHeight">📏 身高 (cm)</label>
+          <input type="number" step="0.1" id="height" placeholder="例：68.5">
+        </div>
+        <div class="form-group">
+          <label for="weight" id="labelWeight">⚖️ 體重 (kg)</label>
+          <input type="number" step="0.01" id="weight" placeholder="例：7.25">
+        </div>
       </div>
 
       <div class="form-group">
-        <label for="food">🥦 食物 / 奶量內容</label>
-        <input type="text" id="food" list="foodList" placeholder="例：牛肉番茄粥 1碗 / 210ml" autocomplete="off" required>
+        <label for="meal" id="labelMeal">⏰ 餐別 (有飲食時選擇)</label>
+        <select id="meal"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="food" id="labelFood">🥦 食物 / 奶量內容 (選填)</label>
+        <input type="text" id="food" list="foodList" placeholder="例：牛肉番茄粥 1碗 / 210ml" autocomplete="off">
         <datalist id="foodList"></datalist>
 
-        <!-- 🍼 繽紛飲奶快捷鍵 -->
-        <div class="quick-title">🍼 飲奶快捷鍵：</div>
+        <!-- 🍼 飲奶快捷鍵 -->
+        <div class="quick-title" id="quickMilkTitle">🍼 飲奶快捷鍵：</div>
         <div class="chips-container">
-          <div class="chip chip-c1" onclick="setQuickFood('配方奶 120ml')">120ml</div>
-          <div class="chip chip-c2" onclick="setQuickFood('配方奶 150ml')">150ml</div>
-          <div class="chip chip-c3" onclick="setQuickFood('配方奶 180ml')">180ml</div>
-          <div class="chip chip-c4" onclick="setQuickFood('配方奶 210ml')">210ml</div>
-          <div class="chip chip-c5" onclick="setQuickFood('配方奶 240ml')">240ml</div>
+          <div class="chip chip-c1" onclick="setQuickMilk('120ml')">120ml</div>
+          <div class="chip chip-c2" onclick="setQuickMilk('150ml')">150ml</div>
+          <div class="chip chip-c3" onclick="setQuickMilk('180ml')">180ml</div>
+          <div class="chip chip-c4" onclick="setQuickMilk('210ml')">210ml</div>
+          <div class="chip chip-c5" onclick="setQuickMilk('240ml')">240ml</div>
         </div>
 
         <!-- 🥣 常用食物 -->
         <div id="quickSection" style="display:none;">
-          <div class="quick-title">⚡ 常用食物快捷鍵：</div>
+          <div class="quick-title" id="quickFoodTitle">⚡ 常用食物快捷鍵：</div>
           <div id="quickChips" class="chips-container"></div>
         </div>
       </div>
 
       <div class="form-group">
-        <label for="calories">📏 份量 / 飽肚情況 (選填)</label>
+        <label for="calories" id="labelCalories">📏 份量 / 飽肚情況 (選填)</label>
         <input type="text" id="calories" placeholder="例：食咗 8 成 / 180ml">
       </div>
 
       <div class="form-group">
-        <label for="notes">📝 備註 (選填)</label>
+        <label for="notes" id="labelNotes">📝 備註 (選填)</label>
         <textarea id="notes" rows="2" placeholder="例：精神好、便便正常..."></textarea>
       </div>
 
@@ -435,19 +586,11 @@
   <div id="sectionList" style="display:none;">
     <div class="filter-box">
       <input type="date" id="filterDate" onchange="loadPastLogs()">
-      <select id="filterMeal" onchange="loadPastLogs()">
-        <option value="全部">所有餐別</option>
-        <option value="配方奶">配方奶</option>
-        <option value="早餐">早餐</option>
-        <option value="午餐">午餐</option>
-        <option value="下午茶">下午茶</option>
-        <option value="晚餐">晚餐</option>
-        <option value="睡前奶/宵夜">睡前奶</option>
-      </select>
+      <select id="filterMeal" onchange="loadPastLogs()"></select>
     </div>
 
     <div id="logsContainer">
-      <div class="no-logs">載入過往紀錄中...</div>
+      <div class="no-logs" id="loadingLogsMsg">載入過往紀錄中...</div>
     </div>
   </div>
 </div>
@@ -455,28 +598,220 @@
 <script>
   const GAS_URL = "https://script.google.com/macros/s/AKfycbys27VeeErb2tlxvyvX2Sf8SpweE4cxWHKZeSPmcPYieP1rYHS0-G5fslfPOBSc7ABy8w/exec";
 
-  // 預設訊息文字 (若未能讀取到 Config 則使用此備用文字)
+  // 🌐 多語言字典
+  const i18n = {
+    zh: {
+      appTitle: "👦 小王子成長紀錄 🚗",
+      hwTitle: "📏 最新身材紀錄",
+      statMilkLabel: "🍼 今日總奶量",
+      statCountLabel: "🥣 今日用餐數",
+      tabAddBtn: "📝 新增紀錄",
+      tabListBtn: "📋 過往紀錄",
+      labelDate: "📅 日期",
+      labelMeal: "⏰ 餐別 (有飲食時選擇)",
+      labelFood: "🥦 食物 / 奶量內容 (選填)",
+      placeholderFood: "例：牛肉番茄粥 1碗 / 210ml",
+      quickMilkTitle: "🍼 飲奶快捷鍵：",
+      quickFoodTitle: "⚡ 常用食物快捷鍵：",
+      labelHeight: "📏 身高 (cm)",
+      placeholderHeight: "例：68.5",
+      labelWeight: "⚖️ 體重 (kg)",
+      placeholderWeight: "例：7.25",
+      labelCalories: "📏 份量 / 飽肚情況 (選填)",
+      placeholderCalories: "例：食咗 8 成 / 180ml",
+      labelNotes: "📝 備註 (選填)",
+      placeholderNotes: "例：精神好、便便正常...",
+      submitBtn: "🚀 儲存紀錄 🚀",
+      savingBtn: "儲存中...",
+      allMeals: "所有餐別",
+      loadingLogs: "載入過往紀錄中...",
+      searching: "搜尋中...",
+      noLogsFound: "沒有符合條件的飲食紀錄",
+      failLogs: "載入紀錄失敗",
+      confirmDelete: "確定要刪除這筆飲食紀錄嗎？",
+      deleteSuccess: "已刪除紀錄！",
+      deleteFail: "刪除失敗，請再試一次！",
+      emptyNotice: "⚠️ 請至少輸入「食物」或「身高/體重」其中一項！",
+      unitTimes: " 次",
+      formulaPrefix: "配方奶",
+      portionText: "份量",
+      notesText: "備註",
+      heightText: "身高",
+      weightText: "體重",
+      success_msg: "🎉 紀錄成功儲存囉！",
+      error_msg: "❌ 傳送失敗，請再試一次！",
+      meals: [
+        { value: "配方奶", text: "🍼 配方奶" },
+        { value: "早餐", text: "🥣 早餐" },
+        { value: "午餐", text: "🍜 午餐 (副食品/正餐)" },
+        { value: "下午茶", text: "🍎 下午茶 / 水果小食" },
+        { value: "晚餐", text: "🍲 晚餐 (副食品/正餐)" },
+        { value: "睡前奶/宵夜", text: "🌙 睡前奶 / 宵夜" }
+      ]
+    },
+    en: {
+      appTitle: "👦 Little Prince Growth Tracker 🚗",
+      hwTitle: "📏 Latest Growth Stats",
+      statMilkLabel: "🍼 Today's Milk",
+      statCountLabel: "🥣 Meals Today",
+      tabAddBtn: "📝 Add Record",
+      tabListBtn: "📋 History",
+      labelDate: "📅 Date",
+      labelMeal: "⏰ Meal Time",
+      labelFood: "🥦 Food / Milk Intake (Optional)",
+      placeholderFood: "e.g. Beef Tomato Porridge 1 bowl / 210ml",
+      quickMilkTitle: "🍼 Milk Quick Buttons:",
+      quickFoodTitle: "⚡ Frequent Food Shortcuts:",
+      labelHeight: "📏 Height (cm)",
+      placeholderHeight: "e.g. 68.5",
+      labelWeight: "⚖️ Weight (kg)",
+      placeholderWeight: "e.g. 7.25",
+      labelCalories: "📏 Portion / Appetite (Optional)",
+      placeholderCalories: "e.g. Ate 80% / 180ml",
+      labelNotes: "📝 Notes (Optional)",
+      placeholderNotes: "e.g. Good mood, normal stool...",
+      submitBtn: "🚀 Save Log 🚀",
+      savingBtn: "Saving...",
+      allMeals: "All Meals",
+      loadingLogs: "Loading history logs...",
+      searching: "Searching...",
+      noLogsFound: "No matching records found",
+      failLogs: "Failed to load logs",
+      confirmDelete: "Are you sure you want to delete this record?",
+      deleteSuccess: "Record deleted!",
+      deleteFail: "Failed to delete, please try again!",
+      emptyNotice: "⚠️ Please enter at least 'Food' or 'Height/Weight'!",
+      unitTimes: " meals",
+      formulaPrefix: "Formula Milk",
+      portionText: "Portion",
+      notesText: "Notes",
+      heightText: "Height",
+      weightText: "Weight",
+      success_msg: "🎉 Saved successfully!",
+      error_msg: "❌ Failed to send, please try again!",
+      meals: [
+        { value: "配方奶", text: "🍼 Formula Milk" },
+        { value: "早餐", text: "🥣 Breakfast" },
+        { value: "午餐", text: "🍜 Lunch (Solids/Meal)" },
+        { value: "下午茶", text: "🍎 Tea Time / Fruit" },
+        { value: "晚餐", text: "🍲 Dinner (Solids/Meal)" },
+        { value: "睡前奶/宵夜", text: "🌙 Bedtime Milk / Night" }
+      ]
+    }
+  };
+
+  let currentLang = localStorage.getItem('app_lang') || 'zh';
+  let currentTheme = localStorage.getItem('app_theme') || 'light';
+
   let customMsgs = {
-    success_msg: "🎉 紀錄成功儲存囉！",
-    error_msg: "❌ 傳送失敗，請再試一次！"
+    success_msg: i18n[currentLang].success_msg,
+    error_msg: i18n[currentLang].error_msg
   };
 
   document.getElementById('date').valueAsDate = new Date();
 
   window.onload = function() {
+    applyTheme(currentTheme);
+    applyLanguage(currentLang);
     autoSelectMealByTime();
     loadConfigs();
     loadRecentFoods();
     loadStats();
+    loadLatestHW();
   };
 
-  // ⚙️ 讀取 Google Sheet 的 Config 設定
+  function toggleTheme() {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    localStorage.setItem('app_theme', currentTheme);
+    applyTheme(currentTheme);
+  }
+
+  function applyTheme(theme) {
+    const themeBtn = document.getElementById('themeBtn');
+    if (theme === 'dark') {
+      document.body.classList.add('dark-mode');
+      themeBtn.innerText = "☀️ Light";
+    } else {
+      document.body.classList.remove('dark-mode');
+      themeBtn.innerText = "🌙 Dark";
+    }
+  }
+
+  function toggleLanguage() {
+    currentLang = currentLang === 'zh' ? 'en' : 'zh';
+    localStorage.setItem('app_lang', currentLang);
+    applyLanguage(currentLang);
+    loadPastLogs();
+  }
+
+  function applyLanguage(lang) {
+    const t = i18n[lang];
+    document.getElementById('langBtn').innerText = lang === 'zh' ? "🌐 EN" : "🌐 中文";
+
+    document.getElementById('appTitle').innerText = t.appTitle;
+    document.getElementById('hwTitle').innerText = t.hwTitle;
+    document.getElementById('statMilkLabel').innerText = t.statMilkLabel;
+    document.getElementById('statCountLabel').innerText = t.statCountLabel;
+    document.getElementById('tabAddBtn').innerText = t.tabAddBtn;
+    document.getElementById('tabListBtn').innerText = t.tabListBtn;
+
+    document.getElementById('labelDate').innerText = t.labelDate;
+    document.getElementById('labelMeal').innerText = t.labelMeal;
+    document.getElementById('labelFood').innerText = t.labelFood;
+    document.getElementById('food').placeholder = t.placeholderFood;
+
+    document.getElementById('labelHeight').innerText = t.labelHeight;
+    document.getElementById('height').placeholder = t.placeholderHeight;
+    document.getElementById('labelWeight').innerText = t.labelWeight;
+    document.getElementById('weight').placeholder = t.placeholderWeight;
+
+    document.getElementById('quickMilkTitle').innerText = t.quickMilkTitle;
+    document.getElementById('quickFoodTitle').innerText = t.quickFoodTitle;
+
+    document.getElementById('labelCalories').innerText = t.labelCalories;
+    document.getElementById('calories').placeholder = t.placeholderCalories;
+
+    document.getElementById('labelNotes').innerText = t.labelNotes;
+    document.getElementById('notes').placeholder = t.placeholderNotes;
+
+    document.getElementById('submitBtn').innerText = t.submitBtn;
+
+    updateMealOptions();
+  }
+
+  function updateMealOptions() {
+    const mealSelect = document.getElementById('meal');
+    const filterMealSelect = document.getElementById('filterMeal');
+    const selectedMealVal = mealSelect.value;
+    const selectedFilterVal = filterMealSelect.value;
+
+    const t = i18n[currentLang];
+
+    mealSelect.innerHTML = '';
+    t.meals.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.value;
+      opt.innerText = m.text;
+      mealSelect.appendChild(opt);
+    });
+    if (selectedMealVal) mealSelect.value = selectedMealVal;
+
+    filterMealSelect.innerHTML = `<option value="全部">${t.allMeals}</option>`;
+    t.meals.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.value;
+      opt.innerText = m.text.split(' ')[1] || m.text;
+      filterMealSelect.appendChild(opt);
+    });
+    if (selectedFilterVal) filterMealSelect.value = selectedFilterVal;
+  }
+
   function loadConfigs() {
     fetch(GAS_URL + "?action=getConfigs")
       .then(res => res.json())
       .then(data => {
         if (data) {
-          if (data.title_text) document.getElementById('appTitle').innerText = data.title_text;
+          if (data.title_text && currentLang === 'zh') document.getElementById('appTitle').innerText = data.title_text;
           if (data.success_msg) customMsgs.success_msg = data.success_msg;
           if (data.error_msg) customMsgs.error_msg = data.error_msg;
         }
@@ -525,14 +860,31 @@
     document.getElementById('food').value = text;
   }
 
+  function setQuickMilk(amount) {
+    const prefix = i18n[currentLang].formulaPrefix;
+    document.getElementById('food').value = `${prefix} ${amount}`;
+  }
+
   function loadStats() {
     fetch(GAS_URL + "?action=getStats")
       .then(res => res.json())
       .then(data => {
         document.getElementById('statMilk').innerText = (data.totalMilk || 0) + " ml";
-        document.getElementById('statCount').innerText = (data.mealCount || 0) + " 次";
+        document.getElementById('statCount').innerText = (data.mealCount || 0) + i18n[currentLang].unitTimes;
       })
       .catch(err => console.log('載入統計失敗', err));
+  }
+
+  function loadLatestHW() {
+    fetch(GAS_URL + "?action=getLatestHW")
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          document.getElementById('hwValues').innerText = `${data.height} | ${data.weight}`;
+          document.getElementById('hwDate').innerText = `📅 ${data.date}`;
+        }
+      })
+      .catch(err => console.log('載入最新身高體重失敗', err));
   }
 
   function loadRecentFoods() {
@@ -566,19 +918,20 @@
   function loadPastLogs() {
     const fDate = document.getElementById('filterDate').value;
     const fMeal = document.getElementById('filterMeal').value;
+    const t = i18n[currentLang];
 
     let queryUrl = GAS_URL + "?action=getLogs";
     if (fDate) queryUrl += "&date=" + encodeURIComponent(fDate);
     if (fMeal) queryUrl += "&meal=" + encodeURIComponent(fMeal);
 
     const container = document.getElementById('logsContainer');
-    container.innerHTML = '<div class="no-logs">搜尋中...</div>';
+    container.innerHTML = `<div class="no-logs">${t.searching}</div>`;
 
     fetch(queryUrl)
       .then(res => res.json())
       .then(logs => {
         if (!logs || logs.length === 0) {
-          container.innerHTML = '<div class="no-logs">沒有符合條件的飲食紀錄</div>';
+          container.innerHTML = `<div class="no-logs">${t.noLogsFound}</div>`;
           return;
         }
 
@@ -587,15 +940,22 @@
           const item = document.createElement('div');
           item.className = 'log-item';
           
-          let metaText = '';
-          if (log.calories) metaText += `份量：${log.calories} `;
-          if (log.notes) metaText += `| 備註：${log.notes}`;
+          let metaParts = [];
+          if (log.calories) metaParts.push(`${t.portionText}：${log.calories}`);
+          if (log.height) metaParts.push(`📏 ${t.heightText}：${log.height} cm`);
+          if (log.weight) metaParts.push(`⚖️ ${t.weightText}：${log.weight} kg`);
+          if (log.notes) metaParts.push(`${t.notesText}：${log.notes}`);
+
+          const metaText = metaParts.join(' | ');
+
+          const matchedMeal = t.meals.find(m => m.value === log.meal);
+          const displayMeal = matchedMeal ? matchedMeal.text : log.meal;
 
           item.innerHTML = `
-            <button class="btn-delete" onclick="deleteLog(${log.rowIndex})" title="刪除此紀錄">🗑️</button>
+            <button class="btn-delete" onclick="deleteLog(${log.rowIndex})" title="Delete">🗑️</button>
             <div class="log-header">
               <span class="log-date">📅 ${log.date}</span>
-              <span class="log-meal">${log.meal}</span>
+              <span class="log-meal">${displayMeal}</span>
             </div>
             <div class="log-food">🥣 ${log.food}</div>
             ${metaText ? `<div class="log-meta">${metaText}</div>` : ''}
@@ -604,12 +964,13 @@
         });
       })
       .catch(() => {
-        container.innerHTML = '<div class="no-logs">載入紀錄失敗</div>';
+        container.innerHTML = `<div class="no-logs">${t.failLogs}</div>`;
       });
   }
 
   function deleteLog(rowIndex) {
-    if (!confirm("確定要刪除這筆飲食紀錄嗎？")) return;
+    const t = i18n[currentLang];
+    if (!confirm(t.confirmDelete)) return;
 
     fetch(GAS_URL, {
       method: "POST",
@@ -618,22 +979,34 @@
       body: JSON.stringify({ action: "delete", rowIndex: rowIndex })
     })
     .then(() => {
-      alert("已刪除紀錄！");
+      alert(t.deleteSuccess);
       setTimeout(() => {
         loadPastLogs();
         loadStats();
       }, 800);
     })
-    .catch(() => alert("刪除失敗，請再試一次！"));
+    .catch(() => alert(t.deleteFail));
   }
 
   document.getElementById('foodForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
     const msg = document.getElementById('msg');
+    const t = i18n[currentLang];
+
+    const foodVal = document.getElementById('food').value.trim();
+    const heightVal = document.getElementById('height').value.trim();
+    const weightVal = document.getElementById('weight').value.trim();
+
+    // 檢查：食物與身高體重不能同時為空
+    if (!foodVal && !heightVal && !weightVal) {
+      msg.className = 'error';
+      msg.innerText = t.emptyNotice;
+      return;
+    }
 
     btn.disabled = true;
-    btn.innerText = '儲存中...';
+    btn.innerText = t.savingBtn;
     msg.className = '';
     msg.innerText = '';
 
@@ -641,7 +1014,9 @@
       action: "add",
       date: document.getElementById('date').value,
       meal: document.getElementById('meal').value,
-      food: document.getElementById('food').value,
+      food: foodVal,
+      height: heightVal,
+      weight: weightVal,
       calories: document.getElementById('calories').value,
       notes: document.getElementById('notes').value
     };
@@ -654,11 +1029,13 @@
     })
     .then(() => {
       btn.disabled = false;
-      btn.innerText = '🚀 儲存紀錄 🚀';
+      btn.innerText = t.submitBtn;
       msg.className = 'success';
-      msg.innerText = customMsgs.success_msg; // 讀取自訂提示文字
+      msg.innerText = customMsgs.success_msg; 
 
       document.getElementById('food').value = '';
+      document.getElementById('height').value = '';
+      document.getElementById('weight').value = '';
       document.getElementById('calories').value = '';
       document.getElementById('notes').value = '';
 
@@ -666,13 +1043,14 @@
         autoSelectMealByTime();
         loadRecentFoods();
         loadStats();
+        loadLatestHW();
       }, 1000);
     })
     .catch(() => {
       btn.disabled = false;
-      btn.innerText = '🚀 儲存紀錄 🚀';
+      btn.innerText = t.submitBtn;
       msg.className = 'error';
-      msg.innerText = customMsgs.error_msg; // 讀取自訂提示文字
+      msg.innerText = customMsgs.error_msg; 
     });
   });
 </script>

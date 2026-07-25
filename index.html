@@ -614,6 +614,7 @@
 
 <div class="card" id="mainCard">
   <div class="top-controls">
+    <button class="control-btn" id="refreshBtn" onclick="refreshData()">🔄 重新整理</button>
     <button class="control-btn" id="shotModeBtn" onclick="toggleScreenshotMode()">📸 截圖</button>
     <button class="control-btn" id="langBtn" onclick="toggleLanguage()">🌐 EN</button>
     <button class="control-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
@@ -781,6 +782,7 @@
   const i18n = {
     zh: {
       appTitle: "👦 小王子成長紀錄 🚗",
+      refreshBtn: "🔄 重新整理",
       shotModeBtn: "📸 截圖",
       exitShotBtn: "✖ 離開截圖",
       shotCardTitle: "👦 小王子單日飲食卡 🚗",
@@ -841,6 +843,7 @@
     },
     en: {
       appTitle: "👦 Growth Tracker 🚗",
+      refreshBtn: "🔄 Refresh",
       shotModeBtn: "📸 Shot",
       exitShotBtn: "✖ Exit Shot",
       shotCardTitle: "👦 Daily Food Summary 🚗",
@@ -945,6 +948,33 @@
     loadLatestHW();
   };
 
+  /* 🔄 重新整理數據功能 */
+  function refreshData() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const originalText = refreshBtn.innerText;
+    refreshBtn.innerText = currentLang === 'zh' ? '🔄 更新中...' : '🔄 Loading...';
+    refreshBtn.disabled = true;
+
+    loadStats();
+    loadLatestHW();
+    loadRecentFoods();
+
+    if (isScreenshotMode) {
+      renderScreenshotCard();
+    } else if (document.getElementById('sectionList').style.display !== 'none') {
+      if (currentHistoryView === 'chart') {
+        renderCharts();
+      } else {
+        loadPastLogs();
+      }
+    }
+
+    setTimeout(() => {
+      refreshBtn.innerText = originalText;
+      refreshBtn.disabled = false;
+    }, 600);
+  }
+
   function initHWDropdowns() {
     const heightSelect = document.getElementById('height');
     const weightSelect = document.getElementById('weight');
@@ -1010,6 +1040,7 @@
 
   function applyLanguage(lang) {
     const t = i18n[lang];
+    document.getElementById('refreshBtn').innerText = t.refreshBtn;
     document.getElementById('langBtn').innerText = lang === 'zh' ? "🌐 EN" : "🌐 中文";
 
     document.getElementById('appTitle').innerText = t.appTitle;

@@ -26,7 +26,6 @@
 
   <style>
     :root {
-      /* 手繪紙張與色彩變數 */
       --bg-gradient: #fcf8f2;
       --card-bg: #ffffff;
       --pencil-color: #2c2825;
@@ -74,7 +73,7 @@
 
     body { 
       background-color: var(--bg-gradient);
-      padding: 16px 12px; 
+      padding: 12px 10px; 
       color: var(--text-main); 
       margin: 0; 
       min-height: 100vh;
@@ -94,7 +93,7 @@
       width: 100%;
       max-width: 440px; 
       background: var(--card-bg); 
-      padding: 22px 18px; 
+      padding: 18px 16px; 
       border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
       border: 3.5px solid var(--pencil-color);
       box-shadow: 6px 6px 0px var(--shadow-color);
@@ -102,27 +101,32 @@
       transition: background 0.3s ease;
     }
 
+    /* 🎯 頂部控制欄：精簡純圖示設計 */
     .top-controls {
       display: flex;
       justify-content: flex-end;
-      gap: 6px;
-      margin-bottom: 12px;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
     }
 
     .control-btn {
       background: var(--card-bg);
       border: 2.5px solid var(--pencil-color);
-      padding: 6px 10px;
-      border-radius: 20px 8px 16px 10px;
-      font-size: 13px;
+      padding: 6px;
+      min-width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      font-size: 16px;
       font-weight: bold;
       color: var(--text-main);
       box-shadow: 3px 3px 0px var(--shadow-color);
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 4px;
-      transition: all 0.1s ease;
+      justify-content: center;
+      transition: all 0.15s ease;
+      user-select: none;
     }
 
     .control-btn:active {
@@ -138,7 +142,7 @@
     .header h2 { 
       margin: 0; 
       font-family: 'Fredoka', cursive, sans-serif;
-      font-size: 23px; 
+      font-size: 22px; 
       color: var(--text-main);
       display: flex;
       align-items: center;
@@ -245,15 +249,19 @@
 
     .tab-btn {
       flex: 1;
-      padding: 10px;
+      padding: 12px;
+      min-height: 44px;
       border: none;
       background: transparent;
       color: var(--text-sub);
       font-weight: 700;
-      font-size: 14px;
+      font-size: 15px;
       border-radius: 16px;
       cursor: pointer;
       transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .tab-btn.active {
@@ -271,7 +279,8 @@
 
     .view-btn {
       flex: 1;
-      padding: 8px;
+      padding: 10px;
+      min-height: 40px;
       border: 2.5px solid var(--pencil-color);
       background: var(--card-bg);
       color: var(--text-main);
@@ -361,9 +370,10 @@
     }
 
     .chip { 
-      padding: 7px 13px; 
+      padding: 9px 14px; 
+      min-height: 38px;
       border-radius: 16px 6px 14px 8px; 
-      font-size: 13px; 
+      font-size: 13.5px; 
       font-weight: 800;
       cursor: pointer; 
       user-select: none;
@@ -371,6 +381,9 @@
       border: 2px solid var(--pencil-color);
       box-shadow: 2px 2px 0px var(--shadow-color);
       color: #2c2825;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .chip:active { 
@@ -390,8 +403,11 @@
     body.dark-mode .chip-item { background: #d0c8bf; }
 
     .submit-btn { 
+      position: sticky;
+      bottom: 12px;
+      z-index: 100;
       width: 100%; 
-      padding: 15px; 
+      padding: 16px; 
       background: var(--accent-pink); 
       color: #2c2825; 
       border: 3px solid var(--pencil-color); 
@@ -400,9 +416,9 @@
       font-family: 'Fredoka', cursive, sans-serif;
       font-weight: bold; 
       cursor: pointer; 
-      margin-top: 14px; 
-      box-shadow: 5px 5px 0px var(--shadow-color);
-      transition: all 0.1s ease;
+      margin-top: 18px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1), 5px 5px 0px var(--shadow-color);
+      transition: all 0.15s ease;
     }
 
     body.dark-mode .submit-btn {
@@ -477,7 +493,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 6px;
-      padding-right: 24px;
+      padding-right: 28px;
     }
 
     .log-date {
@@ -510,17 +526,17 @@
 
     .btn-delete {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 8px;
+      right: 8px;
       background: transparent;
       border: none;
       box-shadow: none;
       width: auto;
-      padding: 2px;
+      padding: 6px;
       margin: 0;
-      font-size: 16px;
+      font-size: 18px;
       cursor: pointer;
-      opacity: 0.7;
+      opacity: 0.75;
     }
 
     .no-logs {
@@ -613,11 +629,12 @@
 </svg>
 
 <div class="card" id="mainCard">
+  <!-- 🎯 頂部控制按鈕：純圖示簡潔版 -->
   <div class="top-controls">
-    <button class="control-btn" id="refreshBtn" onclick="refreshData()">🔄 重新整理</button>
-    <button class="control-btn" id="shotModeBtn" onclick="toggleScreenshotMode()">📸 截圖</button>
-    <button class="control-btn" id="langBtn" onclick="toggleLanguage()">🌐 EN</button>
-    <button class="control-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+    <button class="control-btn" id="refreshBtn" onclick="refreshData()" title="重新整理">🔄</button>
+    <button class="control-btn" id="shotModeBtn" onclick="toggleScreenshotMode()" title="截圖模式">📸</button>
+    <button class="control-btn" id="langBtn" onclick="toggleLanguage()" title="語言切換">🌐 EN</button>
+    <button class="control-btn" id="themeBtn" onclick="toggleTheme()" title="深色/淺色">🌙</button>
   </div>
 
   <div id="normalView">
@@ -720,8 +737,8 @@
 
       <div id="historyListView">
         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-          <button class="control-btn" style="flex: 1; justify-content: center;" onclick="setFilterDate(0)" id="filterTodayBtn">📅 今天</button>
-          <button class="control-btn" style="flex: 1; justify-content: center;" onclick="setFilterDate(-1)" id="filterYesterdayBtn">📅 昨天</button>
+          <button class="control-btn" style="flex: 1; justify-content: center; height: auto; font-size: 13px;" onclick="setFilterDate(0)" id="filterTodayBtn">📅 今天</button>
+          <button class="control-btn" style="flex: 1; justify-content: center; height: auto; font-size: 13px;" onclick="setFilterDate(-1)" id="filterYesterdayBtn">📅 昨天</button>
         </div>
         <div class="filter-box">
           <input type="date" id="filterDate" onchange="loadPastLogs()">
@@ -756,7 +773,7 @@
   <div id="screenshotView" style="display: none;">
     <div style="display: flex; gap: 8px; margin-bottom: 14px;">
       <input type="date" id="shotDate" style="flex: 1; padding: 8px;" onchange="renderScreenshotCard()">
-      <button class="control-btn" onclick="toggleScreenshotMode()" style="background: var(--accent-pink); color: #2c2825; flex: 1; justify-content: center;" id="exitShotBtn">✖ 離開截圖</button>
+      <button class="control-btn" onclick="toggleScreenshotMode()" style="background: var(--accent-pink); color: #2c2825; flex: 1; justify-content: center; height: auto; font-size: 13px;" id="exitShotBtn">✖ 離開截圖</button>
     </div>
 
     <div class="screenshot-card" id="captureCard">
@@ -782,8 +799,8 @@
   const i18n = {
     zh: {
       appTitle: "👦 小王子成長紀錄 🚗",
-      refreshBtn: "🔄 重新整理",
-      shotModeBtn: "📸 截圖",
+      refreshBtn: "🔄",
+      shotModeBtn: "📸",
       exitShotBtn: "✖ 離開截圖",
       shotCardTitle: "👦 小王子單日飲食卡 🚗",
       shotFooterHint: "✨ 截圖保存 · 陪伴寶寶健康成長 ✨",
@@ -843,8 +860,8 @@
     },
     en: {
       appTitle: "👦 Growth Tracker 🚗",
-      refreshBtn: "🔄 Refresh",
-      shotModeBtn: "📸 Shot",
+      refreshBtn: "🔄",
+      shotModeBtn: "📸",
       exitShotBtn: "✖ Exit Shot",
       shotCardTitle: "👦 Daily Food Summary 🚗",
       shotFooterHint: "✨ Captured with love · Growing up happy ✨",
@@ -918,7 +935,6 @@
     error_msg: i18n[currentLang].error_msg
   };
 
-  /* 取得本地日期的 YYYY-MM-DD 字串（與 history 日期邏輯完全相同） */
   function getLocalDateString(daysOffset = 0) {
     const d = new Date();
     d.setDate(d.getDate() + daysOffset);
@@ -928,7 +944,6 @@
     return `${year}-${month}-${day}`;
   }
 
-  /* 初始化所有頁面的日期為「今天」 */
   function initDefaultDates() {
     const todayStr = getLocalDateString(0);
     document.getElementById('date').value = todayStr;
@@ -948,11 +963,9 @@
     loadLatestHW();
   };
 
-  /* 🔄 重新整理數據功能 */
   function refreshData() {
     const refreshBtn = document.getElementById('refreshBtn');
-    const originalText = refreshBtn.innerText;
-    refreshBtn.innerText = currentLang === 'zh' ? '🔄 更新中...' : '🔄 Loading...';
+    refreshBtn.style.opacity = '0.5';
     refreshBtn.disabled = true;
 
     loadStats();
@@ -970,7 +983,7 @@
     }
 
     setTimeout(() => {
-      refreshBtn.innerText = originalText;
+      refreshBtn.style.opacity = '1';
       refreshBtn.disabled = false;
     }, 600);
   }
@@ -1017,10 +1030,10 @@
     const themeBtn = document.getElementById('themeBtn');
     if (theme === 'dark') {
       document.body.classList.add('dark-mode');
-      themeBtn.innerText = "☀️ Light";
+      themeBtn.innerText = "☀️";
     } else {
       document.body.classList.remove('dark-mode');
-      themeBtn.innerText = "🌙 Dark";
+      themeBtn.innerText = "🌙";
     }
   }
 
@@ -1041,10 +1054,10 @@
   function applyLanguage(lang) {
     const t = i18n[lang];
     document.getElementById('refreshBtn').innerText = t.refreshBtn;
-    document.getElementById('langBtn').innerText = lang === 'zh' ? "🌐 EN" : "🌐 中文";
+    document.getElementById('shotModeBtn').innerText = t.shotModeBtn;
+    document.getElementById('langBtn').innerText = lang === 'zh' ? "🌐 EN" : "🌐 中";
 
     document.getElementById('appTitle').innerText = t.appTitle;
-    document.getElementById('shotModeBtn').innerText = t.shotModeBtn;
     document.getElementById('exitShotBtn').innerText = t.exitShotBtn;
     document.getElementById('shotCardTitle').innerText = t.shotCardTitle;
     document.getElementById('shotFooterHint').innerText = t.shotFooterHint;
@@ -1204,7 +1217,6 @@
     }
   }
 
-  /* 📸 開啟 / 關閉 截圖模式 */
   function toggleScreenshotMode() {
     isScreenshotMode = !isScreenshotMode;
     const normalView = document.getElementById('normalView');
@@ -1223,7 +1235,6 @@
     }
   }
 
-  /* 安全性處理：建立 DOM 節點避免 XSS 漏洞 */
   function renderScreenshotCard() {
     const targetDate = document.getElementById('shotDate').value;
     const container = document.getElementById('shotListContainer');

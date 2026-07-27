@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Luka's Schedule</title>
+	
+    <link rel="icon" type="image/png" href="ttps://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/schedule.png">
+	<meta property="og:type" content="website">
+	<meta property="og:title" content="Beaver Schedule">
+	<meta property="og:description" content="Beaver Schedule">
+	<meta property="og:image" content="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/schedule.png"> 
+	<link rel="apple-touch-icon" href="ttps://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/schedule.png">
+
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="apple-mobile-web-app-title" content="Beaver Schedule">
+	
+    <!-- Doodle Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --bg-color: #fdfcfa;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #94a3b8;
+            --border-color: #7c7c7c;
+            --today-bg: #ffe4e6;
+            --today-text: #e11d48;
+            --past-opacity: 0.55;
+            --doodle-font: 'Gloria Hallelujah', cursive;
+        }
+
+        [data-theme="dark"] {
+            --primary: #6366f1;
+            --primary-light: #312e81;
+            --bg-color: #1a1a1a;
+            --card-bg: #2a2a2a;
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+            --border-color: #a3a3a3;
+            --today-bg: #4c0519;
+            --today-text: #fb7185;
+            --past-opacity: 0.45;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--doodle-font);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 12px;
+            transition: background-color 0.3s, color 0.3s;
+            background-image: 
+                linear-gradient(90deg, rgba(124, 124, 124, 0.02) 1px, transparent 1px),
+                linear-gradient(rgba(124, 124, 124, 0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        [data-theme="dark"] body {
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .app-header {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 16px 14px;
+            margin-bottom: 16px;
+            border: 3px solid var(--border-color);
+            border-radius: 15px 30px 10px 25px / 25px 10px 30px 15px;
+            filter: url(#rough-border);
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        @media (min-width: 480px) {
+            .app-header {
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 16px 20px;
+            }
+        }
+
+        [data-theme="dark"] .app-header {
+            box-shadow: 4px 4px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .app-header h1::before {
+            content: "";
+            filter: url(#squiggle);
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: normal;
+            color: var(--text-main);
+            filter: url(#rough-text);
+            text-align: center;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        @media (min-width: 480px) {
+            .header-controls {
+                width: auto;
+            }
+        }
+
+        .nav-btns {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        @media (min-width: 480px) {
+            .nav-btns {
+                flex: initial;
+            }
+        }
+
+        button {
+            background: var(--card-bg);
+            cursor: pointer;
+            font-family: var(--doodle-font);
+            font-weight: normal;
+            font-size: 1.25rem;
+            color: var(--text-main);
+            transition: all 0.15s ease-in-out;
+            border: 3px solid var(--border-color);
+            border-radius: 12px 22px 8px 18px / 18px 8px 22px 12px;
+            padding: 8px 14px;
+            min-height: 48px;
+            min-width: 48px;
+            filter: url(#squiggle);
+            box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.12);
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        [data-theme="dark"] button {
+            box-shadow: 3px 3px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        button:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: scale(1.05) rotate(1deg);
+        }
+
+        button:active {
+            transform: scale(0.92) translate(2px, 2px);
+            box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-current-month {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .utility-btn {
+            padding: 8px 12px;
+            font-size: 1.15rem;
+        }
+
+        .agenda-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .agenda-day-group {
+            background: var(--card-bg);
+            overflow: hidden;
+            border: 3px solid var(--border-color);
+            border-radius: 15px 30px 10px 25px / 25px 10px 30px 15px;
+            filter: url(#rough-border);
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+            transition: opacity 0.3s;
+        }
+        
+        .agenda-day-group.is-past-day {
+            opacity: var(--past-opacity);
+        }
+
+        [data-theme="dark"] .agenda-day-group {
+            box-shadow: 4px 4px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .agenda-day-header {
+            background: var(--card-bg);
+            padding: 14px 18px;
+            font-size: 1.35rem;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px dashed var(--border-color);
+            filter: url(#rough-text);
+        }
+
+        .agenda-day-header.is-today {
+            background: var(--today-bg);
+            color: var(--today-text);
+            filter: url(#squiggle);
+            border-left: 10px solid var(--primary);
+        }
+
+        .agenda-tasks-list {
+            padding: 8px 0;
+        }
+
+        .agenda-task-item {
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            font-size: 1.25rem;
+            border-bottom: 2px dashed var(--border-color);
+            filter: url(#rough-text);
+        }
+
+        .agenda-task-item:last-child {
+            border-bottom: none;
+        }
+
+        .agenda-task-item.is-past-task {
+            opacity: 0.7;
+        }
+
+        .agenda-task-item.is-past-task .agenda-title {
+            text-decoration: line-through;
+            text-decoration-thickness: 2px;
+            color: var(--text-muted);
+        }
+
+        .agenda-task-item.is-past-task .agenda-time {
+            color: var(--text-muted);
+        }
+
+        .agenda-time {
+            color: var(--today-text);
+            min-width: 75px;
+            font-size: 1.2rem;
+            filter: url(#rough-text);
+        }
+
+        .agenda-title {
+            color: var(--text-main);
+            word-break: break-all;
+            filter: url(#rough-text);
+        }
+
+        /* 留言板樣式 */
+        .guestbook-section {
+            margin-bottom: 20px;
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 15px 30px 10px 25px / 25px 10px 30px 15px;
+            filter: url(#rough-border);
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+            padding: 16px 18px;
+        }
+
+        [data-theme="dark"] .guestbook-section {
+            box-shadow: 4px 4px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .guestbook-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .guestbook-title {
+            font-size: 1.4rem;
+            margin: 0;
+            filter: url(#rough-text);
+        }
+
+        /* 「+ 新增留言」按鈕樣式 */
+        .add-msg-btn {
+            font-size: 1.05rem;
+            padding: 6px 12px;
+            min-height: 38px;
+            min-width: unset;
+        }
+
+        /* 新增留言表單容器 (預設關閉 display: none) */
+        .guestbook-form-container {
+            display: none; 
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 2px dashed var(--border-color);
+        }
+
+        .guestbook-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .guestbook-input, .guestbook-textarea {
+            font-family: var(--doodle-font);
+            background: var(--bg-color);
+            color: var(--text-main);
+            border: 2px solid var(--border-color);
+            border-radius: 10px 18px 8px 14px / 14px 8px 18px 10px;
+            padding: 10px 12px;
+            font-size: 1.1rem;
+            outline: none;
+            width: 100%;
+        }
+
+        .guestbook-textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .guestbook-submit-btn {
+            width: 100%;
+            font-size: 1.2rem;
+        }
+
+        .msg-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .msg-item {
+            padding: 10px 12px;
+            border-bottom: 2px dashed var(--border-color);
+            filter: url(#rough-text);
+        }
+
+        .msg-item:last-child {
+            border-bottom: none;
+        }
+
+        .msg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .msg-name {
+            font-weight: bold;
+        }
+
+        .msg-time {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .msg-text {
+            font-size: 1.15rem;
+            word-break: break-word;
+            white-space: pre-wrap;
+            color: var(--text-main);
+        }
+
+        .status, .error {
+            text-align: center;
+            font-size: 1.4rem;
+            padding: 40px 20px;
+            background: var(--card-bg);
+            color: var(--text-muted);
+            border: 3px solid var(--border-color);
+            border-radius: 15px 30px 10px 25px / 25px 10px 30px 15px;
+            filter: url(#rough-border);
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] .status, [data-theme="dark"] .error {
+            box-shadow: 4px 4px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .error {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 載入狀態 -->
+        <div id="status" class="status">載入中...</div>
+        
+        <!-- 行事模式介面 -->
+        <div id="calendar-app" style="display: none;">
+            <div class="app-header">
+                <h1 id="currentMonthYear">-- 年 -- 月</h1>
+                <div class="header-controls">
+                    <div class="nav-btns">
+                        <button id="prevMonthBtn" onclick="changeMonth(-1)" aria-label="上月">-</button>
+                        <button id="currMonthBtn" class="btn-current-month" onclick="goToday()" aria-label="本月">-</button>
+                        <button id="nextMonthBtn" onclick="changeMonth(1)" aria-label="下月">-</button>
+                    </div>
+                    <button class="utility-btn" id="langToggleBtn" onclick="toggleLanguage()">EN</button>
+                    <button class="utility-btn" id="themeToggleBtn" onclick="toggleTheme()">☀️</button>
+                </div>
+            </div>
+
+            <!-- 留言板區塊 -->
+            <div class="guestbook-section">
+                <div class="guestbook-header-bar">
+                    <h2 class="guestbook-title" id="gbTitle">💬 留言板</h2>
+                    <button class="add-msg-btn" id="gbToggleBtn" onclick="toggleForm()">+ 新增留言</button>
+                </div>
+                
+                <!-- 新增留言表單 (預設關閉/隱藏) -->
+                <div id="gbFormContainer" class="guestbook-form-container">
+                    <div class="guestbook-form">
+                        <input type="text" id="gbName" class="guestbook-input" placeholder="名字 (選填)" maxlength="20">
+                        <textarea id="gbMsg" class="guestbook-textarea" placeholder="寫下你的留言..." rows="3"></textarea>
+                        <button id="gbSubmitBtn" class="guestbook-submit-btn" onclick="submitMessage()">送出留言</button>
+                    </div>
+                </div>
+
+                <!-- 留言列表 (直接在外面常駐顯示) -->
+                <div id="gbList" class="msg-list">
+                    <div style="text-align: center; color: var(--text-muted);" id="gbLoading">載入留言中...</div>
+                </div>
+            </div>
+            
+            <!-- 行程列表容器 -->
+            <div id="agendaGrid" class="agenda-container"></div>
+        </div>
+    </div>
+
+    <!-- SVG 濾鏡 -->
+    <svg style="visibility: hidden; position: absolute;" width="0" height="0" xmlns="http://www.w3.org/2000/svg" version="1.1">
+      <defs>
+        <filter id="rough-border">
+          <feTurbulence type="fractalNoise" baseFrequency="0.1" numOctaves="3" seed="1" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="squiggle">
+          <feTurbulence baseFrequency="0.02" numOctaves="5" type="fractalNoise" seed="0" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="rough-text">
+          <feTurbulence type="fractalNoise" baseFrequency="0.1" numOctaves="1" seed="0" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="1" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+      </defs>
+    </svg>
+
+    <script>
+        const scriptBaseURL = 'https://script.google.com/macros/s/AKfycbyTpJCNcPRC4aVonX-9bgYgAQzzleU7jsDGyD_ezowc0cK0hsWJ60COodtDjdHLjqq6/exec';
+        
+        let allTasks = [];
+        let viewDate = new Date();
+        let currentLang = 'zh';
+
+        const translationDict = {
+            "開會": "Meeting",
+            "午餐": "Lunch",
+            "晚餐": "Dinner",
+            "約會": "Appointment",
+            "運動": "Workout",
+            "體檢": "Medical Checkup",
+            "面試": "Interview",
+            "旅行": "Trip",
+            "生日": "Birthday",
+            "聚會": "Gathering",
+            "剪頭髮": "Haircut",
+            "看醫生": "See Doctor",
+            "交租": "Pay Rent",
+            "買餸": "Grocery Shopping"
+        };
+
+        function translateTask(title) {
+            if (currentLang === 'zh') return title;
+            if (translationDict[title]) return translationDict[title];
+            
+            let translated = title;
+            for (let [zh, en] of Object.entries(translationDict)) {
+                if (translated.includes(zh)) {
+                    translated = translated.replace(zh, en);
+                }
+            }
+            return translated;
+        }
+
+        function updateGuestbooki18n() {
+            const isZh = currentLang === 'zh';
+            document.getElementById('gbTitle').textContent = isZh ? '💬 留言板' : '💬 Guestbook';
+            document.getElementById('gbName').placeholder = isZh ? '名字 (選填)' : 'Name (Optional)';
+            document.getElementById('gbMsg').placeholder = isZh ? '寫下你的留言...' : 'Leave a message...';
+            document.getElementById('gbSubmitBtn').textContent = isZh ? '送出留言' : 'Submit';
+            
+            // 同步按鈕語言
+            const formContainer = document.getElementById('gbFormContainer');
+            const isHidden = formContainer.style.display === 'none' || formContainer.style.display === '';
+            const btn = document.getElementById('gbToggleBtn');
+            if (isHidden) {
+                btn.textContent = isZh ? '+ 新增留言' : '+ Add Message';
+            } else {
+                btn.textContent = isZh ? '- 收起表單' : '- Hide Form';
+            }
+        }
+
+        /* 控制「新增留言」表單開關 (+ / -) */
+        function toggleForm() {
+            const formContainer = document.getElementById('gbFormContainer');
+            const btn = document.getElementById('gbToggleBtn');
+            const isZh = currentLang === 'zh';
+            const isHidden = formContainer.style.display === 'none' || formContainer.style.display === '';
+            
+            if (isHidden) {
+                formContainer.style.display = 'block';
+                btn.textContent = isZh ? '- 收起表單' : '- Hide Form';
+            } else {
+                formContainer.style.display = 'none';
+                btn.textContent = isZh ? '+ 新增留言' : '+ Add Message';
+            }
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.getElementById('langToggleBtn').textContent = currentLang === 'zh' ? 'EN' : '繁';
+            localStorage.setItem('lang', currentLang);
+            renderAgenda();
+            updateGuestbooki18n();
+            fetchMessages();
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            
+            const btn = document.getElementById('themeToggleBtn');
+            btn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            
+            localStorage.setItem('theme', newTheme);
+        }
+
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const savedLang = localStorage.getItem('lang') || 'zh';
+            currentLang = savedLang;
+
+            window.addEventListener('DOMContentLoaded', () => {
+                const themeBtn = document.getElementById('themeToggleBtn');
+                if (themeBtn) themeBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+                
+                const langBtn = document.getElementById('langToggleBtn');
+                if (langBtn) langBtn.textContent = currentLang === 'zh' ? 'EN' : '繁';
+
+                updateGuestbooki18n();
+            });
+        })();
+
+        function updateMonthButtons() {
+            const currentMonth = viewDate.getMonth() + 1;
+            const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+            const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+
+            document.getElementById('prevMonthBtn').textContent = prevMonth;
+            document.getElementById('currMonthBtn').textContent = currentMonth;
+            document.getElementById('nextMonthBtn').textContent = nextMonth;
+        }
+
+        async function fetchTimeTasks() {
+            updateMonthButtons();
+
+            const statusEl = document.getElementById('status');
+            const calendarApp = document.getElementById('calendar-app');
+
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth() + 1;
+
+            const requestURL = `${scriptBaseURL}?year=${year}&month=${month}`;
+
+            try {
+                const response = await fetch(requestURL, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`伺服器錯誤：${response.status}`);
+                }
+
+                const data = await response.json();
+
+                statusEl.style.display = 'none';
+                calendarApp.style.display = 'block';
+
+                allTasks = Array.isArray(data) ? data : (data.results || data.data || data.tasks || [data]);
+                
+                renderAgenda();
+                fetchMessages();
+
+            } catch (error) {
+                statusEl.className = 'error';
+                statusEl.textContent = `載入失敗：${error.message}`;
+                console.error(error);
+            }
+        }
+
+        function parseTaskDateTime(item, year, month, day) {
+            const timePart = item.time.split(' ')[1];
+            if (timePart && timePart.includes(':')) {
+                const [h, m] = timePart.split(':').map(Number);
+                return new Date(year, month, day, h, m);
+            }
+            return new Date(year, month, day, 23, 59, 59);
+        }
+
+        function renderAgenda() {
+            const container = document.getElementById('agendaGrid');
+            const monthYearEl = document.getElementById('currentMonthYear');
+
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth();
+
+            if (currentLang === 'en') {
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                monthYearEl.textContent = `${monthNames[month]} ${year}`;
+            } else {
+                monthYearEl.textContent = `${year} 年 ${month + 1} 月`;
+            }
+
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+            const dayGroups = [];
+
+            for (let day = 1; day <= totalDays; day++) {
+                const formattedMonth = String(month + 1).padStart(2, '0');
+                const formattedDay = String(day).padStart(2, '0');
+                const datePrefix = `${formattedMonth}/${formattedDay}`;
+                const dateStr = `${year}-${formattedMonth}-${formattedDay}`;
+
+                const dayTasks = allTasks.filter(item => {
+                    return item.time && item.time.startsWith(datePrefix);
+                });
+
+                if (dayTasks.length === 0) continue;
+
+                dayTasks.sort((a, b) => a.time.localeCompare(b.time));
+
+                let tasksHTML = '';
+                let hasUpcomingTasks = false;
+
+                dayTasks.forEach(item => {
+                    const timeOnly = item.time.split(' ')[1] || (currentLang === 'en' ? 'All Day' : '全日');
+                    const rawTitle = item.task || item.title || item.name || (currentLang === 'en' ? 'Untitled' : '無標題');
+                    const taskTitle = translateTask(rawTitle);
+
+                    const taskDateTime = parseTaskDateTime(item, year, month, day);
+                    const isPastTask = taskDateTime < now;
+
+                    if (!isPastTask) {
+                        hasUpcomingTasks = true;
+                    }
+
+                    tasksHTML += `
+                        <div class="agenda-task-item ${isPastTask ? 'is-past-task' : ''}">
+                            <span class="agenda-time">${timeOnly}</span>
+                            <span class="agenda-title">${taskTitle}</span>
+                        </div>
+                    `;
+                });
+
+                const isToday = dateStr === todayStr;
+
+                let dateHeaderStr = '';
+                if (currentLang === 'en') {
+                    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                    const weekDayIndex = new Date(year, month, day).getDay();
+                    const monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    dateHeaderStr = `${monthNamesShort[month]} ${day} (${daysOfWeek[weekDayIndex]})`;
+                } else {
+                    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+                    const weekDayStr = weekDays[new Date(year, month, day).getDay()];
+                    dateHeaderStr = `${month + 1}月${day}日 (${weekDayStr})`;
+                }
+
+                const countText = currentLang === 'en' ? `${dayTasks.length} task(s)` : `${dayTasks.length} 個行程`;
+
+                const isPastDay = new Date(year, month, day, 23, 59, 59) < now;
+
+                const groupHTML = `
+                    <div class="agenda-day-group ${isPastDay ? 'is-past-day' : ''}">
+                        <div class="agenda-day-header ${isToday ? 'is-today' : ''}">
+                            <span>${dateHeaderStr}</span>
+                            <span style="font-size: 1.1rem; font-weight: normal; opacity: 0.85;">${countText}</span>
+                        </div>
+                        <div class="agenda-tasks-list">
+                            ${tasksHTML}
+                        </div>
+                    </div>
+                `;
+
+                dayGroups.push({
+                    day: day,
+                    isPastDay: isPastDay,
+                    hasUpcomingTasks: hasUpcomingTasks,
+                    html: groupHTML
+                });
+            }
+
+            dayGroups.sort((a, b) => {
+                if (a.isPastDay !== b.isPastDay) {
+                    return a.isPastDay ? 1 : -1;
+                }
+                return a.day - b.day;
+            });
+
+            let agendaHTML = dayGroups.map(g => g.html).join('');
+
+            if (!agendaHTML) {
+                const emptyText = currentLang === 'en' ? 'No events for this month' : '本月無行程資料';
+                agendaHTML = `<div style="text-align: center; padding: 50px; font-size: 1.3rem; color: var(--text-muted); background: var(--card-bg); border-radius: 15px 30px 10px 25px / 25px 10px 30px 15px; border: 3px solid var(--border-color); filter: url(#rough-border); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);">${emptyText}</div>`;
+            }
+
+            container.innerHTML = agendaHTML;
+        }
+
+        /* --- 留言板 JS 邏輯 --- */
+        async function fetchMessages() {
+            const listEl = document.getElementById('gbList');
+            try {
+                const res = await fetch(`${scriptBaseURL}?action=getMessages`);
+                const messages = await res.json();
+
+                if (!Array.isArray(messages) || messages.length === 0) {
+                    const emptyText = currentLang === 'en' ? 'No messages yet.' : '暫無留言';
+                    listEl.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 10px;">${emptyText}</div>`;
+                    return;
+                }
+
+                listEl.innerHTML = messages.map(msg => `
+                    <div class="msg-item">
+                        <div class="msg-header">
+                            <span class="msg-name">${escapeHTML(msg.name)}</span>
+                            <span class="msg-time">${msg.time}</span>
+                        </div>
+                        <div class="msg-text">${escapeHTML(msg.message)}</div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error(err);
+                listEl.innerHTML = `<div style="text-align: center; color: #ef4444;">${currentLang === 'en' ? 'Failed to load messages' : '留言載入失敗'}</div>`;
+            }
+        }
+
+        async function submitMessage() {
+            const nameInput = document.getElementById('gbName');
+            const msgInput = document.getElementById('gbMsg');
+            const btn = document.getElementById('gbSubmitBtn');
+
+            const name = nameInput.value.trim() || (currentLang === 'en' ? 'Anonymous' : '匿名');
+            const message = msgInput.value.trim();
+
+            if (!message) {
+                alert(currentLang === 'en' ? 'Please enter a message!' : '請輸入留言內容！');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = currentLang === 'en' ? 'Submitting...' : '傳送中...';
+
+            try {
+                const res = await fetch(scriptBaseURL, {
+                    method: 'POST',
+                    body: JSON.stringify({ name: name, message: message })
+                });
+
+                const result = await res.json();
+                if (result.status === 'success') {
+                    msgInput.value = '';
+                    toggleForm(); // 送出成功後自動收起表單
+                    fetchMessages();
+                } else {
+                    alert((currentLang === 'en' ? 'Failed: ' : '失敗：') + (result.message || 'Error'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert(currentLang === 'en' ? 'Submission error, please try again.' : '傳送失敗，請再試一次。');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = currentLang === 'en' ? 'Submit' : '送出留言';
+            }
+        }
+
+        function escapeHTML(str) {
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+            });
+        }
+
+        function changeMonth(direction) {
+            viewDate.setMonth(viewDate.getMonth() + direction);
+            fetchTimeTasks();
+        }
+
+        function goToday() {
+            viewDate = new Date();
+            fetchTimeTasks();
+        }
+
+        fetchTimeTasks();
+    </script>
+
+</body>
+</html>

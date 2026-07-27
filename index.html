@@ -7,11 +7,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="寶寶成長紀錄">
   <meta name="theme-color" content="#FF8B94">
-  <title>Luka's 小王子飲食成長紀錄</title>
+  <title>小王子飲食成長紀錄</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/food-icon.png">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Luka's 小王子飲食成長紀錄">
-  <meta property="og:description" content="Luka's 小王子飲食成長紀錄！">
+  <meta property="og:title" content="小王子飲食成長紀錄">
+  <meta property="og:description" content="小王子飲食成長紀錄！">
   <meta property="og:image" content="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/food-icon.png"> 
   <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/food-icon.png">
   <!-- 載入 Google Fonts 兒童童趣字型 -->
@@ -88,7 +88,6 @@
       filter: url('#hand-drawn-stroke');
       transition: background 0.3s ease;
     }
-    /* 🎯 頂部控制欄：精簡純圖示設計 */
     .top-controls {
       display: flex;
       justify-content: flex-end;
@@ -477,8 +476,6 @@
       font-size: 14px;
       padding: 20px 0;
     }
-    /* 📸 截圖模式專用樣式 */
-    /* 📸 截圖模式：購物收據風格 */
     .screenshot-card {
       background: #fffef9;
       border: 2px solid #2c2825;
@@ -513,14 +510,6 @@
       font-weight: 600;
       color: var(--text-sub);
       line-height: 1.4;
-    }
-    .shot-divider {
-      border: none;
-      border-top: 1.5px dashed #2c2825;
-      margin: 8px 0;
-    }
-    body.dark-mode .shot-divider {
-      border-top-color: #f3ece4;
     }
     .shot-list-header {
       display: flex;
@@ -628,7 +617,6 @@
   </defs>
 </svg>
 <div class="card" id="mainCard">
-  <!-- 🎯 頂部控制按鈕：純圖示簡潔版 -->
   <div class="top-controls">
     <button class="control-btn" id="refreshBtn" onclick="refreshData()" title="重新整理">🔄</button>
     <button class="control-btn" id="shotModeBtn" onclick="toggleScreenshotMode()" title="截圖模式">📸</button>
@@ -637,7 +625,7 @@
   </div>
   <div id="normalView">
     <div class="header">
-      <h2 id="appTitle">👦 Luka's 小王子成長紀錄 🚗</h2>
+      <h2 id="appTitle">👦 小王子成長紀錄 🚗</h2>
     </div>
     <div class="hw-banner">
       <div>
@@ -713,7 +701,6 @@
       </form>
       <div id="msg"></div>
     </div>
-    <!-- 過往紀錄頁面 -->
     <div id="sectionList" style="display:none;">
       <div class="view-toggle-group">
         <button class="view-btn active" id="viewListBtn" onclick="switchHistoryView('list')">📋 列表檢視</button>
@@ -748,7 +735,6 @@
       </div>
     </div>
   </div>
-  <!-- 📸 截圖模式專用圖卡介面 -->
   <div id="screenshotView" style="display: none;">
     <div style="display: flex; gap: 8px; margin-bottom: 14px;">
       <input type="date" id="shotDate" style="flex: 1; padding: 8px;" onchange="renderScreenshotCard()">
@@ -760,12 +746,10 @@
         <div class="shot-sub" id="shotDateText">📅 --</div>
       </div>
       <div class="shot-list-header">
-        <span>餐別 / 食物</span>
-        <span>份量</span>
+        <span id="shotHeaderMealFood">餐別 / 食物</span>
+        <span id="shotHeaderPortion">份量</span>
       </div>
-      <div id="shotListContainer">
-        <!-- 動態渲染當天飲食清單（收據風格） -->
-      </div>
+      <div id="shotListContainer"></div>
       <div class="shot-summary" id="shotStatsText">🍼 總奶量: 0ml<br>🥣 用餐數: 0次</div>
       <div class="shot-footer-hint" id="shotFooterHint">✨ 截圖保存 · 陪伴寶寶健康成長 ✨</div>
     </div>
@@ -780,6 +764,10 @@
       shotModeBtn: "📸",
       exitShotBtn: "✖ 離開截圖",
       shotCardTitle: "👦 小王子單日飲食卡 🚗",
+      shotHeaderMealFood: "餐別 / 食物",
+      shotHeaderPortion: "份量",
+      shotTotalMilk: "🍼 總奶量",
+      shotMealCount: "🥣 用餐數",
       shotFooterHint: "✨ 截圖保存 · 陪伴寶寶健康成長 ✨",
       hwTitle: "📏 最新身材紀錄",
       statMilkLabel: "🍼 今日總奶量",
@@ -829,6 +817,7 @@
       meals: [
         { value: "配方奶", text: "🍼 配方奶" },
         { value: "早餐", text: "🥣 早餐" },
+        { value: "上午茶", text: "🍌 上午茶" },
         { value: "午餐", text: "🍜 午餐" },
         { value: "下午茶", text: "🍎 下午茶" },
         { value: "晚餐", text: "🍲 晚餐" },
@@ -841,6 +830,10 @@
       shotModeBtn: "📸",
       exitShotBtn: "✖ Exit Shot",
       shotCardTitle: "👦 Daily Food Summary 🚗",
+      shotHeaderMealFood: "Meal / Food",
+      shotHeaderPortion: "Portion",
+      shotTotalMilk: "🍼 Total Milk",
+      shotMealCount: "🥣 Meals Count",
       shotFooterHint: "✨ Captured with love · Growing up happy ✨",
       hwTitle: "📏 Latest Growth Stats",
       statMilkLabel: "🍼 Today's Milk",
@@ -890,6 +883,7 @@
       meals: [
         { value: "配方奶", text: "🍼 Formula Milk" },
         { value: "早餐", text: "🥣 Breakfast" },
+        { value: "上午茶", text: "🥐 Forenoon Tea" },
         { value: "午餐", text: "🍜 Lunch" },
         { value: "下午茶", text: "🍎 Tea Time" },
         { value: "晚餐", text: "🍲 Dinner" },
@@ -1012,12 +1006,15 @@
   }
   function applyLanguage(lang) {
     const t = i18n[lang];
+    document.title = t.appTitle;
     document.getElementById('refreshBtn').innerText = t.refreshBtn;
     document.getElementById('shotModeBtn').innerText = t.shotModeBtn;
     document.getElementById('langBtn').innerText = lang === 'zh' ? "🌐 EN" : "🌐 中";
     document.getElementById('appTitle').innerText = t.appTitle;
     document.getElementById('exitShotBtn').innerText = t.exitShotBtn;
     document.getElementById('shotCardTitle').innerText = t.shotCardTitle;
+    document.getElementById('shotHeaderMealFood').innerText = t.shotHeaderMealFood;
+    document.getElementById('shotHeaderPortion').innerText = t.shotHeaderPortion;
     document.getElementById('shotFooterHint').innerText = t.shotFooterHint;
     document.getElementById('hwTitle').innerText = t.hwTitle;
     document.getElementById('statMilkLabel').innerText = t.statMilkLabel;
@@ -1090,16 +1087,21 @@
       .catch(err => console.log('讀取設定檔失敗', err));
   }
   function applyConfigData(data) {
-    if (data.title_text && currentLang === 'zh') document.getElementById('appTitle').innerText = data.title_text;
+    if (!data) return;
+    if (data.title_text) i18n.zh.appTitle = data.title_text;
+    if (data.title_text_en) i18n.en.appTitle = data.title_text_en;
     if (data.success_msg) customMsgs.success_msg = data.success_msg;
     if (data.error_msg) customMsgs.error_msg = data.error_msg;
+    applyLanguage(currentLang);
   }
   function autoSelectMealByTime() {
     const hour = new Date().getHours();
     const mealSelect = document.getElementById('meal');
-    if (hour >= 6 && hour < 10) {
+    if (hour >= 6 && hour < 9) {
       mealSelect.value = "早餐";
-    } else if (hour >= 10 && hour < 14) {
+    } else if (hour >= 9 && hour < 12) {
+      mealSelect.value = "上午茶";
+    } else if (hour >= 12 && hour < 14) {
       mealSelect.value = "午餐";
     } else if (hour >= 14 && hour < 17) {
       mealSelect.value = "下午茶";
@@ -1180,10 +1182,9 @@
         let mealCount = 0;
         if (!logs || logs.length === 0) {
           container.innerHTML = `<div class="no-logs">${t.noLogsFound}</div>`;
-          document.getElementById('shotStatsText').innerHTML = `🍼 總奶量: 0ml<br>🥣 用餐數: 0${t.unitTimes}`;
+          document.getElementById('shotStatsText').innerHTML = `${t.shotTotalMilk}: 0ml<br>${t.shotMealCount}: 0${t.unitTimes}`;
           return;
         }
-        // 按時間順序（較早的在上，像收據流水）
         const sortedLogs = [...logs].sort((a, b) => (a.rowIndex || 0) - (b.rowIndex || 0));
         container.innerHTML = '';
         sortedLogs.forEach(log => {
@@ -1191,9 +1192,7 @@
           totalMilk += milkVal;
           if (log.food) mealCount++;
           const matchedMeal = t.meals.find(m => m.value === log.meal);
-          // 簡化餐別顯示（去掉 emoji 前綴以更像收據）
           let displayMeal = matchedMeal ? matchedMeal.text : (log.meal || '');
-          // 保留 emoji 但精簡
           displayMeal = displayMeal.replace(/\s+/g, ' ').trim();
           const item = document.createElement('div');
           item.className = 'shot-item';
@@ -1221,7 +1220,7 @@
           container.appendChild(item);
         });
         document.getElementById('shotStatsText').innerHTML =
-          `🍼 總奶量: ${totalMilk}ml<br>🥣 用餐數: ${mealCount}${t.unitTimes}`;
+          `${t.shotTotalMilk}: ${totalMilk}ml<br>${t.shotMealCount}: ${mealCount}${t.unitTimes}`;
       })
       .catch(() => {
         container.innerHTML = `<div class="no-logs">${t.failLogs}</div>`;
@@ -1295,7 +1294,7 @@
             labels: mealLabels,
             datasets: [{
               data: mealValues,
-              backgroundColor: ['#ff8b94', '#ffe66d', '#a8e6cf', '#9bf6ff', '#bdb2ff', '#ffc6ff'],
+              backgroundColor: ['#ff8b94', '#ffe66d', '#a8e6cf', '#9bf6ff', '#bdb2ff', '#ffc6ff', '#ffd6a5'],
               borderColor: '#2c2825',
               borderWidth: 2.5
             }]

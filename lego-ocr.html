@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LEGO OCR AI - 支援拖曳與圖片預覽</title>
+  <title>LEGO OCR AI</title>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
   <style>
@@ -119,8 +118,7 @@
     }
 
     .btn-green { background-color: var(--lego-green); width: 100%; font-size: 1.1rem; padding: 14px; }
-    .btn-blue { background-color: var(--lego-blue); }
-    .btn-yellow { background-color: var(--lego-yellow); color: var(--lego-black); }
+    .btn-yellow { background-color: var(--lego-yellow); color: var(--lego-black); width: 100%; }
     .btn-small-clear { background-color: #888; font-size: 0.8rem; padding: 4px 8px; border: 2px solid var(--lego-black); }
 
     .lego-btn:active { transform: translateY(2px); box-shadow: 0px 1px 0px var(--lego-black); }
@@ -142,8 +140,7 @@
     .progress-bar { height: 100%; background: var(--lego-blue); width: 0%; transition: width 0.2s ease; }
     .status-text { font-weight: bold; margin-top: 6px; text-align: center; color: var(--lego-blue); font-size: 0.9rem; }
 
-    .bottom-actions { display: flex; gap: 10px; margin-top: 12px; }
-    .bottom-actions .lego-btn { flex: 1; }
+    .bottom-actions { display: flex; margin-top: 12px; }
 
     .history-section {
       margin-top: 12px;
@@ -159,7 +156,7 @@
 <div class="lego-container">
 
   <div class="lego-card card-red">
-    <h1>🧱 LEGO OCR AI</h1>
+    <h1>LEGO OCR AI</h1>
     <p style="text-align: center; margin: 0; font-size: 0.85rem; font-weight: bold;">
       圖片轉文字 ➔ 多語言分析 ➔ 歷史紀錄管理
     </p>
@@ -239,7 +236,6 @@
 
     <div class="bottom-actions">
       <button class="lego-btn btn-yellow" id="copyBtn" onclick="copyResult()">📋 複製內容</button>
-      <button class="lego-btn btn-blue" onclick="downloadPDF()">📄 下載 PDF</button>
     </div>
 
   </div>
@@ -248,7 +244,7 @@
 
 <script>
   let rawMarkdownResult = '';
-  let selectedFile = null; // 儲存目前的圖片檔案
+  let selectedFile = null;
   const HISTORY_KEY = 'lego_ocr_history';
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -303,7 +299,6 @@
     selectedFile = file;
     document.getElementById('fileName').innerText = "已選擇: " + file.name;
 
-    // 建立 FileReader 來渲染預覽圖
     const reader = new FileReader();
     reader.onload = function(e) {
       const img = document.getElementById('imagePreview');
@@ -396,21 +391,6 @@
     }
   }
 
-  function downloadPDF() {
-    const aiOutput = document.getElementById('aiOutput');
-    if (!aiOutput.innerText.trim()) return alert('目前沒有可下載的內容！');
-
-    const opt = {
-      margin:       10,
-      filename:     'LEGO_OCR_Result.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(aiOutput).save();
-  }
-
   function getSystemPrompt(mode, lang) {
     const langInstruction = `Please write the response strictly in ${lang}.`;
     switch (mode) {
@@ -425,7 +405,7 @@
   }
 
   async function startOneStepOCR() {
-    const file = selectedFile; // 使用當前選取/拖曳的檔案
+    const file = selectedFile;
     const apiKey = document.getElementById('apiKey').value.trim();
     const mode = document.getElementById('promptMode').value;
     const targetLang = document.getElementById('targetLang').value;

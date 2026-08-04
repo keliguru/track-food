@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- 積木陰影與漸變 -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="8" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+    
+    <!-- 雷射掃描光束漸變 -->
+    <linearGradient id="scanBeam" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#006CB7" stop-opacity="0.0"/>
+      <stop offset="30%" stop-color="#006CB7" stop-opacity="0.15"/>
+      <stop offset="95%" stop-color="#006CB7" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#006CB7" stop-opacity="1.0"/>
+    </linearGradient>
+
+    <!-- AI 閃耀星光漸變 -->
+    <radialGradient id="aiGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD500"/>
+      <stop offset="100%" stop-color="#FF9900"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 圖示背景圓角矩形 (經典樂高黃背景) -->
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="#FFD500" stroke="#111111" stroke-width="16"/>
+
+  <!-- 主體外框卡片 (樂高紅積木底座) -->
+  <g filter="url(#shadow)">
+    <rect x="96" y="128" width="320" height="280" rx="32" fill="#E3000B" stroke="#111111" stroke-width="14"/>
+  </g>
+
+  <!-- 樂高積木凸點 (Studs) -->
+  <g fill="#E3000B" stroke="#111111" stroke-width="12">
+    <!-- 左凸點 -->
+    <rect x="156" y="92" width="72" height="36" rx="12"/>
+    <!-- 右凸點 -->
+    <rect x="284" y="92" width="72" height="36" rx="12"/>
+  </g>
+  <!-- 凸點頂部光澤 -->
+  <path d="M 168 100 Q 192 96 216 100" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M 296 100 Q 320 96 344 100" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.6"/>
+
+  <!-- OCR 文件與鏡頭視窗 (內部白色紙張區域) -->
+  <rect x="136" y="168" width="240" height="200" rx="20" fill="#FFFFFF" stroke="#111111" stroke-width="12"/>
+
+  <!-- OCR 掃描文件線條細節 -->
+  <line x1="168" y1="208" x2="260" y2="208" stroke="#111111" stroke-width="10" stroke-linecap="round"/>
+  <line x1="168" y1="240" x2="312" y2="240" stroke="#111111" stroke-width="10" stroke-linecap="round"/>
+  <line x1="168" y1="272" x2="280" y2="272" stroke="#111111" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- 掃描藍光區域 (Scan Beam Area) -->
+  <rect x="136" y="168" width="240" height="110" fill="url(#scanBeam)"/>
+  <!-- 雷射掃描橫線 (藍色樂高藍) -->
+  <line x1="128" y1="278" x2="384" y2="278" stroke="#006CB7" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- 取景框四角 (OCR Target Frame) -->
+  <path d="M 152 192 L 152 180 L 164 180" stroke="#006CB7" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M 360 192 L 360 180 L 348 180" stroke="#006CB7" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M 152 320 L 152 332 L 164 332" stroke="#006CB7" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M 360 320 L 360 332 L 348 332" stroke="#006CB7" stroke-width="8" stroke-linecap="round" fill="none"/>
+
+  <!-- 右下角 AI 智慧星光標誌 (Sparkle / Magic AI) -->
+  <g stroke="#111111" stroke-width="8" stroke-linejoin="round">
+    <!-- 主星 -->
+    <path d="M 352 320 Q 352 352 384 352 Q 352 352 352 384 Q 352 352 320 352 Q 352 352 352 320 Z" fill="url(#aiGlow)"/>
+    <!-- 小副星 -->
+    <path d="M 304 300 Q 304 316 320 316 Q 304 316 304 332 Q 304 316 288 316 Q 304 316 304 300 Z" fill="#FFD500"/>
+  </g>
+</svg>

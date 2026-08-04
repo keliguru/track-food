@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>MEGA Health Portal · 個人健康歷程管理 (PRO)</title>
+  <title>MEGA Health Portal</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/mega-health-icon.png">
   <meta property="og:type" content="website">
   <meta property="og:title" content="MEGA Health Portal">
@@ -80,7 +80,7 @@
     }
     .modal-backdrop-blur {
       backdrop-filter: blur(8px);
-      background-color: rgba(15, 23, 42, 0.4);
+      background-color: rgba(15, 23, 42, 0.45);
     }
     /* Toast 進入動畫 */
     @keyframes slideInRight {
@@ -90,12 +90,21 @@
     .toast-animate {
       animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+    /* 防誤觸震動提示動畫 */
+    @keyframes modalShake {
+      0%, 100% { transform: scale(1) translateX(0); }
+      15%, 45%, 75% { transform: scale(1.01) translateX(-4px); }
+      30%, 60%, 90% { transform: scale(1.01) translateX(4px); }
+    }
+    .shake-animation {
+      animation: modalShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
   </style>
 </head>
 <body class="text-mega-slate min-h-screen pb-16 flex flex-col justify-between selection:bg-mega-soft selection:text-mega">
 
   <!-- ==================== TOAST 通知容器 ==================== -->
-  <div id="toastContainer" class="fixed bottom-5 right-5 z-[70] flex flex-col space-y-2 max-w-sm w-full px-4 pointer-events-none"></div>
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-[80] flex flex-col space-y-2 max-w-sm w-full px-4 pointer-events-none"></div>
 
   <div>
     <!-- Header -->
@@ -168,7 +177,7 @@
         <!-- Filter, Search & Add Record -->
         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
           
-          <!-- 病人 Filter 下拉選單 (雙分頁支援) -->
+          <!-- 病人 Filter 下拉選單 -->
           <div class="relative min-w-[130px]" id="patientFilterWrapper">
             <select id="patientFilter" onchange="applyFilters()" class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-mega focus:bg-white transition appearance-none cursor-pointer">
               <option value="">所有病人</option>
@@ -177,7 +186,7 @@
             <i data-lucide="chevron-down" class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
           </div>
 
-          <!-- 搜尋欄 (已加上 Debounce) -->
+          <!-- 搜尋欄 (Debounce) -->
           <div class="relative flex-1 sm:w-52 min-w-[160px]">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
             <input type="text" id="searchInput" placeholder="搜尋關鍵字..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-mega focus:bg-white transition">
@@ -196,7 +205,7 @@
 
       <!-- Dynamic Data List Container -->
       <div id="listViewContainer" class="bg-white rounded-2xl border border-slate-200/80 shadow-mega overflow-hidden min-h-[300px]">
-        <!-- 預設顯示 Skeleton 骨架屏 -->
+        <!-- 預設 Skeleton -->
         <div class="p-6 space-y-4 animate-pulse">
           <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
           <div class="space-y-3">
@@ -220,11 +229,11 @@
     <p>© 2026 Personal Health & Medication Relational Management.</p>
   </footer>
 
-  <!-- ==================== MODALS ==================== -->
+  <!-- ==================== MODALS (加入手機防誤觸與點擊隔離) ==================== -->
 
-  <!-- Custom Confirm Modal (取代原生 confirm) -->
-  <div id="confirmModal" class="fixed inset-0 z-[60] hidden modal-backdrop-blur flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center">
+  <!-- Custom Confirm Modal -->
+  <div id="confirmModal" onclick="handleBackdropClick(event, 'confirmModal', false)" class="fixed inset-0 z-[60] hidden modal-backdrop-blur flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center transform transition-all">
       <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
         <i data-lucide="alert-triangle" class="w-6 h-6"></i>
       </div>
@@ -237,9 +246,9 @@
     </div>
   </div>
 
-  <!-- API URL Modal -->
-  <div id="settingsModal" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+  <!-- API URL Modal (設定為靜態防誤點 isStatic=true) -->
+  <div id="settingsModal" onclick="handleBackdropClick(event, 'settingsModal', true)" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" id="settingsModal_card" class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
         <div class="flex items-center space-x-2 text-mega">
           <i data-lucide="link-2" class="w-5 h-5"></i>
@@ -265,10 +274,9 @@
     </div>
   </div>
 
-  <!-- VIEW-ONLY MODAL (就醫診斷唯讀檢視視窗 - 含關聯藥物) -->
-  <div id="viewMedicalModal" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 my-8">
-      <!-- Modal Header -->
+  <!-- VIEW-ONLY MODAL (唯讀模式，允許點擊背景安全關閉 isStatic=false) -->
+  <div id="viewMedicalModal" onclick="handleBackdropClick(event, 'viewMedicalModal', false)" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4 overflow-y-auto">
+    <div onclick="event.stopPropagation()" class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 my-8 transform transition-all">
       <div class="flex justify-between items-start pb-4 border-b border-slate-100">
         <div class="flex items-center space-x-3">
           <div class="p-2.5 bg-mega-soft text-mega rounded-xl">
@@ -287,7 +295,6 @@
         </button>
       </div>
 
-      <!-- Modal Body -->
       <div class="py-5 space-y-4 text-xs">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-100">
           <div>
@@ -353,7 +360,6 @@
         </div>
       </div>
 
-      <!-- Modal Footer -->
       <div class="pt-4 border-t border-slate-100 flex justify-between items-center">
         <button onclick="closeModal('viewMedicalModal')" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition">關閉</button>
         <button id="view_editBtn" class="px-5 py-2.5 bg-mega hover:bg-mega-dark text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center space-x-1.5">
@@ -364,9 +370,9 @@
     </div>
   </div>
 
-  <!-- MEDICAL Form Modal -->
-  <div id="medicalModal" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 my-8">
+  <!-- MEDICAL Form Modal (設定為靜態防誤點 isStatic=true，防誤觸丟失輸入資料) -->
+  <div id="medicalModal" onclick="handleBackdropClick(event, 'medicalModal', true)" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4 overflow-y-auto">
+    <div onclick="event.stopPropagation()" id="medicalModal_card" class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 my-8 transform transition-all">
       <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
         <div class="flex items-center space-x-2 text-mega">
           <div class="p-2 bg-mega-soft rounded-lg">
@@ -393,7 +399,6 @@
             <label class="block font-semibold text-slate-700 mb-1">醫院 / 診所 <span class="text-red-500">*</span></label>
             <input type="text" id="med_醫院/診所" required placeholder="例如：養和醫院" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
           </div>
-          <!-- 升級為原生日期時間選擇器 -->
           <div>
             <label class="block font-semibold text-slate-700 mb-1">入院日期 / 時間</label>
             <input type="datetime-local" id="med_入院日期/時間" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
@@ -434,9 +439,9 @@
     </div>
   </div>
 
-  <!-- MEDICATION Modal -->
-  <div id="medicationModal" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 my-8">
+  <!-- MEDICATION Form Modal (設定為靜態防誤點 isStatic=true，防誤觸丟失輸入資料) -->
+  <div id="medicationModal" onclick="handleBackdropClick(event, 'medicationModal', true)" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4 overflow-y-auto">
+    <div onclick="event.stopPropagation()" id="medicationModal_card" class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 my-8 transform transition-all">
       <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
         <div class="flex items-center space-x-2 text-mega">
           <div class="p-2 bg-mega-soft rounded-lg">
@@ -497,6 +502,52 @@
   <script>
     let currentSheet = '病歷紀錄';
     let rawData = { '病歷紀錄': [], '藥物紀錄': [] };
+    let openModalCount = 0; // 追蹤目前打開的 Popup 數量以控制背景滾動鎖
+
+    /* -------------------------------------------------------------
+       手機防誤觸與 Modal 管理核心：背景鎖定 & 震動提示
+    -------------------------------------------------------------- */
+    function openModal(modalId) {
+      const el = document.getElementById(modalId);
+      if (!el) return;
+      el.classList.remove('hidden');
+      
+      // 鎖定 Body 滾動與觸控行為，防止背後網頁被誤滑動
+      if (openModalCount === 0) {
+        document.body.classList.add('overflow-hidden', 'overscroll-none');
+      }
+      openModalCount++;
+    }
+
+    function closeModal(modalId) {
+      const el = document.getElementById(modalId);
+      if (!el || el.classList.contains('hidden')) return;
+      el.classList.add('hidden');
+      
+      openModalCount = Math.max(0, openModalCount - 1);
+      if (openModalCount === 0) {
+        document.body.classList.remove('overflow-hidden', 'overscroll-none');
+      }
+    }
+
+    // 遮罩背景點擊處理與表單防誤點震動
+    function handleBackdropClick(event, modalId, isStatic) {
+      // 確保是真的點在最外層背部遮罩，而不是子元素
+      if (event.target.id === modalId) {
+        if (isStatic) {
+          // 如果是表單，不自動關閉並發出微幅震動提示，避免手機誤觸遺失資料
+          const card = document.getElementById(`${modalId}_card`) || event.target.firstElementChild;
+          if (card) {
+            card.classList.remove('shake-animation');
+            void card.offsetWidth; // 重置 CSS 動畫
+            card.classList.add('shake-animation');
+          }
+        } else {
+          // 唯讀或確認視窗，可安全直接關閉
+          closeModal(modalId);
+        }
+      }
+    }
 
     /* -------------------------------------------------------------
        安全防禦與 UI 工具：HTML 逸出 (防 XSS)、Toast、Debounce
@@ -547,7 +598,7 @@
         closeModal('confirmModal');
         onConfirm();
       };
-      document.getElementById('confirmModal').classList.remove('hidden');
+      openModal('confirmModal');
     }
 
     function debounce(func, wait) {
@@ -558,13 +609,11 @@
       };
     }
 
-    /* 將 "YYYY-MM-DD HH:mm" 轉換為 input[type=datetime-local] 所需的 "YYYY-MM-DDTHH:mm" */
     function toInputDateTime(str) {
       if (!str) return '';
       return str.replace(' ', 'T').slice(0, 16);
     }
 
-    /* 將 input[type=datetime-local] 的值轉為 "YYYY-MM-DD HH:mm" 格式存儲 */
     function fromInputDateTime(str) {
       if (!str) return '';
       return str.replace('T', ' ').slice(0, 16);
@@ -577,7 +626,6 @@
       lucide.createIcons();
       const savedUrl = localStorage.getItem('gas_mega_health_url');
       
-      // 綁定 Debounced Search
       document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 250));
 
       if (savedUrl) {
@@ -585,7 +633,6 @@
         document.getElementById('urlConfigWarning').classList.add('hidden');
         document.getElementById('connectionStatusBadge').classList.remove('hidden');
 
-        // 先載入 LocalStorage 緩存 (立即顯示，達成樂觀載入)
         const cached = localStorage.getItem('mega_health_cache_data');
         if (cached) {
           try {
@@ -598,8 +645,6 @@
             console.error('快取解析失敗', e);
           }
         }
-
-        // 靜默在背景請求最新資料
         refreshCurrentData(false);
       }
     });
@@ -609,11 +654,7 @@
     }
 
     function openSettingsModal() {
-      document.getElementById('settingsModal').classList.remove('hidden');
-    }
-
-    function closeModal(modalId) {
-      document.getElementById(modalId).classList.add('hidden');
+      openModal('settingsModal');
     }
 
     function saveGasUrl() {
@@ -637,7 +678,6 @@
     function refreshCurrentData(showLoading = true) {
       loadData('病歷紀錄', showLoading).then(() => {
         loadData('藥物紀錄', false).then(() => {
-          // 同步完成後將資料寫入緩存
           localStorage.setItem('mega_health_cache_data', JSON.stringify(rawData));
           updateBadges();
           updatePatientDropdown();
@@ -716,7 +756,6 @@
       });
     }
 
-    /* 支援處方藥物頁籤依照「關聯病歷」的病人過濾 */
     function applyFilters() {
       const selectedPatient = document.getElementById('patientFilter').value;
       const q = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -726,7 +765,6 @@
         if (currentSheet === '病歷紀錄') {
           list = list.filter(item => item['病人姓名'] === selectedPatient);
         } else {
-          // 找尋該藥物關聯病歷是否屬於被挑選的病人
           list = list.filter(item => {
             const linkedMed = (rawData['病歷紀錄'] || []).find(m => m['ID'] == item['關聯病歷ID']);
             return linkedMed && linkedMed['病人姓名'] === selectedPatient;
@@ -789,13 +827,10 @@
         editRecord(id);
       };
 
-      document.getElementById('viewMedicalModal').classList.remove('hidden');
+      openModal('viewMedicalModal');
       lucide.createIcons();
     }
 
-    /* -------------------------------------------------------------
-       渲染：桌面端表格 + 行動端卡片佈局 (完全防護 XSS)
-    -------------------------------------------------------------- */
     function renderListView(list) {
       const container = document.getElementById('listViewContainer');
       if (!list || list.length === 0) {
@@ -812,7 +847,6 @@
 
       if (currentSheet === '病歷紀錄') {
         container.innerHTML = `
-          <!-- 桌面端表格 (md 以上顯示) -->
           <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
@@ -879,7 +913,7 @@
             </table>
           </div>
 
-          <!-- 行動端卡片佈局 (手機 md 以下專用) -->
+          <!-- 行動端卡片佈局 -->
           <div class="md:hidden divide-y divide-slate-100">
             ${list.map(item => {
               const linkedDrugs = (rawData['藥物紀錄'] || []).filter(d => d['關聯病歷ID'] == item['ID']);
@@ -893,7 +927,7 @@
                       </div>
                       <h4 class="font-bold text-slate-900 text-sm">${escapeHTML(item['診斷結果'] || '未填寫')}</h4>
                     </div>
-                    <div class="flex items-center space-x-1">
+                    <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
                       <button onclick="editRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-slate-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                       <button onclick="deleteRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
@@ -1009,13 +1043,13 @@
         document.getElementById('medicalForm').reset();
         document.getElementById('med_ID').value = '';
         document.getElementById('medModalTitle').innerText = '新增就醫診斷紀錄';
-        document.getElementById('medicalModal').classList.remove('hidden');
+        openModal('medicalModal');
       } else {
         populateMedicalDropdownForDrugModal();
         document.getElementById('medicationForm').reset();
         document.getElementById('drug_ID').value = '';
         document.getElementById('drugModalTitle').innerText = '新增處方用藥紀錄';
-        document.getElementById('medicationModal').classList.remove('hidden');
+        openModal('medicationModal');
       }
     }
 
@@ -1035,7 +1069,7 @@
         document.getElementById('med_治療及結果').value = item['治療及結果'] || '';
         document.getElementById('med_備註').value = item['備註'] || '';
         document.getElementById('medModalTitle').innerText = '編輯就醫診斷紀錄';
-        document.getElementById('medicalModal').classList.remove('hidden');
+        openModal('medicalModal');
       } else {
         populateMedicalDropdownForDrugModal();
         document.getElementById('drug_ID').value = item.ID || '';
@@ -1045,13 +1079,10 @@
         document.getElementById('drug_次數及療程').value = item['次數及療程'] || '';
         document.getElementById('drug_特別備註').value = item['特別備註'] || '';
         document.getElementById('drugModalTitle').innerText = '編輯處方用藥紀錄';
-        document.getElementById('medicationModal').classList.remove('hidden');
+        openModal('medicationModal');
       }
     }
 
-    /* -------------------------------------------------------------
-       儲存紀錄（含按鈕防重複送出保護）
-    -------------------------------------------------------------- */
     async function saveRecord(e, sheetName) {
       e.preventDefault();
       const url = getGasUrl();
@@ -1061,7 +1092,6 @@
       const submitBtn = isMedical ? document.getElementById('medSubmitBtn') : document.getElementById('drugSubmitBtn');
       const originalBtnText = submitBtn.innerHTML;
 
-      // 鎖定送出按鈕
       submitBtn.disabled = true;
       submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>儲存中...</span>`;
       lucide.createIcons();
@@ -1110,16 +1140,12 @@
       } catch (err) {
         showToast('網路請求失敗，請稍後再試', 'error');
       } finally {
-        // 恢復按鈕狀態
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnText;
         lucide.createIcons();
       }
     }
 
-    /* -------------------------------------------------------------
-       刪除紀錄（使用 Tailwind Modal + Toast）
-    -------------------------------------------------------------- */
     function deleteRecord(id) {
       showConfirmModal('確定要刪除這筆紀錄？', '該紀錄刪除後將無法恢復，確定要從雲端資料庫移除？', async () => {
         const url = getGasUrl();

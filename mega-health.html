@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MEGA Health Portal · 個人健康歷程管理</title>
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/mega-health-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="MEGA Health Portal">
+  <meta property="og:description" content="MEGA Health Portal！">
+  <meta property="og:image" content="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/mega-health-icon.png"> 
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/mega-health-icon.png">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            mega: {
+              DEFAULT: '#00605A',
+              dark: '#004B46',
+              light: '#008077',
+              soft: '#EBF4F3',
+              gold: '#CBA135',
+              sand: '#F7F6F2',
+              slate: '#1E293B',
+              muted: '#64748B'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+          },
+          boxShadow: {
+            'mega': '0 4px 20px -2px rgba(0, 96, 90, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',
+            'mega-hover': '0 10px 25px -5px rgba(0, 96, 90, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F4F6F5;
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mega-gradient {
+      background: linear-gradient(135deg, #00605A 0%, #00423E 100%);
+    }
+    .mega-brush-gold {
+      background: linear-gradient(135deg, #D4AF37 0%, #AA820A 100%);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00605A;
+    }
+    .active-tab {
+      color: #00605A !important;
+      border-bottom: 2.5px solid #00605A !important;
+      font-weight: 700 !important;
+    }
+    .modal-backdrop-blur {
+      backdrop-filter: blur(8px);
+      background-color: rgba(15, 23, 42, 0.4);
+    }
+  </style>
+</head>
+<body class="text-mega-slate min-h-screen pb-16 flex flex-col justify-between selection:bg-mega-soft selection:text-mega">
+
+  <div>
+    <!-- Header -->
+    <header class="mega-gradient text-white sticky top-0 z-40 shadow-md">
+      <div class="h-1 w-full mega-brush-gold"></div>
+      
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
+            <i data-lucide="cross" class="w-5 h-5 text-mega-gold stroke-[2.5]"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-semibold tracking-widest text-mega-gold uppercase">MEGA Health</span>
+              <span class="text-[10px] bg-white/15 px-2 py-0.5 rounded-full text-white/80 font-medium">Portal</span>
+            </div>
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">健康歷程與藥物管理系統</h1>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <div id="connectionStatusBadge" class="hidden sm:flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-200 border border-emerald-500/30">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>已連線</span>
+          </div>
+
+          <button onclick="openSettingsModal()" class="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition border border-white/15 backdrop-blur-sm">
+            <i data-lucide="sliders" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">API URL 設定</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
+      
+      <!-- API URL Warning Banner -->
+      <div id="urlConfigWarning" class="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start space-x-3 shadow-sm">
+        <div class="p-2 bg-amber-100 text-amber-700 rounded-lg shrink-0">
+          <i data-lucide="alert-circle" class="w-5 h-5"></i>
+        </div>
+        <div class="flex-1 text-xs sm:text-sm text-amber-800">
+          <p class="font-bold text-amber-900 mb-0.5">尚未設置 Google Apps Script API 網址</p>
+          <p class="text-amber-700">請點擊右上角「API URL 設定」輸入您的 Web App 部署網址以同步 Google Sheet 雲端資料。</p>
+        </div>
+        <button onclick="openSettingsModal()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shrink-0 transition">
+          立即設定
+        </button>
+      </div>
+
+      <!-- Control Bar -->
+      <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-mega border border-slate-200/80 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        
+        <!-- Tabs -->
+        <div class="flex border-b md:border-b-0 border-slate-100 gap-6 px-2 overflow-x-auto">
+          <button id="tab-medical" onclick="switchTab('病歷紀錄')" class="pb-3 md:pb-0 text-slate-500 font-medium text-sm flex items-center space-x-2 transition-all duration-200 whitespace-nowrap active-tab">
+            <i data-lucide="stethoscope" class="w-4 h-4"></i>
+            <span>就醫診斷 (MEDICAL)</span>
+            <span id="medicalBadge" class="bg-mega-soft text-mega text-xs px-2 py-0.5 rounded-full font-bold ml-1">0</span>
+          </button>
+
+          <button id="tab-medication" onclick="switchTab('藥物紀錄')" class="pb-3 md:pb-0 text-slate-500 font-medium text-sm flex items-center space-x-2 transition-all duration-200 whitespace-nowrap">
+            <i data-lucide="pill" class="w-4 h-4"></i>
+            <span>處方用藥 (MEDICATION)</span>
+            <span id="medicationBadge" class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full font-bold ml-1">0</span>
+          </button>
+        </div>
+
+        <!-- Filter, Search & Add Record -->
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          
+          <!-- 病人 Filter 下拉選單 -->
+          <div class="relative min-w-[130px]" id="patientFilterWrapper">
+            <select id="patientFilter" onchange="applyFilters()" class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-mega focus:bg-white transition appearance-none cursor-pointer">
+              <option value="">所有病人</option>
+            </select>
+            <i data-lucide="user-check" class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-mega pointer-events-none"></i>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+          </div>
+
+          <!-- 搜尋欄 -->
+          <div class="relative flex-1 sm:w-52 min-w-[160px]">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="searchInput" oninput="applyFilters()" placeholder="搜尋關鍵字..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-mega focus:bg-white transition">
+          </div>
+
+          <button onclick="refreshCurrentData()" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition" title="重新整理">
+            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+          </button>
+
+          <button onclick="openCreateModal()" class="px-4 py-2.5 bg-mega hover:bg-mega-dark text-white rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-1.5 shadow-md transition hover:scale-[1.02]">
+            <i data-lucide="plus" class="w-4 h-4 stroke-[3]"></i>
+            <span>新增紀錄</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic Data List Container -->
+      <div id="listViewContainer" class="bg-white rounded-2xl border border-slate-200/80 shadow-mega overflow-hidden">
+        <div class="py-16 text-center">
+          <div class="inline-flex p-4 rounded-full bg-mega-soft text-mega mb-3 animate-spin">
+            <i data-lucide="loader-2" class="w-8 h-8"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">正在同步國泰健康與用藥關聯資料...</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="max-w-6xl mx-auto px-4 sm:px-6 pt-12 text-center text-xs text-slate-400">
+    <div class="flex justify-center items-center space-x-2 mb-2">
+      <div class="w-2 h-2 rounded-full bg-mega-gold"></div>
+      <span class="font-semibold text-slate-500 tracking-wider uppercase">mega Health Record System</span>
+      <div class="w-2 h-2 rounded-full bg-mega-gold"></div>
+    </div>
+    <p>© 2026 Personal Health & Medication Relational Management.</p>
+  </footer>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- API URL Modal -->
+  <div id="settingsModal" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2 text-mega">
+          <i data-lucide="link-2" class="w-5 h-5"></i>
+          <h3 class="font-bold text-slate-800 text-base">設定 Apps Script API URL</h3>
+        </div>
+        <button onclick="closeModal('settingsModal')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+        請貼上您於 Google Apps Script 發佈部署獲得的 Web App 網址（結尾應為 <code class="bg-slate-100 text-mega font-mono px-1 py-0.5 rounded">/exec</code>）。
+      </p>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Web App URL</label>
+          <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-mega">
+        </div>
+      </div>
+      <div class="mt-6 flex gap-3">
+        <button onclick="closeModal('settingsModal')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl">取消</button>
+        <button onclick="saveGasUrl()" class="flex-1 py-2.5 bg-mega hover:bg-mega-dark text-white text-xs font-semibold rounded-xl shadow-md">儲存並載入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW-ONLY MODAL (就醫診斷唯讀檢視視窗 - 含關聯藥物) -->
+  <div id="viewMedicalModal" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 my-8">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-start pb-4 border-b border-slate-100">
+        <div class="flex items-center space-x-3">
+          <div class="p-2.5 bg-mega-soft text-mega rounded-xl">
+            <i data-lucide="file-text" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">唯讀模式 READ-ONLY</span>
+              <span id="view_patient_badge" class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">病人：-</span>
+            </div>
+            <h3 id="view_診斷結果" class="text-lg font-bold text-slate-900 mt-1">診斷名稱</h3>
+          </div>
+        </div>
+        <button onclick="closeModal('viewMedicalModal')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="py-5 space-y-4 text-xs">
+        
+        <!-- Hospital & Doctor -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-100">
+          <div>
+            <span class="text-slate-400 block mb-0.5 font-medium">就診醫院 / 診所</span>
+            <p id="view_醫院診所" class="font-bold text-slate-800 text-sm">-</p>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5 font-medium">主診醫生</span>
+            <p id="view_主診醫生" class="font-semibold text-slate-700 text-sm">-</p>
+          </div>
+        </div>
+
+        <!-- Date / Time -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-100">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="calendar" class="w-4 h-4 text-mega"></i>
+            <div>
+              <span class="text-slate-400 block text-[11px]">入院 / 就診時間</span>
+              <p id="view_入院時間" class="font-medium text-slate-700">-</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <i data-lucide="calendar-check" class="w-4 h-4 text-mega"></i>
+            <div>
+              <span class="text-slate-400 block text-[11px]">出院 / 完成時間</span>
+              <p id="view_出院時間" class="font-medium text-slate-700">-</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Symptoms -->
+        <div>
+          <h4 class="font-bold text-slate-700 mb-1 flex items-center space-x-1.5">
+            <i data-lucide="activity" class="w-3.5 h-3.5 text-amber-500"></i>
+            <span>主要症狀</span>
+          </h4>
+          <div id="view_主要症狀" class="p-3 bg-amber-50/50 rounded-xl border border-amber-100/60 text-slate-700 leading-relaxed font-normal">
+            -
+          </div>
+        </div>
+
+        <!-- Treatment -->
+        <div>
+          <h4 class="font-bold text-slate-700 mb-1 flex items-center space-x-1.5">
+            <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-mega"></i>
+            <span>治療及結果</span>
+          </h4>
+          <div id="view_治療及結果" class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 leading-relaxed">
+            -
+          </div>
+        </div>
+
+        <!-- 關聯處方藥物專區 (NEW) -->
+        <div>
+          <h4 class="font-bold text-slate-700 mb-2 flex items-center justify-between">
+            <span class="flex items-center space-x-1.5">
+              <i data-lucide="pill" class="w-3.5 h-3.5 text-mega"></i>
+              <span>開立處方用藥</span>
+            </span>
+            <span id="view_linked_drug_count" class="text-[10px] font-semibold bg-mega-soft text-mega px-2 py-0.5 rounded-full">0 項</span>
+          </h4>
+          
+          <div id="view_linked_medications" class="space-y-2">
+            <!-- 動態插入開立的藥物列表 -->
+          </div>
+        </div>
+
+        <!-- Remarks -->
+        <div>
+          <h4 class="font-bold text-slate-700 mb-1 flex items-center space-x-1.5">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-slate-400"></i>
+            <span>備註事項</span>
+          </h4>
+          <div id="view_備註" class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-500 italic">
+            -
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-4 border-t border-slate-100 flex justify-between items-center">
+        <button onclick="closeModal('viewMedicalModal')" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition">
+          關閉
+        </button>
+        <button id="view_editBtn" onclick="" class="px-5 py-2.5 bg-mega hover:bg-mega-dark text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center space-x-1.5">
+          <i data-lucide="edit-3" class="w-4 h-4"></i>
+          <span>切換至編輯</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MEDICAL Form Modal -->
+  <div id="medicalModal" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 my-8">
+      <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2 text-mega">
+          <div class="p-2 bg-mega-soft rounded-lg">
+            <i data-lucide="stethoscope" class="w-5 h-5 text-mega"></i>
+          </div>
+          <div>
+            <h3 id="medModalTitle" class="font-bold text-slate-800 text-base">新增就醫診斷紀錄</h3>
+            <p class="text-[11px] text-slate-400">MEDICAL Sheet 結構欄位</p>
+          </div>
+        </div>
+        <button onclick="closeModal('medicalModal')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="medicalForm" onsubmit="saveRecord(event, '病歷紀錄')">
+        <input type="hidden" id="med_ID">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">病人姓名 <span class="text-red-500">*</span></label>
+            <input type="text" id="med_病人姓名" required placeholder="例如：張小明" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">醫院 / 診所 <span class="text-red-500">*</span></label>
+            <input type="text" id="med_醫院/診所" required placeholder="例如：養和醫院" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">入院日期 / 時間</label>
+            <input type="text" id="med_入院日期/時間" placeholder="YYYY-MM-DD HH:mm" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">出院日期 / 時間</label>
+            <input type="text" id="med_出院日期/時間" placeholder="YYYY-MM-DD HH:mm" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">主診醫生</label>
+            <input type="text" id="med_主診醫生" placeholder="例如：陳大文醫生" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">診斷結果 <span class="text-red-500">*</span></label>
+            <input type="text" id="med_診斷結果" required placeholder="例如：急性腸胃炎" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-700 mb-1">主要症狀</label>
+            <input type="text" id="med_主要症狀" placeholder="例如：上吐下瀉、發燒 38.5 度" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-700 mb-1">治療及結果</label>
+            <textarea id="med_治療及結果" rows="2" placeholder="例如：打止吐針、點滴注射" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-700 mb-1">備註</label>
+            <input type="text" id="med_備註" placeholder="例如：預約下週複診" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+        </div>
+
+        <div class="mt-6 flex gap-3 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('medicalModal')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl">取消</button>
+          <button type="submit" class="flex-1 py-2.5 bg-mega hover:bg-mega-dark text-white text-xs font-semibold rounded-xl shadow-md">儲存紀錄</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MEDICATION Modal (含關聯病歷選單) -->
+  <div id="medicationModal" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 my-8">
+      <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2 text-mega">
+          <div class="p-2 bg-mega-soft rounded-lg">
+            <i data-lucide="pill" class="w-5 h-5 text-mega"></i>
+          </div>
+          <div>
+            <h3 id="drugModalTitle" class="font-bold text-slate-800 text-base">新增處方用藥紀錄</h3>
+            <p class="text-[11px] text-slate-400">MEDICATION Sheet 結構欄位</p>
+          </div>
+        </div>
+        <button onclick="closeModal('medicationModal')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="medicationForm" onsubmit="saveRecord(event, '藥物紀錄')">
+        <input type="hidden" id="drug_ID">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          
+          <!-- 關聯就醫診斷欄位 -->
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center space-x-1">
+              <i data-lucide="link" class="w-3.5 h-3.5 text-mega"></i>
+              <span>關聯就醫診斷紀錄</span>
+            </label>
+            <select id="drug_關聯病歷ID" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none font-medium text-slate-700">
+              <option value="">-- 不關聯 (獨立藥物) --</option>
+            </select>
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-700 mb-1">藥物名稱 <span class="text-red-500">*</span></label>
+            <input type="text" id="drug_藥物名稱" required placeholder="例如：Amoxicillin 500mg" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-700 mb-1">服用劑量及途徑 <span class="text-red-500">*</span></label>
+            <input type="text" id="drug_服用劑量及途徑" required placeholder="例如：口服每次 1 顆 (500mg)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-700 mb-1">次數及療程</label>
+            <input type="text" id="drug_次數及療程" placeholder="例如：每日 3 次，連續吃 7 天" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-700 mb-1">特別備註</label>
+            <textarea id="drug_特別備註" rows="2" placeholder="例如：飯後三十分鐘服用" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none"></textarea>
+          </div>
+        </div>
+
+        <div class="mt-6 flex gap-3 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('medicationModal')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl">取消</button>
+          <button type="submit" class="flex-1 py-2.5 bg-mega hover:bg-mega-dark text-white text-xs font-semibold rounded-xl shadow-md">儲存紀錄</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    let currentSheet = '病歷紀錄';
+    let rawData = { '病歷紀錄': [], '藥物紀錄': [] };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      const savedUrl = localStorage.getItem('gas_mega_health_url');
+      if (savedUrl) {
+        document.getElementById('gasUrlInput').value = savedUrl;
+        document.getElementById('urlConfigWarning').classList.add('hidden');
+        document.getElementById('connectionStatusBadge').classList.remove('hidden');
+        loadData('病歷紀錄');
+        loadData('藥物紀錄', false);
+      }
+    });
+
+    function getGasUrl() {
+      return localStorage.getItem('gas_mega_health_url') || '';
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function saveGasUrl() {
+      const url = document.getElementById('gasUrlInput').value.trim();
+      if (!url) return alert('請輸入有效的 Web App URL');
+      localStorage.setItem('gas_mega_health_url', url);
+      document.getElementById('urlConfigWarning').classList.add('hidden');
+      document.getElementById('connectionStatusBadge').classList.remove('hidden');
+      closeModal('settingsModal');
+      loadData(currentSheet);
+    }
+
+    function switchTab(sheetName) {
+      currentSheet = sheetName;
+      document.getElementById('tab-medical').classList.toggle('active-tab', sheetName === '病歷紀錄');
+      document.getElementById('tab-medication').classList.toggle('active-tab', sheetName === '藥物紀錄');
+      
+      togglePatientFilterVisibility();
+      applyFilters();
+    }
+
+    function togglePatientFilterVisibility() {
+      const filterWrapper = document.getElementById('patientFilterWrapper');
+      if (currentSheet === '病歷紀錄') {
+        filterWrapper.classList.remove('hidden');
+      } else {
+        filterWrapper.classList.add('hidden');
+      }
+    }
+
+    function refreshCurrentData() {
+      loadData('病歷紀錄');
+      loadData('藥物紀錄');
+    }
+
+    async function loadData(sheetName, render = true) {
+      const url = getGasUrl();
+      if (!url) return;
+
+      if (render) {
+        document.getElementById('listViewContainer').innerHTML = `
+          <div class="py-16 text-center">
+            <div class="inline-flex p-4 rounded-full bg-mega-soft text-mega mb-3 animate-spin">
+              <i data-lucide="loader-2" class="w-8 h-8"></i>
+            </div>
+            <p class="text-sm font-medium text-slate-500">正在獲取最新健康紀錄與藥物關聯...</p>
+          </div>`;
+        lucide.createIcons();
+      }
+
+      try {
+        const response = await fetch(`${url}?sheet=${encodeURIComponent(sheetName)}`);
+        const res = await response.json();
+        if (res.status === 'success') {
+          rawData[sheetName] = res.data;
+          updateBadges();
+          
+          if (sheetName === '病歷紀錄') {
+            updatePatientDropdown();
+            populateMedicalDropdownForDrugModal();
+          }
+
+          if (render) applyFilters();
+        }
+      } catch (err) {
+        if (render) {
+          document.getElementById('listViewContainer').innerHTML = `
+            <div class="py-12 text-center text-slate-500 p-6">
+              <i data-lucide="wifi-off" class="w-8 h-8 mx-auto mb-2 text-slate-400"></i>
+              <p class="font-bold text-slate-700 text-sm">連線中斷或 CORS 設定失敗</p>
+            </div>`;
+          lucide.createIcons();
+        }
+      }
+    }
+
+    function updateBadges() {
+      document.getElementById('medicalBadge').innerText = (rawData['病歷紀錄'] || []).length;
+      document.getElementById('medicationBadge').innerText = (rawData['藥物紀錄'] || []).length;
+    }
+
+    function updatePatientDropdown() {
+      const select = document.getElementById('patientFilter');
+      const currentSelected = select.value;
+      const list = rawData['病歷紀錄'] || [];
+      const patients = [...new Set(list.map(item => item['病人姓名']).filter(Boolean))];
+
+      select.innerHTML = `<option value="">所有病人 (${patients.length})</option>`;
+      patients.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        if (name === currentSelected) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    /* 為藥物 Modal 動態生成診斷關聯選單 */
+    function populateMedicalDropdownForDrugModal() {
+      const select = document.getElementById('drug_關聯病歷ID');
+      const list = rawData['病歷紀錄'] || [];
+      select.innerHTML = `<option value="">-- 不關聯 (獨立藥物) --</option>`;
+
+      list.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item['ID'];
+        opt.textContent = `[${item['病人姓名'] || '未名'}] ${item['診斷結果'] || '診斷'} (${item['醫院/診所'] || '診所'})`;
+        select.appendChild(opt);
+      });
+    }
+
+    function applyFilters() {
+      const selectedPatient = document.getElementById('patientFilter').value;
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      let list = rawData[currentSheet] || [];
+
+      if (currentSheet === '病歷紀錄' && selectedPatient) {
+        list = list.filter(item => item['病人姓名'] === selectedPatient);
+      }
+
+      if (q) {
+        list = list.filter(item => {
+          return Object.values(item).some(val => String(val).toLowerCase().includes(q));
+        });
+      }
+
+      renderListView(list);
+    }
+
+    /* 查看病歷詳情唯讀模式 (自動帶出開立的藥物) */
+    function viewMedicalRecord(id) {
+      const item = (rawData['病歷紀錄'] || []).find(x => x.ID == id);
+      if (!item) return;
+
+      document.getElementById('view_patient_badge').innerText = `病人：${item['病人姓名'] || '未名'}`;
+      document.getElementById('view_診斷結果').innerText = item['診斷結果'] || '未記載診斷';
+      document.getElementById('view_醫院診所').innerText = item['醫院/診所'] || '未記載';
+      document.getElementById('view_主診醫生').innerText = item['主診醫生'] || '未記載';
+      document.getElementById('view_入院時間').innerText = item['入院日期/時間'] || '無資料';
+      document.getElementById('view_出院時間').innerText = item['出院日期/時間'] || '無資料';
+      document.getElementById('view_主要症狀').innerText = item['主要症狀'] || '無詳細症狀描述';
+      document.getElementById('view_治療及結果').innerText = item['治療及結果'] || '無詳細治療結果';
+      document.getElementById('view_備註').innerText = item['備註'] || '無備註';
+
+      // 搜尋關聯此病歷 ID 的藥物
+      const linkedDrugs = (rawData['藥物紀錄'] || []).filter(d => d['關聯病歷ID'] == id);
+      const linkedContainer = document.getElementById('view_linked_medications');
+      document.getElementById('view_linked_drug_count').innerText = `${linkedDrugs.length} 項`;
+
+      if (linkedDrugs.length === 0) {
+        linkedContainer.innerHTML = `
+          <div class="p-3 bg-slate-50 rounded-xl text-slate-400 text-center italic border border-slate-100">
+            目前此就診紀錄尚未關聯任何處方用藥
+          </div>`;
+      } else {
+        linkedContainer.innerHTML = linkedDrugs.map(drug => `
+          <div class="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100 flex justify-between items-start">
+            <div>
+              <div class="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                <i data-lucide="pill" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>${drug['藥物名稱'] || '未填寫藥名'}</span>
+              </div>
+              <div class="text-[11px] text-slate-600 mt-1">
+                <span class="font-semibold text-emerald-800">${drug['服用劑量及途徑'] || ''}</span>
+                ${drug['次數及療程'] ? ` · ${drug['次數及療程']}` : ''}
+              </div>
+              ${drug['特別備註'] ? `<div class="text-[10px] text-slate-400 mt-0.5">備註: ${drug['特別備註']}</div>` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('view_editBtn').onclick = function() {
+        closeModal('viewMedicalModal');
+        editRecord(id);
+      };
+
+      document.getElementById('viewMedicalModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    /* Render List Table View */
+    function renderListView(list) {
+      const container = document.getElementById('listViewContainer');
+      if (!list || list.length === 0) {
+        container.innerHTML = `
+          <div class="py-16 text-center p-8">
+            <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+              <i data-lucide="inbox" class="w-6 h-6"></i>
+            </div>
+            <p class="font-semibold text-slate-700 text-sm">沒有符合條件的資料紀錄</p>
+          </div>`;
+        lucide.createIcons();
+        return;
+      }
+
+      if (currentSheet === '病歷紀錄') {
+        container.innerHTML = `
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-4">診斷結果 / 病人</th>
+                  <th class="py-3.5 px-4">醫院/診所 / 主診</th>
+                  <th class="py-3.5 px-4 hidden md:table-cell">入院 / 出院時間</th>
+                  <th class="py-3.5 px-4 hidden lg:table-cell">處方用藥關聯</th>
+                  <th class="py-3.5 px-4 text-right">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                ${list.map(item => {
+                  const linkedDrugs = (rawData['藥物紀錄'] || []).filter(d => d['關聯病歷ID'] == item['ID']);
+                  return `
+                    <tr class="hover:bg-slate-50/80 transition group">
+                      <td class="py-3.5 px-4 align-top cursor-pointer" onclick="viewMedicalRecord('${item['ID']}')">
+                        <div class="font-bold text-slate-900 text-sm mb-1 group-hover:text-mega transition flex items-center space-x-1.5">
+                          <span>${item['診斷結果'] || '未填寫'}</span>
+                          <i data-lucide="eye" class="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition"></i>
+                        </div>
+                        <div class="flex items-center space-x-1 text-slate-500">
+                          <i data-lucide="user" class="w-3 h-3 text-slate-400"></i>
+                          <span class="font-medium text-mega-dark">${item['病人姓名'] || '未名'}</span>
+                        </div>
+                      </td>
+
+                      <td class="py-3.5 px-4 align-top cursor-pointer" onclick="viewMedicalRecord('${item['ID']}')">
+                        <div class="font-semibold text-slate-800 mb-0.5">${item['醫院/診所'] || '未知醫院'}</div>
+                        <div class="text-slate-400 text-[11px]">主診：${item['主診醫生'] || '未記錄'}</div>
+                      </td>
+
+                      <td class="py-3.5 px-4 align-top hidden md:table-cell cursor-pointer" onclick="viewMedicalRecord('${item['ID']}')">
+                        <div class="text-slate-600 whitespace-nowrap"><span class="text-slate-400">入：</span>${item['入院日期/時間'] || '-'}</div>
+                        <div class="text-slate-600 whitespace-nowrap"><span class="text-slate-400">出：</span>${item['出院日期/時間'] || '-'}</div>
+                      </td>
+
+                      <td class="py-3.5 px-4 align-top hidden lg:table-cell cursor-pointer" onclick="viewMedicalRecord('${item['ID']}')">
+                        ${linkedDrugs.length > 0 
+                          ? `<span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[11px]">
+                              <i data-lucide="pill" class="w-3 h-3"></i>
+                              <span>已開立 ${linkedDrugs.length} 種處方藥</span>
+                             </span>`
+                          : `<span class="text-slate-400 italic">無關聯藥物</span>`
+                        }
+                      </td>
+
+                      <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
+                        <div class="flex items-center justify-end space-x-1">
+                          <button onclick="viewMedicalRecord('${item['ID']}')" class="p-1.5 hover:bg-mega-soft text-mega rounded-lg transition" title="檢視詳情">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                          </button>
+                          <button onclick="editRecord('${item['ID']}')" class="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg transition" title="編輯">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                          </button>
+                          <button onclick="deleteRecord('${item['ID']}')" class="p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition" title="刪除">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      } else {
+        container.innerHTML = `
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-4">藥物名稱</th>
+                  <th class="py-3.5 px-4">服用劑量及途徑</th>
+                  <th class="py-3.5 px-4">關聯就醫診斷</th>
+                  <th class="py-3.5 px-4 hidden md:table-cell">次數及療程 / 備註</th>
+                  <th class="py-3.5 px-4 text-right">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                ${list.map(item => {
+                  const linkedMed = (rawData['病歷紀錄'] || []).find(m => m['ID'] == item['關聯病歷ID']);
+                  return `
+                    <tr class="hover:bg-slate-50/80 transition group">
+                      <td class="py-3.5 px-4 align-top">
+                        <div class="font-bold text-slate-900 text-sm group-hover:text-mega transition">
+                          ${item['藥物名稱'] || '未填寫藥名'}
+                        </div>
+                      </td>
+
+                      <td class="py-3.5 px-4 align-top">
+                        <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          <span>${item['服用劑量及途徑'] || '未填寫'}</span>
+                        </span>
+                      </td>
+
+                      <!-- 顯示關聯診斷 -->
+                      <td class="py-3.5 px-4 align-top">
+                        ${linkedMed ? `
+                          <div class="font-semibold text-slate-800 flex items-center space-x-1">
+                            <i data-lucide="stethoscope" class="w-3.5 h-3.5 text-mega"></i>
+                            <span>${linkedMed['診斷結果']}</span>
+                          </div>
+                          <div class="text-[10px] text-slate-400">病人: ${linkedMed['病人姓名'] || '未名'} (${linkedMed['醫院/診所'] || ''})</div>
+                        ` : `<span class="text-slate-400 italic">無關聯診斷</span>`}
+                      </td>
+
+                      <td class="py-3.5 px-4 align-top hidden md:table-cell">
+                        <div class="text-slate-700 font-medium">${item['次數及療程'] || '-'}</div>
+                        ${item['特別備註'] ? `<div class="text-slate-400 text-[10px] truncate max-w-xs">${item['特別備註']}</div>` : ''}
+                      </td>
+
+                      <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
+                        <div class="flex items-center justify-end space-x-1.5">
+                          <button onclick="editRecord('${item['ID']}')" class="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg transition" title="編輯">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                          </button>
+                          <button onclick="deleteRecord('${item['ID']}')" class="p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition" title="刪除">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      lucide.createIcons();
+    }
+
+    function openCreateModal() {
+      if (currentSheet === '病歷紀錄') {
+        document.getElementById('medicalForm').reset();
+        document.getElementById('med_ID').value = '';
+        document.getElementById('medModalTitle').innerText = '新增就醫診斷紀錄';
+        document.getElementById('medicalModal').classList.remove('hidden');
+      } else {
+        populateMedicalDropdownForDrugModal();
+        document.getElementById('medicationForm').reset();
+        document.getElementById('drug_ID').value = '';
+        document.getElementById('drugModalTitle').innerText = '新增處方用藥紀錄';
+        document.getElementById('medicationModal').classList.remove('hidden');
+      }
+    }
+
+    function editRecord(id) {
+      const item = (rawData[currentSheet] || []).find(x => x.ID == id);
+      if (!item) return;
+
+      if (currentSheet === '病歷紀錄') {
+        document.getElementById('med_ID').value = item.ID || '';
+        document.getElementById('med_病人姓名').value = item['病人姓名'] || '';
+        document.getElementById('med_醫院/診所').value = item['醫院/診所'] || '';
+        document.getElementById('med_入院日期/時間').value = item['入院日期/時間'] || '';
+        document.getElementById('med_出院日期/時間').value = item['出院日期/時間'] || '';
+        document.getElementById('med_主診醫生').value = item['主診醫生'] || '';
+        document.getElementById('med_診斷結果').value = item['診斷結果'] || '';
+        document.getElementById('med_主要症狀').value = item['主要症狀'] || '';
+        document.getElementById('med_治療及結果').value = item['治療及結果'] || '';
+        document.getElementById('med_備註').value = item['備註'] || '';
+        document.getElementById('medModalTitle').innerText = '編輯就醫診斷紀錄';
+        document.getElementById('medicalModal').classList.remove('hidden');
+      } else {
+        populateMedicalDropdownForDrugModal();
+        document.getElementById('drug_ID').value = item.ID || '';
+        document.getElementById('drug_關聯病歷ID').value = item['關聯病歷ID'] || '';
+        document.getElementById('drug_藥物名稱').value = item['藥物名稱'] || '';
+        document.getElementById('drug_服用劑量及途徑').value = item['服用劑量及途徑'] || '';
+        document.getElementById('drug_次數及療程').value = item['次數及療程'] || '';
+        document.getElementById('drug_特別備註').value = item['特別備註'] || '';
+        document.getElementById('drugModalTitle').innerText = '編輯處方用藥紀錄';
+        document.getElementById('medicationModal').classList.remove('hidden');
+      }
+    }
+
+    async function saveRecord(e, sheetName) {
+      e.preventDefault();
+      const url = getGasUrl();
+      if (!url) return alert('請先設定 API URL');
+
+      let payload = {};
+      if (sheetName === '病歷紀錄') {
+        payload = {
+          ID: document.getElementById('med_ID').value,
+          '病人姓名': document.getElementById('med_病人姓名').value,
+          '醫院/診所': document.getElementById('med_醫院/診所').value,
+          '入院日期/時間': document.getElementById('med_入院日期/時間').value,
+          '出院日期/時間': document.getElementById('med_出院日期/時間').value,
+          '主診醫生': document.getElementById('med_主診醫生').value,
+          '診斷結果': document.getElementById('med_診斷結果').value,
+          '主要症狀': document.getElementById('med_主要症狀').value,
+          '治療及結果': document.getElementById('med_治療及結果').value,
+          '備註': document.getElementById('med_備註').value
+        };
+      } else {
+        payload = {
+          ID: document.getElementById('drug_ID').value,
+          '關聯病歷ID': document.getElementById('drug_關聯病歷ID').value,
+          '藥物名稱': document.getElementById('drug_藥物名稱').value,
+          '服用劑量及途徑': document.getElementById('drug_服用劑量及途徑').value,
+          '次數及療程': document.getElementById('drug_次數及療程').value,
+          '特別備註': document.getElementById('drug_特別備註').value
+        };
+      }
+
+      const action = payload.ID ? 'update' : 'create';
+
+      try {
+        closeModal(sheetName === '病歷紀錄' ? 'medicalModal' : 'medicationModal');
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action, sheetName, data: payload })
+        });
+        const res = await response.json();
+        if (res.status === 'success') {
+          refreshCurrentData();
+        } else {
+          alert('儲存失敗：' + res.message);
+        }
+      } catch (err) {
+        alert('請求失敗：' + err);
+      }
+    }
+
+    async function deleteRecord(id) {
+      if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+      const url = getGasUrl();
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'delete', sheetName: currentSheet, data: { id } })
+        });
+        const res = await response.json();
+        if (res.status === 'success') {
+          refreshCurrentData();
+        } else {
+          alert('刪除失敗：' + res.message);
+        }
+      } catch (err) {
+        alert('請求失敗：' + err);
+      }
+    }
+  </script>
+
+</body>
+</html>

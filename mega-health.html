@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>MEGA Health Portal</title>
+  <title>MEGA Health Record System</title>
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/mega-health-icon.png">
   <meta property="og:type" content="website">
   <meta property="og:title" content="MEGA Health Portal">
@@ -133,8 +133,8 @@
           </div>
           <div>
             <div class="flex items-center space-x-2">
-              <span class="text-xs font-semibold tracking-widest text-mega-gold uppercase">MEGA Health</span>
-              <span class="text-[10px] bg-white/15 px-2 py-0.5 rounded-full text-white/80 font-medium">Portal</span>
+              <span class="text-xs font-semibold tracking-widest text-mega-gold uppercase">MEGA Health Record System</span>
+              <span class="text-[10px] bg-white/15 px-2 py-0.5 rounded-full text-white/80 font-medium">Family</span>
             </div>
             <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">健康紀錄</h1>
           </div>
@@ -172,7 +172,7 @@
       </div>
 
       <!-- Control Bar -->
-      <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-mega border border-slate-200/80 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div id="megaControl" class="hidden bg-white rounded-2xl p-3 sm:p-4 shadow-mega border border-slate-200/80 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         
         <!-- Tabs -->
         <div class="flex border-b md:border-b-0 border-slate-100 gap-6 px-2 overflow-x-auto">
@@ -229,7 +229,7 @@
       </div>
 
       <!-- Dynamic Data List Container -->
-      <div id="listViewContainer" class="bg-white rounded-2xl border border-slate-200/80 shadow-mega overflow-hidden min-h-[300px]">
+      <div id="listViewContainer" class="hidden bg-white rounded-2xl border border-slate-200/80 shadow-mega overflow-hidden min-h-[300px]">
         <!-- 預設 Skeleton -->
         <div class="p-6 space-y-4 animate-pulse">
           <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
@@ -678,6 +678,8 @@
         document.getElementById('gasUrlInput').value = savedUrl;
         document.getElementById('urlConfigWarning').classList.add('hidden');
         document.getElementById('connectionStatusBadge').classList.remove('hidden');
+		document.getElementById('megaControl').classList.remove('hidden');
+		document.getElementById('listViewContainer').classList.remove('hidden');
 
         const cached = localStorage.getItem('mega_health_cache_data');
         if (cached) {
@@ -709,6 +711,8 @@
       localStorage.setItem('gas_mega_health_url', url);
       document.getElementById('urlConfigWarning').classList.add('hidden');
       document.getElementById('connectionStatusBadge').classList.remove('hidden');
+	  document.getElementById('megaControl').classList.remove('hidden');
+	  document.getElementById('listViewContainer').classList.remove('hidden');
       closeModal('settingsModal');
       showToast('API 網址儲存成功');
       refreshCurrentData(true);

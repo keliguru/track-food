@@ -201,6 +201,16 @@
             <i data-lucide="chevron-down" class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
           </div>
 
+          <!-- 新增排序 Filter 下拉選單 (預設按日期最新排序) -->
+          <div class="relative min-w-[135px]" id="sortFilterWrapper">
+            <select id="sortFilter" onchange="applyFilters()" class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-mega focus:bg-white transition appearance-none cursor-pointer">
+              <option value="date_desc" selected>日期：最新</option>
+              <option value="date_asc">日期：最舊</option>
+            </select>
+            <i data-lucide="arrow-up-down" class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-mega pointer-events-none"></i>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+          </div>
+
           <!-- 搜尋欄 (Debounce) -->
           <div class="relative flex-1 sm:w-52 min-w-[160px]">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
@@ -246,7 +256,7 @@
 
   <!-- ==================== MODALS & DRAWERS ==================== -->
 
-  <!-- Custom Confirm Modal (維持置中彈窗) -->
+  <!-- Custom Confirm Modal -->
   <div id="confirmModal" onclick="handleBackdropClick(event, 'confirmModal', false)" class="fixed inset-0 z-[60] hidden modal-backdrop-blur flex items-center justify-center p-4">
     <div onclick="event.stopPropagation()" class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center transform transition-all">
       <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
@@ -261,7 +271,7 @@
     </div>
   </div>
 
-  <!-- API URL Modal (設定為靜態防誤點 isStatic=true) -->
+  <!-- API URL Modal -->
   <div id="settingsModal" onclick="handleBackdropClick(event, 'settingsModal', true)" class="fixed inset-0 z-50 hidden modal-backdrop-blur flex items-center justify-center p-4">
     <div onclick="event.stopPropagation()" id="settingsModal_card" class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
@@ -289,11 +299,9 @@
     </div>
   </div>
 
-  <!-- VIEW-ONLY DRAWER (改為右側滑出式面板) -->
+  <!-- VIEW-ONLY DRAWER -->
   <div id="viewMedicalModal" class="fixed inset-0 z-50 hidden drawer-hidden">
-    <!-- 背景遮罩 -->
     <div class="absolute inset-0 drawer-backdrop modal-backdrop-blur" onclick="closeModal('viewMedicalModal')"></div>
-    <!-- 滑出面板 -->
     <div class="absolute inset-y-0 right-0 max-w-xl w-full bg-white shadow-2xl flex flex-col drawer-panel border-l border-slate-100">
       <div class="p-6 flex justify-between items-start border-b border-slate-100 bg-slate-50/50">
         <div class="flex items-center space-x-3">
@@ -388,7 +396,7 @@
     </div>
   </div>
 
-  <!-- MEDICAL Form Drawer (改為右側滑出式面板) -->
+  <!-- MEDICAL Form Drawer -->
   <div id="medicalModal" class="fixed inset-0 z-50 hidden drawer-hidden">
     <div class="absolute inset-0 drawer-backdrop modal-backdrop-blur" onclick="handleDrawerBackdrop('medicalModal', 'medicalForm')"></div>
     <div class="absolute inset-y-0 right-0 max-w-xl w-full bg-white shadow-2xl flex flex-col drawer-panel border-l border-slate-100" id="medicalModal_card">
@@ -460,7 +468,7 @@
     </div>
   </div>
 
-  <!-- MEDICATION Form Drawer (改為右側滑出式面板) -->
+  <!-- MEDICATION Form Drawer -->
   <div id="medicationModal" class="fixed inset-0 z-50 hidden drawer-hidden">
     <div class="absolute inset-0 drawer-backdrop modal-backdrop-blur" onclick="handleDrawerBackdrop('medicationModal', 'medicationForm')"></div>
     <div class="absolute inset-y-0 right-0 max-w-xl w-full bg-white shadow-2xl flex flex-col drawer-panel border-l border-slate-100" id="medicationModal_card">
@@ -526,21 +534,14 @@
   <script>
     let currentSheet = '病歷紀錄';
     let rawData = { '病歷紀錄': [], '藥物紀錄': [] };
-    let openModalCount = 0; // 追蹤目前打開的 Modal/Drawer 數量以控制背景滾動鎖
+    let openModalCount = 0;
 
-    /* -------------------------------------------------------------
-       手機防誤觸與 Drawer 管理核心：背景鎖定 & 滑出控制
-    -------------------------------------------------------------- */
     function openModal(modalId) {
       const el = document.getElementById(modalId);
       if (!el) return;
       el.classList.remove('hidden');
-      
-      // 強制重繪以觸發 CSS 轉場動畫
       void el.offsetWidth;
       el.classList.remove('drawer-hidden');
-      
-      // 鎖定 Body 滾動與觸控行為，防止背後網頁被誤滑動
       if (openModalCount === 0) {
         document.body.classList.add('overflow-hidden', 'overscroll-none');
       }
@@ -550,27 +551,22 @@
     function closeModal(modalId) {
       const el = document.getElementById(modalId);
       if (!el || el.classList.contains('hidden')) return;
-      
-      // 如果是 Drawer 類型（帶有 drawer-panel）
       if (el.classList.contains('drawer-hidden') === false && el.querySelector('.drawer-panel')) {
         el.classList.add('drawer-hidden');
         setTimeout(() => {
           el.classList.add('hidden');
-        }, 350); // 等待轉場結束
+        }, 350);
       } else {
         el.classList.add('hidden');
       }
-      
       openModalCount = Math.max(0, openModalCount - 1);
       if (openModalCount === 0) {
         document.body.classList.remove('overflow-hidden', 'overscroll-none');
       }
     }
 
-    // 針對滑出表單的防誤觸點擊遮罩處理
     function handleDrawerBackdrop(modalId, formId) {
       const formEl = document.getElementById(formId);
-      // 簡單檢查表單是否有輸入內容（非空白欄位）
       let hasContent = false;
       if (formEl) {
         const inputs = formEl.querySelectorAll('input:not([type="hidden"]), textarea');
@@ -578,9 +574,7 @@
           if (input.value && input.value.trim() !== '') hasContent = true;
         });
       }
-
       if (hasContent) {
-        // 發出面板震動提示
         const card = document.getElementById(`${modalId}_card`);
         if (card) {
           card.classList.remove('shake-animation');
@@ -592,7 +586,6 @@
       }
     }
 
-    // 遮罩背景點擊處理與表單防誤點震動（維持給確認視窗與設定視窗）
     function handleBackdropClick(event, modalId, isStatic) {
       if (event.target.id === modalId) {
         if (isStatic) {
@@ -608,9 +601,6 @@
       }
     }
 
-    /* -------------------------------------------------------------
-       安全防禦與 UI 工具：HTML 逸出 (防 XSS)、Toast、Debounce
-    -------------------------------------------------------------- */
     function escapeHTML(str) {
       if (str === null || str === undefined) return '';
       return String(str).replace(/[&<>'"]/g, tag => ({
@@ -678,9 +668,6 @@
       return str.replace('T', ' ').slice(0, 16);
     }
 
-    /* -------------------------------------------------------------
-       初始化與本地緩存 (Stale-While-Revalidate)
-    -------------------------------------------------------------- */
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
       const savedUrl = localStorage.getItem('gas_mega_health_url');
@@ -815,11 +802,14 @@
       });
     }
 
+    // 更新篩選與新增排序邏輯
     function applyFilters() {
       const selectedPatient = document.getElementById('patientFilter').value;
       const q = document.getElementById('searchInput').value.toLowerCase().trim();
-      let list = rawData[currentSheet] || [];
+      const sortValue = document.getElementById('sortFilter') ? document.getElementById('sortFilter').value : 'date_desc';
+      let list = [...(rawData[currentSheet] || [])];
 
+      // 1. 病人條件過濾
       if (selectedPatient) {
         if (currentSheet === '病歷紀錄') {
           list = list.filter(item => item['病人姓名'] === selectedPatient);
@@ -831,11 +821,33 @@
         }
       }
 
+      // 2. 搜尋關鍵字過濾
       if (q) {
         list = list.filter(item => {
           return Object.values(item).some(val => String(val).toLowerCase().includes(q));
         });
       }
+
+      // 3. 按日期新舊排序 (預設最新在最上面)
+      list.sort((a, b) => {
+        const getDateString = (item) => {
+          if (currentSheet === '病歷紀錄') {
+            return item['入院日期/時間'] || item['出院日期/時間'] || String(item['ID'] || '');
+          } else {
+            const linkedMed = (rawData['病歷紀錄'] || []).find(m => m['ID'] == item['關聯病歷ID']);
+            return (linkedMed && linkedMed['入院日期/時間']) ? linkedMed['入院日期/時間'] : String(item['ID'] || '');
+          }
+        };
+        
+        const dateA = getDateString(a);
+        const dateB = getDateString(b);
+        
+        if (sortValue === 'date_desc') {
+          return dateB.localeCompare(dateA); // 最新日期在上 (降序)
+        } else {
+          return dateA.localeCompare(dateB); // 最舊日期在上 (升序)
+        }
+      });
 
       renderListView(list);
     }

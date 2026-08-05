@@ -368,6 +368,25 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.1), 5px 5px 0px var(--shadow-color);
       transition: all 0.15s ease;
     }
+    .cancel-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--tab-bg);
+      color: var(--text-main);
+      border: 2.5px solid var(--pencil-color);
+      border-radius: 20px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      box-shadow: 3px 3px 0px var(--shadow-color);
+      transition: all 0.15s ease;
+      display: none;
+    }
+    .cancel-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px var(--shadow-color);
+    }
     body.dark-mode .submit-btn {
       color: #2c2825;
     }
@@ -430,7 +449,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 6px;
-      padding-right: 28px;
+      padding-right: 56px; /* 為右上角的 修改 + 刪除 兩顆按鈕留出空間 */
     }
     .log-date {
       font-size: 12px;
@@ -456,19 +475,29 @@
       font-size: 12px;
       color: var(--text-sub);
     }
-    .btn-delete {
+    .btn-delete, .btn-edit {
       position: absolute;
       top: 8px;
-      right: 8px;
       background: transparent;
       border: none;
       box-shadow: none;
       width: auto;
       padding: 6px;
       margin: 0;
-      font-size: 18px;
+      font-size: 17px;
       cursor: pointer;
       opacity: 0.75;
+      transition: transform 0.15s ease;
+    }
+    .btn-delete:hover, .btn-edit:hover {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+    .btn-delete {
+      right: 8px;
+    }
+    .btn-edit {
+      right: 36px;
     }
     .no-logs {
       text-align: center;
@@ -698,6 +727,7 @@
           <textarea id="notes" rows="2" placeholder="例：精神好、便便正常..."></textarea>
         </div>
         <button type="submit" id="submitBtn" class="submit-btn">🚀 儲存紀錄 🚀</button>
+        <button type="button" id="cancelEditBtn" class="cancel-btn" onclick="cancelEdit()">✖ 取消修改</button>
       </form>
       <div id="msg"></div>
     </div>
@@ -794,7 +824,9 @@
       labelNotes: "📝 備註 (選填)",
       placeholderNotes: "例：精神好、便便正常...",
       submitBtn: "🚀 儲存紀錄 🚀",
-      savingBtn: "儲存中...",
+      updateBtn: "🛠️ 更新紀錄 🛠️",
+      cancelEditBtn: "✖ 取消修改",
+      savingBtn: "處理中...",
       allMeals: "所有餐別",
       loadingLogs: "載入過往紀錄中...",
       searching: "搜尋中...",
@@ -803,6 +835,8 @@
       confirmDelete: "確定要刪除這筆飲食紀錄嗎？",
       deleteSuccess: "已刪除紀錄！",
       deleteFail: "刪除失敗，請再試一次！",
+      editSuccess: "已更新紀錄！",
+      editFail: "更新失敗，請再試一次！",
       emptyNotice: "⚠️ 請至少輸入「食物」或「身高/體重」其中一項！",
       unitTimes: " 次",
       formulaPrefix: "配方奶",
@@ -860,7 +894,9 @@
       labelNotes: "📝 Notes (Optional)",
       placeholderNotes: "e.g. Good mood, normal stool...",
       submitBtn: "🚀 Save Log 🚀",
-      savingBtn: "Saving...",
+      updateBtn: "🛠️ Update Log 🛠️",
+      cancelEditBtn: "✖ Cancel Edit",
+      savingBtn: "Processing...",
       allMeals: "All Meals",
       loadingLogs: "Loading history logs...",
       searching: "Searching...",
@@ -869,6 +905,8 @@
       confirmDelete: "Are you sure you want to delete this record?",
       deleteSuccess: "Record deleted!",
       deleteFail: "Failed to delete, please try again!",
+      editSuccess: "Record updated!",
+      editFail: "Failed to update, try again!",
       emptyNotice: "⚠️ Please enter at least 'Food' or 'Height/Weight'!",
       unitTimes: " meals",
       formulaPrefix: "Formula Milk",
@@ -895,6 +933,7 @@
   let currentTheme = localStorage.getItem('app_theme') || 'light';
   let currentHistoryView = 'list';
   let isScreenshotMode = false;
+  let editingRowIndex = null; // ✏️ 當前正在修改的資料列索引
   let milkChartInstance = null;
   let mealPieChartInstance = null;
   let growthChartInstance = null;
@@ -1038,7 +1077,8 @@
     document.getElementById('calories').placeholder = t.placeholderCalories;
     document.getElementById('labelNotes').innerText = t.labelNotes;
     document.getElementById('notes').placeholder = t.placeholderNotes;
-    document.getElementById('submitBtn').innerText = t.submitBtn;
+    document.getElementById('submitBtn').innerText = editingRowIndex ? t.updateBtn : t.submitBtn;
+    document.getElementById('cancelEditBtn').innerText = t.cancelEditBtn;
     document.getElementById('filterTodayBtn').innerText = t.filterToday;
     document.getElementById('filterYesterdayBtn').innerText = t.filterYesterday;
     updateMealOptions();
@@ -1446,12 +1486,23 @@
           const metaText = metaParts.join(' | ');
           const matchedMeal = t.meals.find(m => m.value === log.meal);
           const displayMeal = matchedMeal ? matchedMeal.text : log.meal;
+
+          // ✏️ 新增編輯按鈕
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn-edit';
+          editBtn.title = 'Edit';
+          editBtn.textContent = '✏️';
+          editBtn.onclick = () => editLog(log);
+          item.appendChild(editBtn);
+
+          // 🗑️ 刪除按鈕
           const delBtn = document.createElement('button');
           delBtn.className = 'btn-delete';
           delBtn.title = 'Delete';
           delBtn.textContent = '🗑️';
           delBtn.onclick = () => deleteLog(log.rowIndex);
           item.appendChild(delBtn);
+
           const headerDiv = document.createElement('div');
           headerDiv.className = 'log-header';
           const dateSpan = document.createElement('span');
@@ -1480,6 +1531,51 @@
         container.innerHTML = `<div class="no-logs">${t.failLogs}</div>`;
       });
   }
+
+  // ✏️ 點選編輯：載入該筆紀錄資料回表單
+  function editLog(log) {
+    const t = i18n[currentLang];
+    editingRowIndex = log.rowIndex;
+    
+    // 切換回新增表單頁籤
+    switchTab('add');
+    
+    // 填回既有內容
+    document.getElementById('date').value = log.date || getLocalDateString(0);
+    if (log.meal) document.getElementById('meal').value = log.meal;
+    document.getElementById('food').value = log.food || '';
+    document.getElementById('calories').value = log.calories || '';
+    document.getElementById('notes').value = log.notes || '';
+    
+    // 將按鈕更改為「更新」並顯示取消修改
+    document.getElementById('submitBtn').innerText = t.updateBtn;
+    document.getElementById('cancelEditBtn').style.display = 'block';
+
+    // 捲動至頁面頂部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ✖ 取消修改狀態：還原表單
+  function cancelEdit() {
+    const t = i18n[currentLang];
+    editingRowIndex = null;
+    
+    // 清空欄位
+    document.getElementById('food').value = '';
+    document.getElementById('height').value = '';
+    document.getElementById('weight').value = '';
+    document.getElementById('calories').value = '';
+    document.getElementById('notes').value = '';
+    
+    // 還原為預設日期及時間餐別
+    initDefaultDates();
+    autoSelectMealByTime();
+    
+    // 還原按鈕字眼並隱藏取消按鈕
+    document.getElementById('submitBtn').innerText = t.submitBtn;
+    document.getElementById('cancelEditBtn').style.display = 'none';
+  }
+
   function deleteLog(rowIndex) {
     const t = i18n[currentLang];
     if (!confirm(t.confirmDelete)) return;
@@ -1502,6 +1598,7 @@
     })
     .catch(() => alert(t.deleteFail));
   }
+
   document.getElementById('foodForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
@@ -1510,17 +1607,22 @@
     const foodVal = document.getElementById('food').value.trim();
     const heightVal = document.getElementById('height').value;
     const weightVal = document.getElementById('weight').value;
+    
     if (!foodVal && !heightVal && !weightVal) {
       msg.className = 'error';
       msg.innerText = t.emptyNotice;
       return;
     }
+    
     btn.disabled = true;
     btn.innerText = t.savingBtn;
     msg.className = '';
     msg.innerText = '';
+    
+    // 判斷當前為「新增」還是「修改」模式
     const payload = {
-      action: "add",
+      action: editingRowIndex ? "edit" : "add",
+      rowIndex: editingRowIndex || undefined,
       date: document.getElementById('date').value,
       meal: document.getElementById('meal').value,
       food: foodVal,
@@ -1529,6 +1631,7 @@
       calories: document.getElementById('calories').value,
       notes: document.getElementById('notes').value
     };
+
     fetch(GAS_URL, {
       method: "POST",
       mode: "no-cors",
@@ -1537,16 +1640,15 @@
     })
     .then(() => {
       btn.disabled = false;
-      btn.innerText = t.submitBtn;
+      const wasEditing = (editingRowIndex !== null);
+      
+      // 完成後自動清空修改模式
+      cancelEdit();
+      
       msg.className = 'success';
-      msg.innerText = customMsgs.success_msg; 
-      document.getElementById('food').value = '';
-      document.getElementById('height').value = '';
-      document.getElementById('weight').value = '';
-      document.getElementById('calories').value = '';
-      document.getElementById('notes').value = '';
+      msg.innerText = wasEditing ? t.editSuccess : customMsgs.success_msg; 
+      
       setTimeout(() => {
-        autoSelectMealByTime();
         loadRecentFoods();
         loadStats();
         loadLatestHW();
@@ -1554,9 +1656,9 @@
     })
     .catch(() => {
       btn.disabled = false;
-      btn.innerText = t.submitBtn;
+      btn.innerText = editingRowIndex ? t.updateBtn : t.submitBtn;
       msg.className = 'error';
-      msg.innerText = customMsgs.error_msg; 
+      msg.innerText = editingRowIndex ? t.editFail : customMsgs.error_msg; 
     });
   });
 </script>

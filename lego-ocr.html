@@ -13,7 +13,8 @@
   
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+  <!-- 引入更可愛的圓體與 Fredoka 英文字型 -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --lego-red: #E3000B;
@@ -24,7 +25,11 @@
       --lego-bg: #F4F4F0;
     }
 
-    * { box-sizing: border-box; font-family: 'Fredoka', cursive, system-ui, sans-serif; }
+    /* 將全站字型改為 M PLUS Rounded 1c 圓體與 Fredoka 搭配，呈現可愛積木風 */
+    * { 
+      box-sizing: border-box; 
+      font-family: 'M PLUS Rounded 1c', 'Fredoka', cursive, system-ui, sans-serif; 
+    }
 
     body {
       margin: 0; padding: 16px;
@@ -40,7 +45,7 @@
     .lego-card {
       background: #FFFFFF;
       border: 4px solid var(--lego-black);
-      border-radius: 12px;
+      border-radius: 16px; /* 增加一點圓角讓整體更圓潤可愛 */
       padding: 16px;
       box-shadow: 6px 6px 0px var(--lego-black);
     }
@@ -49,21 +54,23 @@
     .card-yellow { border-top: 12px solid var(--lego-yellow); }
 
     h1 {
-      margin: 0 0 8px 0; font-size: 1.5rem; text-align: center;
+      margin: 0 0 8px 0; font-size: 1.6rem; text-align: center;
       color: var(--lego-yellow); text-shadow: 2px 2px 0px var(--lego-black);
       -webkit-text-stroke: 1px var(--lego-black);
+      letter-spacing: 1px;
     }
 
     label { display: block; font-weight: 700; margin-bottom: 6px; }
 
     input[type="password"], select {
       width: 100%; padding: 12px;
-      border: 3px solid var(--lego-black); border-radius: 8px;
+      border: 3px solid var(--lego-black); border-radius: 10px;
       font-size: 1rem; outline: none; background: #FAFAFA;
       box-shadow: inset 2px 2px 0px rgba(0,0,0,0.1);
+      font-weight: 700;
     }
 
-    select { cursor: pointer; font-weight: bold; background-color: #FFF; }
+    select { cursor: pointer; background-color: #FFF; }
 
     .control-group { display: flex; gap: 10px; margin-bottom: 12px; }
     .control-group > div { flex: 1; }
@@ -75,10 +82,9 @@
       overflow-y: auto;
       padding: 12px;
       border: 3px solid var(--lego-black);
-      border-radius: 8px;
+      border-radius: 10px;
       background: #FAFAFA;
       box-shadow: inset 2px 2px 0px rgba(0,0,0,0.1);
-      font-family: sans-serif;
       font-size: 0.95rem;
       line-height: 1.6;
     }
@@ -92,7 +98,7 @@
     /* 拖曳與預覽區塊樣式 */
     .file-dropzone {
       border: 3px dashed var(--lego-black);
-      background: #FFFDE7; border-radius: 8px;
+      background: #FFFDE7; border-radius: 10px;
       padding: 16px; text-align: center; cursor: pointer; font-weight: bold;
       transition: all 0.2s ease;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -109,7 +115,7 @@
       max-width: 100%;
       max-height: 200px;
       border: 2px solid var(--lego-black);
-      border-radius: 6px;
+      border-radius: 8px;
       margin-top: 8px;
       display: none;
       box-shadow: 3px 3px 0px var(--lego-black);
@@ -117,7 +123,7 @@
 
     .lego-btn {
       padding: 10px 14px;
-      border: 3px solid var(--lego-black); border-radius: 10px;
+      border: 3px solid var(--lego-black); border-radius: 12px;
       font-size: 1rem; font-weight: 700; color: white;
       cursor: pointer; box-shadow: 0px 4px 0px var(--lego-black);
       transition: all 0.1s ease; display: inline-flex;
@@ -132,7 +138,7 @@
 
     .collapse-header {
       background: #F0F0F0; border: 3px solid var(--lego-black);
-      border-radius: 8px; padding: 10px; cursor: pointer;
+      border-radius: 10px; padding: 10px; cursor: pointer;
       display: flex; justify-content: space-between; align-items: center;
       font-weight: bold; user-select: none;
     }
@@ -141,7 +147,7 @@
 
     .progress-box {
       display: none; margin-top: 12px; border: 3px solid var(--lego-black);
-      background: #DDD; border-radius: 8px; overflow: hidden; height: 24px;
+      background: #DDD; border-radius: 10px; overflow: hidden; height: 24px;
     }
 
     .progress-bar { height: 100%; background: var(--lego-blue); width: 0%; transition: width 0.2s ease; }
@@ -154,7 +160,7 @@
       padding: 10px;
       background: #EBF3FA;
       border: 3px solid var(--lego-black);
-      border-radius: 8px;
+      border-radius: 10px;
     }
   </style>
 </head>

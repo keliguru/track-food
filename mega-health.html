@@ -366,6 +366,21 @@
           <div id="view_治療及結果" class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 leading-relaxed">-</div>
         </div>
 
+        <!-- 附件檢視區塊 -->
+        <div id="view_attachment_section" class="hidden">
+          <h4 class="font-bold text-slate-700 mb-1 flex items-center space-x-1.5">
+            <i data-lucide="paperclip" class="w-3.5 h-3.5 text-mega"></i>
+            <span>醫療收據 / 附件檔案</span>
+          </h4>
+          <div class="p-3 bg-mega-soft/50 rounded-xl border border-mega/20 flex items-center justify-between">
+            <span class="text-slate-700 font-medium truncate max-w-[280px]" id="view_attachment_name">已上傳附件檔案</span>
+            <a id="view_attachment_link" href="#" target="_blank" class="px-3 py-1.5 bg-mega hover:bg-mega-dark text-white rounded-lg font-semibold text-xs transition flex items-center space-x-1">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>檢視檔案</span>
+            </a>
+          </div>
+        </div>
+
         <div>
           <h4 class="font-bold text-slate-700 mb-2 flex items-center justify-between">
             <span class="flex items-center space-x-1.5">
@@ -451,6 +466,18 @@
               <label class="block font-semibold text-slate-700 mb-1">治療及結果</label>
               <textarea id="med_治療及結果" rows="2" placeholder="例如：打止吐針、點滴注射" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none"></textarea>
             </div>
+            
+            <!-- 新增檔案上傳欄位 -->
+            <div class="sm:col-span-2">
+              <label class="block font-semibold text-slate-700 mb-1 flex items-center space-x-1">
+                <i data-lucide="paperclip" class="w-3.5 h-3.5 text-mega"></i>
+                <span>醫療收據 / 附件上傳</span>
+              </label>
+              <input type="file" id="med_fileInput" accept="image/*,application/pdf" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-mega-soft file:text-mega hover:file:bg-mega hover:file:text-white cursor-pointer transition">
+              <p class="text-[10px] text-slate-400 mt-1">支援上傳圖片或 PDF 檔案（會自動同步至 Google Drive 雲端資料夾）</p>
+              <div id="med_current_attachment_status" class="mt-1.5 text-[11px] text-emerald-600 font-medium hidden">已存在雲端附件</div>
+            </div>
+
             <div class="sm:col-span-2">
               <label class="block font-semibold text-slate-700 mb-1">備註</label>
               <input type="text" id="med_備註" placeholder="例如：預約下週複診" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none">
@@ -870,6 +897,17 @@
       document.getElementById('view_治療及結果').innerText = item['治療及結果'] || '無詳細治療結果';
       document.getElementById('view_備註').innerText = item['備註'] || '無備註';
 
+      // 處理附件顯示
+      const attachmentSection = document.getElementById('view_attachment_section');
+      const attachmentLink = document.getElementById('view_attachment_link');
+      const attachmentUrl = item['附件Base64'];
+      if (attachmentUrl && attachmentUrl.startsWith('http')) {
+        attachmentSection.classList.remove('hidden');
+        attachmentLink.href = attachmentUrl;
+      } else {
+        attachmentSection.classList.add('hidden');
+      }
+
       const linkedDrugs = (rawData['藥物紀錄'] || []).filter(d => d['關聯病歷ID'] == id);
       const linkedContainer = document.getElementById('view_linked_medications');
       document.getElementById('view_linked_drug_count').innerText = `${linkedDrugs.length} 項`;
@@ -930,12 +968,14 @@
                   <th class="py-3.5 px-4">醫院/診所 / 主診</th>
                   <th class="py-3.5 px-4">入院 / 出院時間</th>
                   <th class="py-3.5 px-4">處方用藥關聯</th>
+                  <th class="py-3.5 px-4">附件檔案</th>
                   <th class="py-3.5 px-4 text-right">操作</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
                 ${list.map(item => {
                   const linkedDrugs = (rawData['藥物紀錄'] || []).filter(d => d['關聯病歷ID'] == item['ID']);
+                  const hasFile = item['附件Base64'] && item['附件Base64'].startsWith('http');
                   return `
                     <tr class="hover:bg-slate-50/80 transition group">
                       <td class="py-3.5 px-4 align-top cursor-pointer" onclick="viewMedicalRecord('${item['ID']}')">
@@ -968,6 +1008,15 @@
                         }
                       </td>
 
+                      <td class="py-3.5 px-4 align-top">
+                        ${hasFile ? `
+                          <a href="${escapeHTML(item['附件Base64'])}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-mega-soft text-mega hover:bg-mega hover:text-white transition font-semibold text-[11px]">
+                            <i data-lucide="paperclip" class="w-3 h-3"></i>
+                            <span>檢視收據</span>
+                          </a>
+                        ` : `<span class="text-slate-300">-</span>`}
+                      </td>
+
                       <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
                         <div class="flex items-center justify-end space-x-1">
                           <button onclick="viewMedicalRecord('${item['ID']}')" class="p-1.5 hover:bg-mega-soft text-mega rounded-lg transition" title="檢視詳情">
@@ -992,6 +1041,7 @@
           <div class="md:hidden divide-y divide-slate-100">
             ${list.map(item => {
               const linkedDrugs = (rawData['藥物紀錄'] || []).filter(d => d['關聯病歷ID'] == item['ID']);
+              const hasFile = item['附件Base64'] && item['附件Base64'].startsWith('http');
               return `
                 <div class="p-4 space-y-3 hover:bg-slate-50/50 transition">
                   <div class="flex justify-between items-start" onclick="viewMedicalRecord('${item['ID']}')">
@@ -1011,9 +1061,12 @@
                     <div><span class="text-slate-400">入院:</span> ${escapeHTML(item['入院日期/時間'] || '-')}</div>
                     <div><span class="text-slate-400">出院:</span> ${escapeHTML(item['出院日期/時間'] || '-')}</div>
                   </div>
-                  <div class="flex justify-between items-center text-[11px]" onclick="viewMedicalRecord('${item['ID']}')">
-                    <span class="text-slate-500">主診醫生: ${escapeHTML(item['主診醫生'] || '-')}</span>
-                    ${linkedDrugs.length > 0 ? `<span class="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">藥物 × ${linkedDrugs.length}</span>` : ''}
+                  <div class="flex justify-between items-center text-[11px]">
+                    <span class="text-slate-500" onclick="viewMedicalRecord('${item['ID']}')">主診醫生: ${escapeHTML(item['主診醫生'] || '-')}</span>
+                    <div class="flex items-center space-x-2">
+                      ${hasFile ? `<a href="${escapeHTML(item['附件Base64'])}" target="_blank" class="text-mega font-semibold underline">收據</a>` : ''}
+                      ${linkedDrugs.length > 0 ? `<span class="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">藥物 × ${linkedDrugs.length}</span>` : ''}
+                    </div>
                   </div>
                 </div>
               `;
@@ -1117,6 +1170,7 @@
       if (currentSheet === '病歷紀錄') {
         document.getElementById('medicalForm').reset();
         document.getElementById('med_ID').value = '';
+        document.getElementById('med_current_attachment_status').classList.add('hidden');
         document.getElementById('medModalTitle').innerText = '新增就醫診斷紀錄';
         openModal('medicalModal');
       } else {
@@ -1143,6 +1197,17 @@
         document.getElementById('med_主要症狀').value = item['主要症狀'] || '';
         document.getElementById('med_治療及結果').value = item['治療及結果'] || '';
         document.getElementById('med_備註').value = item['備註'] || '';
+        
+        // 檔案上傳狀態處理
+        document.getElementById('med_fileInput').value = '';
+        const statusEl = document.getElementById('med_current_attachment_status');
+        if (item['附件Base64'] && item['附件Base64'].startsWith('http')) {
+          statusEl.classList.remove('hidden');
+          statusEl.innerHTML = `已存在雲端附件：<a href="${item['附件Base64']}" target="_blank" class="underline text-mega">點此檢視</a>`;
+        } else {
+          statusEl.classList.add('hidden');
+        }
+
         document.getElementById('medModalTitle').innerText = '編輯就醫診斷紀錄';
         openModal('medicalModal');
       } else {
@@ -1156,6 +1221,16 @@
         document.getElementById('drugModalTitle').innerText = '編輯處方用藥紀錄';
         openModal('medicationModal');
       }
+    }
+
+    // 讀取檔案轉為 Base64 字串的 Helper
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
     }
 
     async function saveRecord(e, sheetName) {
@@ -1173,6 +1248,16 @@
 
       let payload = {};
       if (isMedical) {
+        let attachmentBase64 = '';
+        const fileInput = document.getElementById('med_fileInput');
+        if (fileInput.files && fileInput.files[0]) {
+          try {
+            attachmentBase64 = await readFileAsDataURL(fileInput.files[0]);
+          } catch (err) {
+            console.error('檔案讀取失敗', err);
+          }
+        }
+
         payload = {
           ID: document.getElementById('med_ID').value,
           '病人姓名': document.getElementById('med_病人姓名').value,
@@ -1183,6 +1268,7 @@
           '診斷結果': document.getElementById('med_診斷結果').value,
           '主要症狀': document.getElementById('med_主要症狀').value,
           '治療及結果': document.getElementById('med_治療及結果').value,
+          '附件Base64': attachmentBase64, // 傳送 Base64 給 GAS 後端自動上傳雲端
           '備註': document.getElementById('med_備註').value
         };
       } else {

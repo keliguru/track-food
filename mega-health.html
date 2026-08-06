@@ -201,7 +201,7 @@
             <i data-lucide="chevron-down" class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
           </div>
 
-          <!-- 新增排序 Filter 下拉選單 (預設按日期最新排序) -->
+          <!-- 新增排序 Filter 下拉選單 -->
           <div class="relative min-w-[135px]" id="sortFilterWrapper">
             <select id="sortFilter" onchange="applyFilters()" class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-mega focus:bg-white transition appearance-none cursor-pointer">
               <option value="date_desc" selected>日期：最新</option>
@@ -401,12 +401,19 @@
         </div>
       </div>
 
-      <div class="p-6 border-t border-slate-100 bg-white flex justify-between items-center">
+      <div class="p-6 border-t border-slate-100 bg-white flex justify-between items-center gap-2">
         <button onclick="closeModal('viewMedicalModal')" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition">關閉</button>
-        <button id="view_editBtn" class="px-5 py-2.5 bg-mega hover:bg-mega-dark text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center space-x-1.5">
-          <i data-lucide="edit-3" class="w-4 h-4"></i>
-          <span>切換至編輯</span>
-        </button>
+        <div class="flex items-center space-x-2">
+          <!-- 新增：複製診斷結果並新增按鈕 -->
+          <button id="view_copyBtn" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center space-x-1.5" title="複製此診斷紀錄並建立新紀錄">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            <span>複製並新增</span>
+          </button>
+          <button id="view_editBtn" class="px-5 py-2.5 bg-mega hover:bg-mega-dark text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center space-x-1.5">
+            <i data-lucide="edit-3" class="w-4 h-4"></i>
+            <span>切換至編輯</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -705,8 +712,8 @@
         document.getElementById('gasUrlInput').value = savedUrl;
         document.getElementById('urlConfigWarning').classList.add('hidden');
         document.getElementById('connectionStatusBadge').classList.remove('hidden');
-		document.getElementById('megaControl').classList.remove('hidden');
-		document.getElementById('listViewContainer').classList.remove('hidden');
+        document.getElementById('megaControl').classList.remove('hidden');
+        document.getElementById('listViewContainer').classList.remove('hidden');
 
         const cached = localStorage.getItem('mega_health_cache_data');
         if (cached) {
@@ -738,8 +745,8 @@
       localStorage.setItem('gas_mega_health_url', url);
       document.getElementById('urlConfigWarning').classList.add('hidden');
       document.getElementById('connectionStatusBadge').classList.remove('hidden');
-	  document.getElementById('megaControl').classList.remove('hidden');
-	  document.getElementById('listViewContainer').classList.remove('hidden');
+      document.getElementById('megaControl').classList.remove('hidden');
+      document.getElementById('listViewContainer').classList.remove('hidden');
       closeModal('settingsModal');
       showToast('API 網址儲存成功');
       refreshCurrentData(true);
@@ -935,9 +942,15 @@
         `).join('');
       }
 
+      // 綁定檢視抽屜底部按鈕
       document.getElementById('view_editBtn').onclick = function() {
         closeModal('viewMedicalModal');
         editRecord(id);
+      };
+
+      document.getElementById('view_copyBtn').onclick = function() {
+        closeModal('viewMedicalModal');
+        copyRecord(id);
       };
 
       openModal('viewMedicalModal');
@@ -1022,6 +1035,10 @@
                           <button onclick="viewMedicalRecord('${item['ID']}')" class="p-1.5 hover:bg-mega-soft text-mega rounded-lg transition" title="檢視詳情">
                             <i data-lucide="eye" class="w-4 h-4"></i>
                           </button>
+                          <!-- 新增：複製診斷結果按鈕 -->
+                          <button onclick="copyRecord('${item['ID']}')" class="p-1.5 hover:bg-amber-50 text-amber-600 rounded-lg transition" title="複製此診斷結果並新增">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                          </button>
                           <button onclick="editRecord('${item['ID']}')" class="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg transition" title="編輯">
                             <i data-lucide="edit-3" class="w-4 h-4"></i>
                           </button>
@@ -1053,8 +1070,10 @@
                       <h4 class="font-bold text-slate-900 text-sm">${escapeHTML(item['診斷結果'] || '未填寫')}</h4>
                     </div>
                     <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
-                      <button onclick="editRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-slate-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                      <button onclick="deleteRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                      <!-- 新增：行動端卡片複製按鈕 -->
+                      <button onclick="copyRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-amber-600" title="複製並新增"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                      <button onclick="editRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-slate-600" title="編輯"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                      <button onclick="deleteRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-red-600" title="刪除"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                   </div>
                   <div class="text-[11px] text-slate-500 grid grid-cols-2 gap-1 bg-slate-50 p-2 rounded-lg" onclick="viewMedicalRecord('${item['ID']}')">
@@ -1119,6 +1138,9 @@
 
                       <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
                         <div class="flex items-center justify-end space-x-1.5">
+                          <button onclick="copyRecord('${item['ID']}')" class="p-1.5 hover:bg-amber-50 text-amber-600 rounded-lg transition" title="複製此藥物紀錄並新增">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                          </button>
                           <button onclick="editRecord('${item['ID']}')" class="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg transition" title="編輯">
                             <i data-lucide="edit-3" class="w-4 h-4"></i>
                           </button>
@@ -1146,8 +1168,9 @@
                       <span class="inline-block mt-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">${escapeHTML(item['服用劑量及途徑'] || '')}</span>
                     </div>
                     <div class="flex items-center space-x-1">
-                      <button onclick="editRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-slate-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                      <button onclick="deleteRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                      <button onclick="copyRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-amber-600" title="複製並新增"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                      <button onclick="editRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-slate-600" title="編輯"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                      <button onclick="deleteRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-red-600" title="刪除"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                   </div>
                   <div class="text-xs text-slate-600">${escapeHTML(item['次數及療程'] || '')}</div>
@@ -1220,6 +1243,44 @@
         document.getElementById('drug_特別備註').value = item['特別備註'] || '';
         document.getElementById('drugModalTitle').innerText = '編輯處方用藥紀錄';
         openModal('medicationModal');
+      }
+    }
+
+    // 新增：複製既有紀錄並當作新單新增 (COPY TO ADD NEW)
+    function copyRecord(id) {
+      const item = (rawData[currentSheet] || []).find(x => x.ID == id);
+      if (!item) return;
+
+      if (currentSheet === '病歷紀錄') {
+        document.getElementById('med_ID').value = ''; // 清空 ID 以便以 "create" action 儲存成新紀錄
+        document.getElementById('med_病人姓名').value = item['病人姓名'] || '';
+        document.getElementById('med_醫院/診所').value = item['醫院/診所'] || '';
+        document.getElementById('med_入院日期/時間').value = ''; // 複製時清空入出院日期，方便使用者填寫新就診時間
+        document.getElementById('med_出院日期/時間').value = '';
+        document.getElementById('med_主診醫生').value = item['主診醫生'] || '';
+        document.getElementById('med_診斷結果').value = item['診斷結果'] || '';
+        document.getElementById('med_主要症狀').value = item['主要症狀'] || '';
+        document.getElementById('med_治療及結果').value = item['治療及結果'] || '';
+        document.getElementById('med_備註').value = item['備註'] || '';
+        
+        // 清空檔案與附件狀態，避免複製前次看診的收據
+        document.getElementById('med_fileInput').value = '';
+        document.getElementById('med_current_attachment_status').classList.add('hidden');
+
+        document.getElementById('medModalTitle').innerText = '複製並新增就醫診斷紀錄';
+        openModal('medicalModal');
+        showToast('已複製診斷資料，請修改後儲存為新紀錄');
+      } else {
+        populateMedicalDropdownForDrugModal();
+        document.getElementById('drug_ID').value = ''; // 清空 ID
+        document.getElementById('drug_關聯病歷ID').value = item['關聯病歷ID'] || '';
+        document.getElementById('drug_藥物名稱').value = item['藥物名稱'] || '';
+        document.getElementById('drug_服用劑量及途徑').value = item['服用劑量及途徑'] || '';
+        document.getElementById('drug_次數及療程').value = item['次數及療程'] || '';
+        document.getElementById('drug_特別備註').value = item['特別備註'] || '';
+        document.getElementById('drugModalTitle').innerText = '複製並新增處方用藥紀錄';
+        openModal('medicationModal');
+        showToast('已複製藥物資料，請修改後儲存為新紀錄');
       }
     }
 

@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Recuit & Health Log</title>
+  <title>Food & Health Log</title>
   
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/calo-icon.png">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="RECRUIT & HEALTH LOG">
-  <meta property="og:description" content="RECRUIT & HEALTH LOG">
+  <meta property="og:title" content="FOOD & HEALTH LOG">
+  <meta property="og:description" content="FOOD & HEALTH LOG">
   <meta property="og:image" content="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/calo-icon.png"> 
   <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/calo-icon.png">
   
@@ -422,6 +422,79 @@
       background: var(--bunshun-border);
       border-radius: 3px;
       margin: 0 auto 16px auto;
+    }
+	
+/* =========================================================
+       骨架屏與載入中特報樣式 (Skeleton Screen & Loading Banner)
+       ========================================================= */
+    @keyframes bunshun-pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.35; }
+      100% { opacity: 1; }
+    }
+
+    .skeleton-loader {
+      animation: bunshun-pulse 1.3s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    /* 文春報刊風格：現場警示橫幅 */
+    .loading-banner {
+      background: var(--bunshun-text);
+      color: var(--bunshun-bg);
+      border: 2px solid var(--bunshun-border);
+      padding: 10px 14px;
+      font-weight: 900;
+      font-size: 0.88rem;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 3px 3px 0px var(--bunshun-border);
+    }
+    .loading-banner.red {
+      background: var(--bunshun-red);
+      color: #ffffff;
+    }
+
+    /* 骨架色塊與邊框 */
+    .skeleton-box {
+      background: var(--bunshun-gray);
+      border: 1px solid var(--bunshun-border);
+    }
+
+    .skeleton-title {
+      height: 18px;
+      background: var(--bunshun-border);
+      margin-bottom: 8px;
+      opacity: 0.85;
+    }
+
+    .skeleton-bar-bg {
+      height: 14px;
+      background: var(--bunshun-gray);
+      border: 1px solid var(--bunshun-border);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .skeleton-bar-fill {
+      height: 100%;
+      background: var(--bunshun-subtext);
+      opacity: 0.3;
+    }
+
+    .skeleton-history-item {
+      padding: 14px 8px;
+      border-bottom: 1px dashed var(--bunshun-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .skeleton-history-item:last-child {
+      border-bottom: none;
     }
   </style>
 </head>
@@ -853,12 +926,24 @@
       }
     }
 
-    // 從 GAS 讀取：同時同步「今日配額」與「歷史清單」
+	// 從 GAS 讀取：同時同步「今日配額」與「歷史清單」（整合骨架屏 UI）
     async function fetchFromGAS() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
       if (!gasUrl) return showAlert("請先於系統 API 設定填入 Google Sheet Web App URL！", 'error');
 
+      const syncBtn = document.querySelector('button[onclick="fetchFromGAS()"]');
+      const originalText = syncBtn ? syncBtn.textContent : "🔄 同步雲端";
+
       try {
+        // 1. 啟動骨架屏與按鈕鎖定
+        if (syncBtn) {
+          syncBtn.disabled = true;
+          syncBtn.textContent = "⏳ 前線通訊中...";
+        }
+        showDashboardSkeleton();
+        showHistorySkeleton();
+
+        // 2. 請求今日數據
         const todayUrl = gasUrl + (gasUrl.includes('?') ? '&' : '?') + 'action=today';
         const resToday = await fetch(todayUrl);
         const resultToday = await resToday.json();
@@ -869,6 +954,7 @@
           renderDashboard();
         }
 
+        // 3. 請求全部歷史紀錄
         const resAll = await fetch(gasUrl);
         const resultAll = await resAll.json();
 
@@ -878,10 +964,18 @@
           renderHistory();
         }
 
-        showAlert("✅ 已自 Google Sheet 同步最新進度！");
+        showAlert("✅ 雲端通訊完畢：最新進度與歷史庫存已同步！");
       } catch (e) {
-        showAlert("連線失敗，改由本地記錄顯示中。", 'error');
+        showAlert("連線失敗，改由本地前線儲存紀錄顯示中。", 'error');
+        // 出錯時復原為顯示本地數據
         renderDashboard();
+        renderHistory();
+      } finally {
+        // 4. 解鎖同步按鈕
+        if (syncBtn) {
+          syncBtn.disabled = false;
+          syncBtn.textContent = originalText;
+        }
       }
     }
 
@@ -1026,6 +1120,50 @@
       link.href = URL.createObjectURL(blob);
       link.download = `cells_log_${new Date().toISOString().slice(0,10)}.csv`;
       link.click();
+    }
+	
+// 顯示今日運送配額的「工作細胞主題」骨架屏
+    function showDashboardSkeleton() {
+      const container = document.getElementById('dashboardProgress');
+      container.innerHTML = `
+        <div class="loading-banner skeleton-loader">
+          <span>🚧 白血球巡邏中：正在自血管前線調度今日運送進度...</span>
+        </div>
+        <div class="skeleton-loader">
+          <div class="skeleton-title" style="width: 40%;"></div>
+          <div class="skeleton-bar-bg"><div class="skeleton-bar-fill" style="width: 65%;"></div></div>
+          
+          <div class="skeleton-title" style="width: 48%;"></div>
+          <div class="skeleton-bar-bg"><div class="skeleton-bar-fill" style="width: 40%;"></div></div>
+          
+          <div class="skeleton-title" style="width: 55%;"></div>
+          <div class="skeleton-bar-bg"><div class="skeleton-bar-fill" style="width: 80%;"></div></div>
+        </div>
+      `;
+    }
+
+    // 顯示歷史紀錄清單的「工作細胞主題」骨架屏
+    function showHistorySkeleton() {
+      const container = document.getElementById('historyList');
+      const skeletonItems = Array(4).fill(0).map(() => `
+        <div class="skeleton-history-item skeleton-loader">
+          <div style="width: 60%;">
+            <div class="skeleton-box" style="height: 16px; width: 75%; margin-bottom: 6px;"></div>
+            <div class="skeleton-box" style="height: 12px; width: 45%;"></div>
+          </div>
+          <div style="width: 30%; text-align: right;">
+            <div class="skeleton-box" style="height: 18px; width: 70%; margin-left: auto; margin-bottom: 4px;"></div>
+            <div class="skeleton-box" style="height: 12px; width: 50%; margin-left: auto;"></div>
+          </div>
+        </div>
+      `).join('');
+      
+      container.innerHTML = `
+        <div class="loading-banner red skeleton-loader">
+          <span>📂 血小板歸檔中：正在自雲端總局載入物流歷史...</span>
+        </div>
+        ${skeletonItems}
+      `;
     }
   </script>
 </body>

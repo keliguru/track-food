@@ -324,6 +324,14 @@
     .progress-bar { height: 14px; background: var(--bunshun-gray); border: 1px solid var(--bunshun-border); overflow: hidden; }
     .progress-fill { height: 100%; background: var(--bunshun-red); width: 0%; transition: width 0.4s ease; }
 
+    /* 新增：7天每日紀錄特別進度條式樣 */
+    .day-progress-card {
+      border: 1px solid var(--bunshun-border);
+      padding: 14px;
+      margin-bottom: 12px;
+      background: var(--bunshun-bg);
+    }
+
     .history-item {
       border-bottom: 1px dashed var(--bunshun-border);
       padding: 12px 8px;
@@ -424,7 +432,7 @@
       margin: 0 auto 16px auto;
     }
 	
-/* =========================================================
+    /* =========================================================
        骨架屏與載入中特報樣式 (Skeleton Screen & Loading Banner)
        ========================================================= */
     @keyframes bunshun-pulse {
@@ -554,8 +562,8 @@
           
           <div class="drop-zone" id="dropZone" onclick="document.getElementById('imageInput').click()">
             <div class="drop-zone-prompt">📂 點擊選擇照片，或將圖片拖曳至此處</div>
-			<input type="file" id="imageInput" accept="image/*" style="display: none;">
-		  </div>
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+          </div>
 
           <img id="imagePreview" alt="食物預覽">
         </div>
@@ -596,9 +604,17 @@
         <div id="dashboardProgress"></div>
       </div>
 
+      <!-- 區塊 2.5：前線過去 7 天營運進度（新增功能！） -->
+      <div class="section-header">
+        <h2 class="section-title">過去 7 天營運報告 (7-DAY STRATEGIC PROGRESS)</h2>
+      </div>
+      <div class="card">
+        <div id="sevenDayHistory"></div>
+      </div>
+
       <!-- 區塊 3：歷史運送紀錄 -->
       <div class="section-header">
-        <h2 class="section-title">歷史運送紀錄 (OPERATIONAL LOG)</h2>
+        <h2 class="section-title">歷史運送細節 (OPERATIONAL LOG)</h2>
       </div>
       <div class="card">
         <div id="historyList"></div>
@@ -616,7 +632,7 @@
         <ul class="news-list">
           <li class="news-item">
             <div class="news-date">2026.08.06</div>
-            <div class="news-title">【專題報導】白血球隊伍擴大招募：應對外來病原體的最新裝備介紹。</div>
+            <div class="news-title">【特設報導】系統前線全面對接 GAS，支援「七日連續追蹤」趨勢圖表！</div>
           </li>
           <li class="news-item">
             <div class="news-date">2026.08.05</div>
@@ -666,7 +682,7 @@
         <hr style="border: 0; border-top: 1px dashed var(--bunshun-border); margin: 18px 0;">
 
         <label style="color: var(--bunshun-red); margin-bottom: 10px;">■ 資料數據操作</label>
-        <button class="btn btn-secondary" onclick="fetchFromGAS()">🔄 同步雲端</button>
+        <button class="btn btn-secondary" onclick="fetchFromGAS()">🔄 同步雲端與 7 天進度</button>
         <button class="btn btn-secondary" onclick="exportCSV()">📥 匯出 CSV</button>
 
         <div id="settingMsg" style="text-align: center; margin-top: 8px; font-size: 0.82rem; color: var(--bunshun-red); font-weight: 800;"></div>
@@ -782,7 +798,6 @@
 
     // 載入本地設定與主題
     window.addEventListener('DOMContentLoaded', () => {
-      // 讀取保留的黑夜設定
       const savedTheme = localStorage.getItem('uiTheme');
       if (savedTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -801,6 +816,7 @@
         fetchFromGAS();
       } else {
         renderDashboard();
+        renderSevenDaysHistory();
         renderHistory();
       }
     });
@@ -810,6 +826,7 @@
         localStorage.setItem(id, document.getElementById(id).value.trim());
       });
       renderDashboard();
+      renderSevenDaysHistory();
       showAlert("✅ 設定已儲存完成！");
     }
 
@@ -830,7 +847,6 @@
       document.getElementById('saveStatus').textContent = "";
 
       try {
-        // 第一階段：Qwen-VL
         document.getElementById('stage1Status').textContent = "正在現場辨識照片菜色...";
         const res1 = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
@@ -855,7 +871,6 @@
         document.getElementById('stage1Status').textContent = "✅ 第一階段辨識完畢";
         document.getElementById('stage1Output').textContent = foodDescription;
 
-        // 第二階段：DeepSeek
         document.getElementById('stage2Status').textContent = "正在精密計算卡路里、蛋白質與鈉含量...";
         const res2 = await fetch("https://api.deepseek.com/chat/completions", {
           method: "POST",
@@ -897,7 +912,7 @@
       }
     }
 
-    // 儲存紀錄：改用 ISO 時間格式寫入
+    // 儲存紀錄：使用 ISO 時間格式
     async function saveData() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
       analyzedData.timestamp = new Date().toISOString();
@@ -917,16 +932,17 @@
         } catch (e) {}
       }
 
-      showAlert("✅ 紀錄已寫入！儀表板與清單已同步更新。");
+      showAlert("✅ 紀錄已寫入！今日進度與 7 天趨勢同步更新。");
       if (gasUrl) {
         fetchFromGAS();
       } else {
         renderDashboard();
+        renderSevenDaysHistory();
         renderHistory();
       }
     }
 
-	// 從 GAS 讀取：同時同步「今日配額」與「歷史清單」（整合骨架屏 UI）
+    // 從 GAS 讀取：增加 7 天匯總讀取支援
     async function fetchFromGAS() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
       if (!gasUrl) return showAlert("請先於系統 API 設定填入 Google Sheet Web App URL！", 'error');
@@ -935,16 +951,16 @@
       const originalText = syncBtn ? syncBtn.textContent : "🔄 同步雲端";
 
       try {
-        // 1. 啟動骨架屏與按鈕鎖定
         if (syncBtn) {
           syncBtn.disabled = true;
           syncBtn.textContent = "⏳ 前線通訊中...";
         }
         showDashboardSkeleton();
+        showSevenDaysSkeleton();
         showHistorySkeleton();
 
-        // 2. 請求今日數據
-        const todayUrl = gasUrl + (gasUrl.includes('?') ? '&' : '?') + 'action=today';
+        // 1. 請求今日數據 (?action=today)
+        const todayUrl = `${gasUrl}${gasUrl.includes('?') ? '&' : '?'}action=today`;
         const resToday = await fetch(todayUrl);
         const resultToday = await resToday.json();
 
@@ -954,7 +970,18 @@
           renderDashboard();
         }
 
-        // 3. 請求全部歷史紀錄
+        // 2. 請求每日統計報告 (?action=dailySummary) -- 渲染 7 天報告！
+        const summaryUrl = `${gasUrl}${gasUrl.includes('?') ? '&' : '?'}action=dailySummary`;
+        const resSummary = await fetch(summaryUrl);
+        const resultSummary = await resSummary.json();
+        
+        if (resultSummary.status === "success" && Array.isArray(resultSummary.data)) {
+          renderSevenDaysHistory(resultSummary.data);
+        } else {
+          renderSevenDaysHistory();
+        }
+
+        // 3. 請求全部歷史細節
         const resAll = await fetch(gasUrl);
         const resultAll = await resAll.json();
 
@@ -964,14 +991,13 @@
           renderHistory();
         }
 
-        showAlert("✅ 雲端通訊完畢：最新進度與歷史庫存已同步！");
+        showAlert("✅ 雲端通訊完畢：所有報告與 7 天紀錄已同步！");
       } catch (e) {
         showAlert("連線失敗，改由本地前線儲存紀錄顯示中。", 'error');
-        // 出錯時復原為顯示本地數據
         renderDashboard();
+        renderSevenDaysHistory();
         renderHistory();
       } finally {
-        // 4. 解鎖同步按鈕
         if (syncBtn) {
           syncBtn.disabled = false;
           syncBtn.textContent = originalText;
@@ -979,7 +1005,6 @@
       }
     }
 
-    // 輔助函數：將 ISO 時間或各種格式轉為繁體中文格式
     function formatChineseDateTime(dateStr) {
       if (!dateStr) return '未知';
       const d = new Date(dateStr);
@@ -996,7 +1021,7 @@
       });
     }
 
-    // 今日配額儀表板 (安全型別檢查防錯方案)
+    // 今日配額儀表板
     function renderDashboard(externalData = null) {
       let todayHistory = [];
 
@@ -1053,6 +1078,95 @@
       renderBar('今日熱量配額 (Calories)', totals.calories, targetCal, 'kcal') +
       renderBar('今日蛋白質進度 (Protein)', totals.protein, targetProtein, 'g') +
       renderBar('今日鈉攝取上限 (Sodium)', totals.sodium, targetSodium, 'mg');
+    }
+
+    // =========================================================================
+    // 🔴 核心升級功能：過去 7 天營運趨勢報告 (7-Day Strategic Progress)
+    // =========================================================================
+    function renderSevenDaysHistory(summaryData = null) {
+      const container = document.getElementById('sevenDayHistory');
+      const targetCal = Number(localStorage.getItem('targetCal')) || 2000;
+      const targetProtein = Number(localStorage.getItem('targetProtein')) || 75;
+
+      let daysList = [];
+
+      // 1. 如果 GAS 傳入了 dailySummary
+      if (Array.isArray(summaryData) && summaryData.length > 0) {
+        daysList = summaryData.slice(0, 7);
+      } else {
+        // 2. 本地儲存備援方案：自行分組統計過去 7 天
+        const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
+        const map = {};
+
+        history.forEach(item => {
+          if (!item.timestamp) return;
+          const d = new Date(item.timestamp);
+          if (isNaN(d.getTime())) return;
+          const dayStr = d.toISOString().slice(0, 10);
+          
+          if (!map[dayStr]) {
+            map[dayStr] = { date: dayStr, totalCalories: 0, totalProtein: 0, recordCount: 0 };
+          }
+          map[dayStr].totalCalories += (Number(item.calories) || 0);
+          map[dayStr].totalProtein += (Number(item.protein) || 0);
+          map[dayStr].recordCount += 1;
+        });
+
+        daysList = Object.values(map)
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .slice(0, 7);
+      }
+
+      if (daysList.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:var(--bunshun-subtext); font-weight:700; padding:10px 0;">目前暫無足夠歷史報告數據</p>';
+        return;
+      }
+
+      // 將 7 天統計化為有感覺的每日進度圖表卡片
+      container.innerHTML = daysList.map((day, idx) => {
+        const calPercent = Math.min(100, (day.totalCalories / targetCal) * 100);
+        const proPercent = Math.min(100, (day.totalProtein / targetProtein) * 100);
+        
+        // 特色：達成度健康色與爆錶紅色警示
+        const calColor = day.totalCalories > targetCal ? 'var(--bunshun-red)' : '#16a34a';
+        const isExceeded = day.totalCalories > targetCal;
+
+        return `
+          <div class="day-progress-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <div>
+                <strong style="font-size:0.95rem; font-family:var(--font-serif);">${day.date} ${idx === 0 ? '<span style="color:var(--bunshun-red); font-size:0.75rem;">(最近一日)</span>' : ''}</strong>
+                <span style="font-size:0.78rem; color:var(--bunshun-subtext); margin-left:6px;">(${day.recordCount} 筆餐食)</span>
+              </div>
+              <div style="font-size:0.8rem; font-weight:900;">
+                ${isExceeded ? '⚠️ 能源過載' : '✅ 正常運營'}
+              </div>
+            </div>
+            
+            <!-- 每日卡路里條 -->
+            <div style="margin-bottom:8px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:800; margin-bottom:4px;">
+                <span>熱量 (Calories)</span>
+                <span style="color:${isExceeded ? 'var(--bunshun-red)' : 'inherit'}">${Math.round(day.totalCalories)} / ${targetCal} kcal</span>
+              </div>
+              <div class="progress-bar" style="height:10px;">
+                <div class="progress-fill" style="width:${calPercent}%; background:${calColor};"></div>
+              </div>
+            </div>
+
+            <!-- 每日蛋白質條 -->
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:800; margin-bottom:4px;">
+                <span>蛋白質 (Protein)</span>
+                <span>${Math.round(day.totalProtein)} / ${targetProtein} g</span>
+              </div>
+              <div class="progress-bar" style="height:10px;">
+                <div class="progress-fill" style="width:${proPercent}%; background:var(--bunshun-text);"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     // 渲染歷史清單
@@ -1122,7 +1236,7 @@
       link.click();
     }
 	
-// 顯示今日運送配額的「工作細胞主題」骨架屏
+    // 骨架屏：今日運送進度
     function showDashboardSkeleton() {
       const container = document.getElementById('dashboardProgress');
       container.innerHTML = `
@@ -1142,7 +1256,29 @@
       `;
     }
 
-    // 顯示歷史紀錄清單的「工作細胞主題」骨架屏
+    // 骨架屏：7 天過去紀錄報告（新增）
+    function showSevenDaysSkeleton() {
+      const container = document.getElementById('sevenDayHistory');
+      container.innerHTML = `
+        <div class="loading-banner skeleton-loader" style="background:var(--bunshun-gray); color:var(--bunshun-text);">
+          <span>📊 調度七日歷史匯總與趨勢報告中...</span>
+        </div>
+        <div class="skeleton-loader">
+          <div class="day-progress-card">
+            <div class="skeleton-box" style="height:16px; width:45%; margin-bottom:12px;"></div>
+            <div class="skeleton-bar-bg" style="height:10px;"><div class="skeleton-bar-fill" style="width:70%;"></div></div>
+            <div class="skeleton-bar-bg" style="height:10px;"><div class="skeleton-bar-fill" style="width:40%;"></div></div>
+          </div>
+          <div class="day-progress-card">
+            <div class="skeleton-box" style="height:16px; width:50%; margin-bottom:12px;"></div>
+            <div class="skeleton-bar-bg" style="height:10px;"><div class="skeleton-bar-fill" style="width:85%;"></div></div>
+            <div class="skeleton-bar-bg" style="height:10px;"><div class="skeleton-bar-fill" style="width:60%;"></div></div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 骨架屏：歷史紀錄清單
     function showHistorySkeleton() {
       const container = document.getElementById('historyList');
       const skeletonItems = Array(4).fill(0).map(() => `

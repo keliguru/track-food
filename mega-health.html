@@ -11,14 +11,14 @@
   <meta property="og:image" content="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/mega-health-icon.png"> 
   <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/mega-health-icon.png">
   
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS CDN (建議正式上線環境改用建置好的 CSS 檔案，例如：<link href="/css/tailwind-output.css" rel="stylesheet">) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Inter & Noto Sans TC -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Lucide Icons (加入 defer 延遲加載以優化效能) -->
+  <script src="https://unpkg.com/lucide@latest" defer></script>
   
   <script>
     tailwind.config = {
@@ -82,7 +82,6 @@
       backdrop-filter: blur(8px);
       background-color: rgba(15, 23, 42, 0.45);
     }
-    /* Toast 進入動畫 */
     @keyframes slideInRight {
       from { transform: translateX(100%); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
@@ -90,7 +89,6 @@
     .toast-animate {
       animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    /* 防誤觸震動提示動畫 */
     @keyframes modalShake {
       0%, 100% { transform: scale(1) translateX(0); }
       15%, 45%, 75% { transform: scale(1.01) translateX(-4px); }
@@ -99,8 +97,6 @@
     .shake-animation {
       animation: modalShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
     }
-
-    /* 滑出顯示動畫與樣式 (右側滑出) */
     .drawer-backdrop {
       transition: opacity 0.3s ease;
     }
@@ -174,15 +170,15 @@
       <!-- Control Bar -->
       <div id="megaControl" class="hidden bg-white rounded-2xl p-3 sm:p-4 shadow-mega border border-slate-200/80 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         
-        <!-- Tabs -->
+        <!-- Tabs (整合為常數呼叫) -->
         <div class="flex border-b md:border-b-0 border-slate-100 gap-6 px-2 overflow-x-auto">
-          <button id="tab-medical" onclick="switchTab('病歷紀錄')" class="pb-3 md:pb-0 text-slate-500 font-medium text-sm flex items-center space-x-2 transition-all duration-200 whitespace-nowrap active-tab">
+          <button id="tab-medical" onclick="switchTab(SHEETS.MEDICAL)" class="pb-3 md:pb-0 text-slate-500 font-medium text-sm flex items-center space-x-2 transition-all duration-200 whitespace-nowrap active-tab">
             <i data-lucide="stethoscope" class="w-4 h-4"></i>
             <span>就醫診斷 (MEDICAL)</span>
             <span id="medicalBadge" class="bg-mega-soft text-mega text-xs px-2 py-0.5 rounded-full font-bold ml-1">0</span>
           </button>
 
-          <button id="tab-medication" onclick="switchTab('藥物紀錄')" class="pb-3 md:pb-0 text-slate-500 font-medium text-sm flex items-center space-x-2 transition-all duration-200 whitespace-nowrap">
+          <button id="tab-medication" onclick="switchTab(SHEETS.MEDICATION)" class="pb-3 md:pb-0 text-slate-500 font-medium text-sm flex items-center space-x-2 transition-all duration-200 whitespace-nowrap">
             <i data-lucide="pill" class="w-4 h-4"></i>
             <span>處方用藥 (MEDICATION)</span>
             <span id="medicationBadge" class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full font-bold ml-1">0</span>
@@ -192,7 +188,6 @@
         <!-- Filter, Search & Add Record -->
         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
           
-          <!-- 病人 Filter 下拉選單 -->
           <div class="relative min-w-[130px]" id="patientFilterWrapper">
             <select id="patientFilter" onchange="applyFilters()" class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-mega focus:bg-white transition appearance-none cursor-pointer">
               <option value="">所有病人</option>
@@ -201,7 +196,6 @@
             <i data-lucide="chevron-down" class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
           </div>
 
-          <!-- 新增排序 Filter 下拉選單 -->
           <div class="relative min-w-[135px]" id="sortFilterWrapper">
             <select id="sortFilter" onchange="applyFilters()" class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-mega focus:bg-white transition appearance-none cursor-pointer">
               <option value="date_desc" selected>日期：最新</option>
@@ -211,7 +205,6 @@
             <i data-lucide="chevron-down" class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
           </div>
 
-          <!-- 搜尋欄 (Debounce) -->
           <div class="relative flex-1 sm:w-52 min-w-[160px]">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
             <input type="text" id="searchInput" placeholder="搜尋關鍵字..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-mega focus:bg-white transition">
@@ -230,7 +223,6 @@
 
       <!-- Dynamic Data List Container -->
       <div id="listViewContainer" class="hidden bg-white rounded-2xl border border-slate-200/80 shadow-mega overflow-hidden min-h-[300px]">
-        <!-- 預設 Skeleton -->
         <div class="p-6 space-y-4 animate-pulse">
           <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
           <div class="space-y-3">
@@ -404,7 +396,6 @@
       <div class="p-6 border-t border-slate-100 bg-white flex justify-between items-center gap-2">
         <button onclick="closeModal('viewMedicalModal')" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition">關閉</button>
         <div class="flex items-center space-x-2">
-          <!-- 新增：複製診斷結果並新增按鈕 -->
           <button id="view_copyBtn" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center space-x-1.5" title="複製此診斷紀錄並建立新紀錄">
             <i data-lucide="copy" class="w-4 h-4"></i>
             <span>複製並新增</span>
@@ -437,7 +428,7 @@
         </button>
       </div>
 
-      <form id="medicalForm" onsubmit="saveRecord(event, '病歷紀錄')" class="flex-1 flex flex-col overflow-hidden">
+      <form id="medicalForm" onsubmit="saveRecord(event, SHEETS.MEDICAL)" class="flex-1 flex flex-col overflow-hidden">
         <input type="hidden" id="med_ID">
         <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -474,7 +465,6 @@
               <textarea id="med_治療及結果" rows="2" placeholder="例如：打止吐針、點滴注射" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-mega outline-none"></textarea>
             </div>
             
-            <!-- 新增檔案上傳欄位 -->
             <div class="sm:col-span-2">
               <label class="block font-semibold text-slate-700 mb-1 flex items-center space-x-1">
                 <i data-lucide="paperclip" class="w-3.5 h-3.5 text-mega"></i>
@@ -521,7 +511,7 @@
         </button>
       </div>
 
-      <form id="medicationForm" onsubmit="saveRecord(event, '藥物紀錄')" class="flex-1 flex flex-col overflow-hidden">
+      <form id="medicationForm" onsubmit="saveRecord(event, SHEETS.MEDICATION)" class="flex-1 flex flex-col overflow-hidden">
         <input type="hidden" id="drug_ID">
         <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -566,9 +556,25 @@
 
   <!-- JavaScript Logic -->
   <script>
-    let currentSheet = '病歷紀錄';
-    let rawData = { '病歷紀錄': [], '藥物紀錄': [] };
-    let openModalCount = 0;
+    // --- [優化] 定義常數與集中狀態 ---
+    const SHEETS = {
+      MEDICAL: '病歷紀錄',
+      MEDICATION: '藥物紀錄'
+    };
+
+    const appState = {
+      currentSheet: SHEETS.MEDICAL,
+      rawData: { [SHEETS.MEDICAL]: [], [SHEETS.MEDICATION]: [] },
+      openModalCount: 0
+    };
+
+    // --- [優化] 加入 Timeout 的 Fetch Helper ---
+    function fetchWithTimeout(url, options = {}, timeout = 15000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+    }
 
     function openModal(modalId) {
       const el = document.getElementById(modalId);
@@ -576,10 +582,10 @@
       el.classList.remove('hidden');
       void el.offsetWidth;
       el.classList.remove('drawer-hidden');
-      if (openModalCount === 0) {
+      if (appState.openModalCount === 0) {
         document.body.classList.add('overflow-hidden', 'overscroll-none');
       }
-      openModalCount++;
+      appState.openModalCount++;
     }
 
     function closeModal(modalId) {
@@ -593,8 +599,8 @@
       } else {
         el.classList.add('hidden');
       }
-      openModalCount = Math.max(0, openModalCount - 1);
-      if (openModalCount === 0) {
+      appState.openModalCount = Math.max(0, appState.openModalCount - 1);
+      if (appState.openModalCount === 0) {
         document.body.classList.remove('overflow-hidden', 'overscroll-none');
       }
     }
@@ -660,7 +666,7 @@
         </div>`;
       
       container.insertAdjacentHTML('beforeend', toastHtml);
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
 
       setTimeout(() => {
         const el = document.getElementById(id);
@@ -703,7 +709,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
       const savedUrl = localStorage.getItem('gas_mega_health_url');
       
       document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 250));
@@ -718,7 +724,7 @@
         const cached = localStorage.getItem('mega_health_cache_data');
         if (cached) {
           try {
-            rawData = JSON.parse(cached);
+            appState.rawData = JSON.parse(cached);
             updateBadges();
             updatePatientDropdown();
             populateMedicalDropdownForDrugModal();
@@ -753,16 +759,16 @@
     }
 
     function switchTab(sheetName) {
-      currentSheet = sheetName;
-      document.getElementById('tab-medical').classList.toggle('active-tab', sheetName === '病歷紀錄');
-      document.getElementById('tab-medication').classList.toggle('active-tab', sheetName === '藥物紀錄');
+      appState.currentSheet = sheetName;
+      document.getElementById('tab-medical').classList.toggle('active-tab', sheetName === SHEETS.MEDICAL);
+      document.getElementById('tab-medication').classList.toggle('active-tab', sheetName === SHEETS.MEDICATION);
       applyFilters();
     }
 
     function refreshCurrentData(showLoading = true) {
-      loadData('病歷紀錄', showLoading).then(() => {
-        loadData('藥物紀錄', false).then(() => {
-          localStorage.setItem('mega_health_cache_data', JSON.stringify(rawData));
+      loadData(SHEETS.MEDICAL, showLoading).then(() => {
+        loadData(SHEETS.MEDICATION, false).then(() => {
+          localStorage.setItem('mega_health_cache_data', JSON.stringify(appState.rawData));
           updateBadges();
           updatePatientDropdown();
           populateMedicalDropdownForDrugModal();
@@ -789,10 +795,10 @@
       }
 
       try {
-        const response = await fetch(`${url}?sheet=${encodeURIComponent(sheetName)}`);
+        const response = await fetchWithTimeout(`${url}?sheet=${encodeURIComponent(sheetName)}`);
         const res = await response.json();
         if (res.status === 'success') {
-          rawData[sheetName] = res.data || [];
+          appState.rawData[sheetName] = res.data || [];
         }
       } catch (err) {
         if (showLoading) {
@@ -801,20 +807,20 @@
               <i data-lucide="wifi-off" class="w-8 h-8 mx-auto mb-2 text-slate-400"></i>
               <p class="font-bold text-slate-700 text-sm">連線中斷或 CORS 設定失敗</p>
             </div>`;
-          lucide.createIcons();
+          if (window.lucide) lucide.createIcons();
         }
       }
     }
 
     function updateBadges() {
-      document.getElementById('medicalBadge').innerText = (rawData['病歷紀錄'] || []).length;
-      document.getElementById('medicationBadge').innerText = (rawData['藥物紀錄'] || []).length;
+      document.getElementById('medicalBadge').innerText = (appState.rawData[SHEETS.MEDICAL] || []).length;
+      document.getElementById('medicationBadge').innerText = (appState.rawData[SHEETS.MEDICATION] || []).length;
     }
 
     function updatePatientDropdown() {
       const select = document.getElementById('patientFilter');
       const currentSelected = select.value;
-      const list = rawData['病歷紀錄'] || [];
+      const list = appState.rawData[SHEETS.MEDICAL] || [];
       const patients = [...new Set(list.map(item => item['病人姓名']).filter(Boolean))];
 
       select.innerHTML = `<option value="">所有病人 (${patients.length})</option>`;
@@ -829,7 +835,7 @@
 
     function populateMedicalDropdownForDrugModal() {
       const select = document.getElementById('drug_關聯病歷ID');
-      const list = rawData['病歷紀錄'] || [];
+      const list = appState.rawData[SHEETS.MEDICAL] || [];
       select.innerHTML = `<option value="">-- 不關聯 (獨立藥物) --</option>`;
 
       list.forEach(item => {
@@ -840,20 +846,19 @@
       });
     }
 
-    // 更新篩選與新增排序邏輯
     function applyFilters() {
       const selectedPatient = document.getElementById('patientFilter').value;
       const q = document.getElementById('searchInput').value.toLowerCase().trim();
       const sortValue = document.getElementById('sortFilter') ? document.getElementById('sortFilter').value : 'date_desc';
-      let list = [...(rawData[currentSheet] || [])];
+      let list = [...(appState.rawData[appState.currentSheet] || [])];
 
       // 1. 病人條件過濾
       if (selectedPatient) {
-        if (currentSheet === '病歷紀錄') {
+        if (appState.currentSheet === SHEETS.MEDICAL) {
           list = list.filter(item => item['病人姓名'] === selectedPatient);
         } else {
           list = list.filter(item => {
-            const linkedMed = (rawData['病歷紀錄'] || []).find(m => m['ID'] == item['關聯病歷ID']);
+            const linkedMed = (appState.rawData[SHEETS.MEDICAL] || []).find(m => m['ID'] == item['關聯病歷ID']);
             return linkedMed && linkedMed['病人姓名'] === selectedPatient;
           });
         }
@@ -866,13 +871,13 @@
         });
       }
 
-      // 3. 按日期新舊排序 (預設最新在最上面)
+      // 3. 按日期新舊排序
       list.sort((a, b) => {
         const getDateString = (item) => {
-          if (currentSheet === '病歷紀錄') {
+          if (appState.currentSheet === SHEETS.MEDICAL) {
             return item['入院日期/時間'] || item['出院日期/時間'] || String(item['ID'] || '');
           } else {
-            const linkedMed = (rawData['病歷紀錄'] || []).find(m => m['ID'] == item['關聯病歷ID']);
+            const linkedMed = (appState.rawData[SHEETS.MEDICAL] || []).find(m => m['ID'] == item['關聯病歷ID']);
             return (linkedMed && linkedMed['入院日期/時間']) ? linkedMed['入院日期/時間'] : String(item['ID'] || '');
           }
         };
@@ -881,9 +886,9 @@
         const dateB = getDateString(b);
         
         if (sortValue === 'date_desc') {
-          return dateB.localeCompare(dateA); // 最新日期在上 (降序)
+          return dateB.localeCompare(dateA); 
         } else {
-          return dateA.localeCompare(dateB); // 最舊日期在上 (升序)
+          return dateA.localeCompare(dateB); 
         }
       });
 
@@ -891,7 +896,7 @@
     }
 
     function viewMedicalRecord(id) {
-      const item = (rawData['病歷紀錄'] || []).find(x => x.ID == id);
+      const item = (appState.rawData[SHEETS.MEDICAL] || []).find(x => x.ID == id);
       if (!item) return;
 
       document.getElementById('view_patient_badge').innerText = `病人：${item['病人姓名'] || '未名'}`;
@@ -904,7 +909,6 @@
       document.getElementById('view_治療及結果').innerText = item['治療及結果'] || '無詳細治療結果';
       document.getElementById('view_備註').innerText = item['備註'] || '無備註';
 
-      // 處理附件顯示
       const attachmentSection = document.getElementById('view_attachment_section');
       const attachmentLink = document.getElementById('view_attachment_link');
       const attachmentUrl = item['附件Base64'];
@@ -915,7 +919,7 @@
         attachmentSection.classList.add('hidden');
       }
 
-      const linkedDrugs = (rawData['藥物紀錄'] || []).filter(d => d['關聯病歷ID'] == id);
+      const linkedDrugs = (appState.rawData[SHEETS.MEDICATION] || []).filter(d => d['關聯病歷ID'] == id);
       const linkedContainer = document.getElementById('view_linked_medications');
       document.getElementById('view_linked_drug_count').innerText = `${linkedDrugs.length} 項`;
 
@@ -942,7 +946,6 @@
         `).join('');
       }
 
-      // 綁定檢視抽屜底部按鈕
       document.getElementById('view_editBtn').onclick = function() {
         closeModal('viewMedicalModal');
         editRecord(id);
@@ -954,7 +957,7 @@
       };
 
       openModal('viewMedicalModal');
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
     }
 
     function renderListView(list) {
@@ -967,11 +970,11 @@
             </div>
             <p class="font-semibold text-slate-700 text-sm">沒有符合條件的資料紀錄</p>
           </div>`;
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
         return;
       }
 
-      if (currentSheet === '病歷紀錄') {
+      if (appState.currentSheet === SHEETS.MEDICAL) {
         container.innerHTML = `
           <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -987,7 +990,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
                 ${list.map(item => {
-                  const linkedDrugs = (rawData['藥物紀錄'] || []).filter(d => d['關聯病歷ID'] == item['ID']);
+                  const linkedDrugs = (appState.rawData[SHEETS.MEDICATION] || []).filter(d => d['關聯病歷ID'] == item['ID']);
                   const hasFile = item['附件Base64'] && item['附件Base64'].startsWith('http');
                   return `
                     <tr class="hover:bg-slate-50/80 transition group">
@@ -1035,7 +1038,6 @@
                           <button onclick="viewMedicalRecord('${item['ID']}')" class="p-1.5 hover:bg-mega-soft text-mega rounded-lg transition" title="檢視詳情">
                             <i data-lucide="eye" class="w-4 h-4"></i>
                           </button>
-                          <!-- 新增：複製診斷結果按鈕 -->
                           <button onclick="copyRecord('${item['ID']}')" class="p-1.5 hover:bg-amber-50 text-amber-600 rounded-lg transition" title="複製此診斷結果並新增">
                             <i data-lucide="copy" class="w-4 h-4"></i>
                           </button>
@@ -1057,7 +1059,7 @@
           <!-- 行動端卡片佈局 -->
           <div class="md:hidden divide-y divide-slate-100">
             ${list.map(item => {
-              const linkedDrugs = (rawData['藥物紀錄'] || []).filter(d => d['關聯病歷ID'] == item['ID']);
+              const linkedDrugs = (appState.rawData[SHEETS.MEDICATION] || []).filter(d => d['關聯病歷ID'] == item['ID']);
               const hasFile = item['附件Base64'] && item['附件Base64'].startsWith('http');
               return `
                 <div class="p-4 space-y-3 hover:bg-slate-50/50 transition">
@@ -1070,7 +1072,6 @@
                       <h4 class="font-bold text-slate-900 text-sm">${escapeHTML(item['診斷結果'] || '未填寫')}</h4>
                     </div>
                     <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
-                      <!-- 新增：行動端卡片複製按鈕 -->
                       <button onclick="copyRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-amber-600" title="複製並新增"><i data-lucide="copy" class="w-4 h-4"></i></button>
                       <button onclick="editRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-slate-600" title="編輯"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                       <button onclick="deleteRecord('${item['ID']}')" class="p-1.5 text-slate-400 hover:text-red-600" title="刪除"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -1108,7 +1109,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
                 ${list.map(item => {
-                  const linkedMed = (rawData['病歷紀錄'] || []).find(m => m['ID'] == item['關聯病歷ID']);
+                  const linkedMed = (appState.rawData[SHEETS.MEDICAL] || []).find(m => m['ID'] == item['關聯病歷ID']);
                   return `
                     <tr class="hover:bg-slate-50/80 transition group">
                       <td class="py-3.5 px-4 align-top">
@@ -1159,7 +1160,7 @@
           <!-- 處方藥物：行動端卡片佈局 -->
           <div class="md:hidden divide-y divide-slate-100">
             ${list.map(item => {
-              const linkedMed = (rawData['病歷紀錄'] || []).find(m => m['ID'] == item['關聯病歷ID']);
+              const linkedMed = (appState.rawData[SHEETS.MEDICAL] || []).find(m => m['ID'] == item['關聯病歷ID']);
               return `
                 <div class="p-4 space-y-2 hover:bg-slate-50/50 transition">
                   <div class="flex justify-between items-start">
@@ -1186,11 +1187,11 @@
         `;
       }
 
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
     }
 
     function openCreateModal() {
-      if (currentSheet === '病歷紀錄') {
+      if (appState.currentSheet === SHEETS.MEDICAL) {
         document.getElementById('medicalForm').reset();
         document.getElementById('med_ID').value = '';
         document.getElementById('med_current_attachment_status').classList.add('hidden');
@@ -1206,10 +1207,10 @@
     }
 
     function editRecord(id) {
-      const item = (rawData[currentSheet] || []).find(x => x.ID == id);
+      const item = (appState.rawData[appState.currentSheet] || []).find(x => x.ID == id);
       if (!item) return;
 
-      if (currentSheet === '病歷紀錄') {
+      if (appState.currentSheet === SHEETS.MEDICAL) {
         document.getElementById('med_ID').value = item.ID || '';
         document.getElementById('med_病人姓名').value = item['病人姓名'] || '';
         document.getElementById('med_醫院/診所').value = item['醫院/診所'] || '';
@@ -1221,7 +1222,6 @@
         document.getElementById('med_治療及結果').value = item['治療及結果'] || '';
         document.getElementById('med_備註').value = item['備註'] || '';
         
-        // 檔案上傳狀態處理
         document.getElementById('med_fileInput').value = '';
         const statusEl = document.getElementById('med_current_attachment_status');
         if (item['附件Base64'] && item['附件Base64'].startsWith('http')) {
@@ -1246,16 +1246,15 @@
       }
     }
 
-    // 新增：複製既有紀錄並當作新單新增 (COPY TO ADD NEW)
     function copyRecord(id) {
-      const item = (rawData[currentSheet] || []).find(x => x.ID == id);
+      const item = (appState.rawData[appState.currentSheet] || []).find(x => x.ID == id);
       if (!item) return;
 
-      if (currentSheet === '病歷紀錄') {
-        document.getElementById('med_ID').value = ''; // 清空 ID 以便以 "create" action 儲存成新紀錄
+      if (appState.currentSheet === SHEETS.MEDICAL) {
+        document.getElementById('med_ID').value = ''; 
         document.getElementById('med_病人姓名').value = item['病人姓名'] || '';
         document.getElementById('med_醫院/診所').value = item['醫院/診所'] || '';
-        document.getElementById('med_入院日期/時間').value = ''; // 複製時清空入出院日期，方便使用者填寫新就診時間
+        document.getElementById('med_入院日期/時間').value = ''; 
         document.getElementById('med_出院日期/時間').value = '';
         document.getElementById('med_主診醫生').value = item['主診醫生'] || '';
         document.getElementById('med_診斷結果').value = item['診斷結果'] || '';
@@ -1263,7 +1262,6 @@
         document.getElementById('med_治療及結果').value = item['治療及結果'] || '';
         document.getElementById('med_備註').value = item['備註'] || '';
         
-        // 清空檔案與附件狀態，避免複製前次看診的收據
         document.getElementById('med_fileInput').value = '';
         document.getElementById('med_current_attachment_status').classList.add('hidden');
 
@@ -1272,7 +1270,7 @@
         showToast('已複製診斷資料，請修改後儲存為新紀錄');
       } else {
         populateMedicalDropdownForDrugModal();
-        document.getElementById('drug_ID').value = ''; // 清空 ID
+        document.getElementById('drug_ID').value = ''; 
         document.getElementById('drug_關聯病歷ID').value = item['關聯病歷ID'] || '';
         document.getElementById('drug_藥物名稱').value = item['藥物名稱'] || '';
         document.getElementById('drug_服用劑量及途徑').value = item['服用劑量及途徑'] || '';
@@ -1284,7 +1282,6 @@
       }
     }
 
-    // 讀取檔案轉為 Base64 字串的 Helper
     function readFileAsDataURL(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -1299,19 +1296,31 @@
       const url = getGasUrl();
       if (!url) return showToast('請先設定 API URL', 'error');
 
-      const isMedical = sheetName === '病歷紀錄';
+      const isMedical = sheetName === SHEETS.MEDICAL;
+      const formEl = document.getElementById(isMedical ? 'medicalForm' : 'medicationForm');
       const submitBtn = isMedical ? document.getElementById('medSubmitBtn') : document.getElementById('drugSubmitBtn');
       const originalBtnText = submitBtn.innerHTML;
+      const formInputs = formEl.querySelectorAll('input, select, textarea, button');
 
-      submitBtn.disabled = true;
+      // --- [優化] 表單鎖定 ---
+      formInputs.forEach(input => input.disabled = true);
       submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>儲存中...</span>`;
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
 
       let payload = {};
       if (isMedical) {
         let attachmentBase64 = '';
         const fileInput = document.getElementById('med_fileInput');
+        
+        // --- [優化] 限制上傳檔案大小 ---
         if (fileInput.files && fileInput.files[0]) {
+          const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+          if (fileInput.files[0].size > MAX_FILE_SIZE) {
+            showToast('附件檔案過大，請上傳小於 5MB 的檔案', 'error');
+            formInputs.forEach(input => input.disabled = false);
+            submitBtn.innerHTML = originalBtnText;
+            return;
+          }
           try {
             attachmentBase64 = await readFileAsDataURL(fileInput.files[0]);
           } catch (err) {
@@ -1329,7 +1338,7 @@
           '診斷結果': document.getElementById('med_診斷結果').value,
           '主要症狀': document.getElementById('med_主要症狀').value,
           '治療及結果': document.getElementById('med_治療及結果').value,
-          '附件Base64': attachmentBase64, // 傳送 Base64 給 GAS 後端自動上傳雲端
+          '附件Base64': attachmentBase64,
           '備註': document.getElementById('med_備註').value
         };
       } else {
@@ -1346,11 +1355,13 @@
       const action = payload.ID ? 'update' : 'create';
 
       try {
-        const response = await fetch(url, {
+        // --- [優化] 結合 fetchWithTimeout (15秒超時) ---
+        const response = await fetchWithTimeout(url, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action, sheetName, data: payload })
-        });
+        }, 15000);
+        
         const res = await response.json();
         if (res.status === 'success') {
           closeModal(isMedical ? 'medicalModal' : 'medicationModal');
@@ -1360,11 +1371,15 @@
           showToast('儲存失敗：' + res.message, 'error');
         }
       } catch (err) {
-        showToast('網路請求失敗，請稍後再試', 'error');
+        if (err.name === 'AbortError') {
+          showToast('伺服器無回應 (逾時)，請檢查網路或稍後再試', 'error');
+        } else {
+          showToast('網路請求失敗，請稍後再試', 'error');
+        }
       } finally {
-        submitBtn.disabled = false;
+        formInputs.forEach(input => input.disabled = false);
         submitBtn.innerHTML = originalBtnText;
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
       }
     }
 
@@ -1372,10 +1387,10 @@
       showConfirmModal('確定要刪除這筆紀錄？', '該紀錄刪除後將無法恢復，確定要從雲端資料庫移除？', async () => {
         const url = getGasUrl();
         try {
-          const response = await fetch(url, {
+          const response = await fetchWithTimeout(url, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'delete', sheetName: currentSheet, data: { id } })
+            body: JSON.stringify({ action: 'delete', sheetName: appState.currentSheet, data: { id } })
           });
           const res = await response.json();
           if (res.status === 'success') {

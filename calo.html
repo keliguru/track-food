@@ -316,9 +316,7 @@
     }
     .status { font-weight: 800; color: var(--bunshun-red); font-size: 0.85rem; margin-bottom: 4px; }
 
-    /* -------------------------------------------------------------
-       從下方升上來 (Bottom Sheet) 彈出視窗 + 防止誤觸背景
-       ------------------------------------------------------------- */
+    /* Bottom Sheet 彈出視窗 */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0;
@@ -327,12 +325,12 @@
       backdrop-filter: blur(2px);
       z-index: 10000;
       display: flex;
-      align-items: flex-end; /* 在底部排列 */
+      align-items: flex-end;
       justify-content: center;
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.3s ease, visibility 0.3s ease;
-      pointer-events: auto; /* 防止透過背景觸發底層 */
+      pointer-events: auto;
     }
     
     .modal-overlay.active {
@@ -351,7 +349,6 @@
       overflow-y: auto;
       padding: 24px;
       position: relative;
-      /* 動畫核心：初始偏下方 100%，開啟時升回原位 */
       transform: translateY(100%);
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -371,7 +368,6 @@
       padding: 4px 8px;
     }
 
-    /* 手機視覺把手 */
     .drag-handle {
       width: 40px;
       height: 5px;
@@ -386,7 +382,7 @@
   <!-- UI 提示訊息區塊 -->
   <div id="toast-notification"></div>
 
-  <!-- 歷史備註彈出頁面 Modal (不含背景點擊關閉事件，防止誤觸) -->
+  <!-- 歷史備註彈出頁面 Modal -->
   <div class="modal-overlay" id="detailModal">
     <div class="modal-card">
       <div class="drag-handle"></div>
@@ -430,7 +426,6 @@
         <div class="form-group">
           <label>📸 現場養分照片上傳 (FOOD SCOOP)</label>
           
-          <!-- Drag N Drop 上傳區域 -->
           <div class="drop-zone" id="dropZone" onclick="document.getElementById('imageInput').click()">
             <div class="drop-zone-prompt">📂 點擊選擇照片，或將圖片拖曳至此處</div>
             <input type="file" id="imageInput" accept="image/*" capture="environment" style="display: none;">
@@ -752,9 +747,10 @@
       }
     }
 
+    // 儲存紀錄：改用 ISO 時間格式寫入
     async function saveData() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
-      analyzedData.timestamp = new Date().toLocaleString();
+      analyzedData.timestamp = new Date().toISOString();
 
       let history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
       history.unshift(analyzedData);
@@ -772,72 +768,137 @@
       }
 
       showAlert("✅ 紀錄已寫入！儀表板與清單已同步更新。");
-      renderDashboard();
-      renderHistory();
+      if (gasUrl) {
+        fetchFromGAS();
+      } else {
+        renderDashboard();
+        renderHistory();
+      }
     }
 
+    // 從 GAS 讀取：同時同步「今日配額」與「歷史清單」
     async function fetchFromGAS() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
       if (!gasUrl) return showAlert("請先於系統 API 設定填入 Google Sheet Web App URL！", 'error');
 
       try {
-        const res = await fetch(gasUrl);
-        const result = await res.json();
-        if (result.status === "success" && Array.isArray(result.data)) {
-          localStorage.setItem('nutritionHistory', JSON.stringify(result.data.reverse()));
-          renderDashboard();
-          renderHistory();
-          showAlert("✅ 已自 Google Sheet 同步最新進度！");
+        // (A) 呼叫 ?action=today 抓取今天紀錄，供 Dashboard 使用
+        const todayUrl = gasUrl + (gasUrl.includes('?') ? '&' : '?') + 'action=today';
+        const resToday = await fetch(todayUrl);
+        const resultToday = await resToday.json();
+
+        if (resultToday.status === "success" && Array.isArray(resultToday.data)) {
+          renderDashboard(resultToday.data);
         }
+
+        // (B) 抓取全部歷史紀錄，供歷史清單使用
+        const resAll = await fetch(gasUrl);
+        const resultAll = await resAll.json();
+
+        if (resultAll.status === "success" && Array.isArray(resultAll.data)) {
+          const allData = resultAll.data.reverse();
+          localStorage.setItem('nutritionHistory', JSON.stringify(allData));
+          renderHistory();
+        }
+
+        showAlert("✅ 已自 Google Sheet 同步最新進度！");
       } catch (e) {
         showAlert("連線失敗，請檢查 Web App 網址設定。", 'error');
       }
     }
 
-    function renderDashboard() {
-      const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
-      const todayStr = new Date().toLocaleDateString();
-      
-      const todayData = history.filter(item => {
-        if (!item.timestamp) return false;
-        return new Date(item.timestamp).toLocaleDateString() === todayStr;
-      });
+    // 輔助函數：將 ISO 時間或各種格式轉為繁體中文格式 (例: 2026年6月8日 上午10:50:16)
+    function formatChineseDateTime(dateStr) {
+      if (!dateStr) return '未知';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
 
-      const totals = todayData.reduce((acc, curr) => ({
+      return d.toLocaleString('zh-TW', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    }
+
+    // 今日配額儀表板 (支援從 GAS 傳入的今日資料，或自 localStorage 篩選今日紀錄)
+    function renderDashboard(todayDataFromGAS = null) {
+      let todayHistory = [];
+
+      if (todayDataFromGAS) {
+        todayHistory = todayDataFromGAS;
+      } else {
+        const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
+        const todayStr = new Date().toISOString().slice(0, 10);
+        
+        todayHistory = history.filter(item => {
+          if (!item.timestamp) return false;
+          const d = new Date(item.timestamp);
+          if (isNaN(d.getTime())) return false;
+          return d.toISOString().slice(0, 10) === todayStr;
+        });
+      }
+
+      const totals = todayHistory.reduce((acc, curr) => ({
         calories: acc.calories + (Number(curr.calories) || 0),
         protein: acc.protein + (Number(curr.protein) || 0),
         sodium: acc.sodium + (Number(curr.sodium) || 0)
       }), { calories: 0, protein: 0, sodium: 0 });
 
-      const targetCal = localStorage.getItem('targetCal') || 2000;
-      const targetProtein = localStorage.getItem('targetProtein') || 75;
-      const targetSodium = localStorage.getItem('targetSodium') || 2000;
+      const targetCal = Number(localStorage.getItem('targetCal')) || 2000;
+      const targetProtein = Number(localStorage.getItem('targetProtein')) || 75;
+      const targetSodium = Number(localStorage.getItem('targetSodium')) || 2000;
 
-      const renderBar = (label, current, max, unit) => `
-        <div class="progress-item">
-          <div class="progress-label"><span>${label}</span><span>${Math.round(current)} / ${max} ${unit}</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width: ${Math.min(100, (current/max)*100)}%;"></div></div>
+      // 渲染進度條（超量爆錶自動轉為紅字與紅色進度條）
+      const renderBar = (label, current, max, unit) => {
+        const isExceeded = current > max;
+        const percent = Math.min(100, (current / max) * 100);
+        
+        const textStyle = isExceeded ? 'color: var(--bunshun-red); font-weight: 900;' : '';
+        const barStyle = isExceeded ? 'background: var(--bunshun-red);' : '';
+
+        return `
+          <div class="progress-item">
+            <div class="progress-label">
+              <span>${label} ${isExceeded ? '⚠️ <span style="color:var(--bunshun-red);">(已爆錶)</span>' : ''}</span>
+              <span style="${textStyle}">${Math.round(current)} / ${max} ${unit}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${percent}%; ${barStyle}"></div>
+            </div>
+          </div>
+        `;
+      };
+
+      const count = todayHistory.length;
+      document.getElementById('dashboardProgress').innerHTML = `
+        <div style="background: var(--bunshun-gray); padding: 12px; margin-bottom: 16px; border: 1px solid #111; font-weight: 800; font-size: 0.88rem;">
+          📅 今日運送紀錄共 ${count} 筆
         </div>
-      `;
-
-      document.getElementById('dashboardProgress').innerHTML = 
-        renderBar('熱量配額 (Calories)', totals.calories, targetCal, 'kcal') +
-        renderBar('蛋白質進度 (Protein)', totals.protein, targetProtein, 'g') +
-        renderBar('鈉攝取上限 (Sodium)', totals.sodium, targetSodium, 'mg');
+      ` +
+      renderBar('今日熱量配額 (Calories)', totals.calories, targetCal, 'kcal') +
+      renderBar('今日蛋白質進度 (Protein)', totals.protein, targetProtein, 'g') +
+      renderBar('今日鈉攝取上限 (Sodium)', totals.sodium, targetSodium, 'mg');
     }
 
+    // 渲染歷史清單（套用繁體中文時間格式）
     function renderHistory() {
       const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
       const container = document.getElementById('historyList');
+      
       if (history.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#888; font-weight:700; padding:10px 0;">尚無運送紀錄</p>';
         return;
       }
+
       container.innerHTML = history.slice(0, 10).map((item, index) => `
         <div class="history-item" onclick="openModal(${index})">
           <div>
             <strong style="font-size:1rem;">${item.foodName || '未命名餐點'}</strong>
-            <div style="font-size:0.75rem; color:#666; margin-top:2px;">${item.timestamp || ''}</div>
+            <div style="font-size:0.75rem; color:#666; margin-top:2px;">${formatChineseDateTime(item.timestamp)}</div>
           </div>
           <div style="text-align:right;">
             <div style="font-weight:900; color:var(--bunshun-red); font-size:1.05rem;">${item.calories || 0} kcal</div>
@@ -847,14 +908,17 @@
       `).join('');
     }
 
-    // Modal 彈出視窗詳細備註邏輯
+    // Modal 彈出詳細視窗（運送時間顯示為繁體中文格式）
     function openModal(index) {
       const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
       const item = history[index];
       if (!item) return;
 
       document.getElementById('modalFoodName').textContent = item.foodName || '未命名餐點';
-      document.getElementById('modalTimestamp').textContent = `運送時間：${item.timestamp || '未知'}`;
+      
+      const formattedTime = formatChineseDateTime(item.timestamp);
+      document.getElementById('modalTimestamp').textContent = `運送時間：${formattedTime}`;
+      
       document.getElementById('modalMacros').innerHTML = `
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:var(--bunshun-gray); padding:10px; border:1px solid #ddd; font-weight:800; font-size:0.85rem;">
           <div>熱量: <span style="color:var(--bunshun-red);">${item.calories || 0} kcal</span></div>

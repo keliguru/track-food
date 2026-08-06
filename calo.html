@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RECRUIT & HEALTH LOG</title>
+  <title>Recuit & Health Log</title>
   
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/calo-icon.png">
   <meta property="og:type" content="website">
@@ -38,6 +38,34 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* 自訂 UI 提示訊息 */
+    #toast-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      padding: 14px 20px;
+      background: var(--bunshun-dark);
+      color: #ffffff;
+      border: 2px solid var(--bunshun-border);
+      box-shadow: 4px 4px 0px var(--bunshun-border);
+      font-weight: 800;
+      font-size: 0.95rem;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: translateY(-10px);
+    }
+    #toast-notification.show {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #toast-notification.error {
+      background: var(--bunshun-red);
+      color: #ffffff;
+    }
+
     /* 頂部 Header 區域 */
     header {
       max-width: 1080px;
@@ -62,7 +90,7 @@
     }
     .main-title span { color: var(--bunshun-red); }
 
-    /* 主要容器：兩欄佈局（配合圖片排位） */
+    /* 主要容器：兩欄佈局 */
     .container {
       max-width: 1080px;
       margin: 28px auto;
@@ -78,7 +106,7 @@
       }
     }
 
-    /* 左側主欄 (Main Content) */
+    /* 左側主欄 */
     .hero-banner {
       background: var(--bunshun-dark);
       color: white;
@@ -112,6 +140,10 @@
       align-items: center;
       justify-content: space-between;
     }
+    .section-header.clickable {
+      cursor: pointer;
+      user-select: none;
+    }
     .section-title {
       font-family: var(--font-serif);
       font-size: 1.35rem;
@@ -129,7 +161,14 @@
       flex-shrink: 0;
     }
 
-    /* 卡片與邊框框線風格 */
+    .toggle-arrow {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--bunshun-dark);
+      transition: transform 0.2s ease;
+    }
+
+    /* 卡片風格 */
     .card {
       background: #ffffff;
       border: 2px solid var(--bunshun-border);
@@ -160,7 +199,28 @@
       background: #fffcfc;
     }
 
-    /* 粗獷俐落的按鈕 */
+    /* 拖放上傳區域 */
+    .drop-zone {
+      border: 2px dashed var(--bunshun-border);
+      background: var(--bunshun-gray);
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .drop-zone.dragover {
+      background: #ffe6e6;
+      border-color: var(--bunshun-red);
+    }
+    .drop-zone-prompt {
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #444;
+      pointer-events: none;
+    }
+
+    /* 按鈕風格 */
     .btn {
       display: block;
       width: 100%;
@@ -181,7 +241,7 @@
     .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--bunshun-dark); }
     
     .btn-dark { background: var(--bunshun-dark); color: #fff; }
-    .btn-secondary { background: #e2e8f0; color: #111; width: auto; padding: 6px 12px; font-size: 0.8rem; display: inline-block; }
+    .btn-secondary { background: #e2e8f0; color: #111; width: 100%; padding: 10px 12px; font-size: 0.85rem; font-weight: 800; display: inline-block; margin-bottom: 8px; }
     .btn:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
 
     #imagePreview {
@@ -193,7 +253,7 @@
       border: 2px solid var(--bunshun-border);
     }
 
-    /* 右側側邊欄 News 清單 */
+    /* 右側 NEWS 清單 */
     .news-list { list-style: none; }
     .news-item {
       padding: 14px 0;
@@ -221,10 +281,15 @@
 
     .history-item {
       border-bottom: 1px dashed #ccc;
-      padding: 12px 0;
+      padding: 12px 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .history-item:hover {
+      background: var(--bunshun-gray);
     }
     .history-item:last-child { border-bottom: none; }
 
@@ -250,22 +315,107 @@
       margin-top: 6px;
     }
     .status { font-weight: 800; color: var(--bunshun-red); font-size: 0.85rem; margin-bottom: 4px; }
+
+    /* -------------------------------------------------------------
+       從下方升上來 (Bottom Sheet) 彈出視窗 + 防止誤觸背景
+       ------------------------------------------------------------- */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(2px);
+      z-index: 10000;
+      display: flex;
+      align-items: flex-end; /* 在底部排列 */
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      pointer-events: auto; /* 防止透過背景觸發底層 */
+    }
+    
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border: 3px solid var(--bunshun-border);
+      border-bottom: none;
+      box-shadow: 0px -6px 20px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 640px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      position: relative;
+      /* 動畫核心：初始偏下方 100%，開啟時升回原位 */
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px; right: 16px;
+      font-size: 1.4rem;
+      font-weight: 900;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px 8px;
+    }
+
+    /* 手機視覺把手 */
+    .drag-handle {
+      width: 40px;
+      height: 5px;
+      background: #ccc;
+      border-radius: 3px;
+      margin: 0 auto 16px auto;
+    }
   </style>
 </head>
 <body>
 
-  <!-- 頂部大標題（對齊圖片排版） -->
+  <!-- UI 提示訊息區塊 -->
+  <div id="toast-notification"></div>
+
+  <!-- 歷史備註彈出頁面 Modal (不含背景點擊關閉事件，防止誤觸) -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-card">
+      <div class="drag-handle"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      
+      <div class="section-header" style="margin-top:0;">
+        <h3 class="section-title" id="modalFoodName">餐點詳細紀錄</h3>
+      </div>
+      <div style="font-size: 0.82rem; color: #666; margin-bottom: 12px;" id="modalTimestamp"></div>
+      
+      <div style="margin-bottom: 16px;" id="modalMacros"></div>
+
+      <label>📝 AI 分析詳細備註：</label>
+      <pre id="modalRawOutput"></pre>
+    </div>
+  </div>
+
+  <!-- 頂部大標題 -->
   <header>
     <div class="sub-title">CELLS AT WORK! RECRUITMENT & OPERATIONAL LOGISTICS</div>
     <h1 class="main-title">工作細胞<span>採用與營運</span>總署</h1>
   </header>
 
-  <!-- 經典雙欄排位 Grid -->
+  <!-- 雙欄排位 Grid -->
   <div class="container">
     
-    <!-- 左側主欄：Hero + 養分辨識 + 每日進度與紀錄 -->
+    <!-- 左側主欄 -->
     <main>
-      <!-- Hero Banner 宣言 -->
+      <!-- Hero Banner -->
       <div class="hero-banner">
         <div class="hero-catchphrase">「把養分送到最需要的地方。」<br>我們正在尋求創新的細胞夥伴。</div>
         <p class="hero-desc">利用頂尖 AI 視覺辨識與營養分析系統，掌握人體內每一次物質傳送的精確數據。加入我們，共同守護體內世界的和平與健康。</p>
@@ -279,7 +429,13 @@
       <div class="card">
         <div class="form-group">
           <label>📸 現場養分照片上傳 (FOOD SCOOP)</label>
-          <input type="file" id="imageInput" accept="image/*" capture="environment">
+          
+          <!-- Drag N Drop 上傳區域 -->
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('imageInput').click()">
+            <div class="drop-zone-prompt">📂 點擊選擇照片，或將圖片拖曳至此處</div>
+            <input type="file" id="imageInput" accept="image/*" capture="environment" style="display: none;">
+          </div>
+
           <img id="imagePreview" alt="食物預覽">
         </div>
         <button class="btn" id="analyzeBtn" onclick="processTwoStageWorkflow()">
@@ -287,7 +443,7 @@
         </button>
       </div>
 
-      <!-- 辨識結果顯示區（分析後顯示） -->
+      <!-- 辨識結果顯示區 -->
       <div class="card" id="resultCard" style="display: none;">
         <div class="section-header">
           <h3 class="section-title" style="font-size: 1.15rem;">雙階段 AI 現場分析報告</h3>
@@ -311,7 +467,7 @@
         <div id="saveStatus" style="text-align: center; margin-top: 10px; font-weight: 800; font-size: 0.9rem;"></div>
       </div>
 
-      <!-- 區塊 2：今日營養攝取監測 (每日儀表板) -->
+      <!-- 區塊 2：今日運送目標配額 -->
       <div class="section-header">
         <h2 class="section-title">今日運送目標配額 (DASHBOARD)</h2>
       </div>
@@ -319,22 +475,18 @@
         <div id="dashboardProgress"></div>
       </div>
 
-      <!-- 區塊 3：歷史紀錄與雲端同步 -->
+      <!-- 區塊 3：歷史運送紀錄 -->
       <div class="section-header">
         <h2 class="section-title">歷史運送紀錄 (OPERATIONAL LOG)</h2>
-        <div>
-          <button class="btn btn-secondary" onclick="fetchFromGAS()">🔄 同步雲端</button>
-          <button class="btn btn-secondary" onclick="exportCSV()">匯出 CSV</button>
-        </div>
       </div>
       <div class="card">
         <div id="historyList"></div>
       </div>
     </main>
 
-    <!-- 右側邊欄：NEWS 最新特報 + API 與目標設定 (貼合圖片右欄) -->
+    <!-- 右側邊欄 -->
     <aside>
-      <!-- 區塊 1：最新特報 NEWS -->
+      <!-- NEWS 最新特報 -->
       <div class="section-header">
         <h2 class="section-title">最新特報 NEWS</h2>
       </div>
@@ -352,12 +504,13 @@
         </ul>
       </div>
 
-      <!-- 區塊 2：系統 API 與目標設定 -->
-      <div class="section-header">
+      <!-- 系統 API 設定 -->
+      <div class="section-header clickable" onclick="toggleApiSettings()">
         <h2 class="section-title">系統 API 設定</h2>
+        <span id="apiToggleArrow" class="toggle-arrow">▶</span>
       </div>
 
-      <div class="card">
+      <div class="card" id="apiSettingsCard" style="display: none;">
         <div class="form-group">
           <label>OpenRouter API Key (Qwen-VL)</label>
           <input type="password" id="openrouterKey" placeholder="sk-or-...">
@@ -387,7 +540,14 @@
           <input type="number" id="targetSodium" value="2000">
         </div>
 
-        <button class="btn btn-dark" onclick="saveSettings()">儲存設定</button>
+        <button class="btn btn-dark" onclick="saveSettings()" style="margin-bottom: 16px;">儲存設定</button>
+        
+        <hr style="border: 0; border-top: 1px dashed #ccc; margin: 18px 0;">
+
+        <label style="color: var(--bunshun-red); margin-bottom: 10px;">■ 資料數據操作</label>
+        <button class="btn btn-secondary" onclick="fetchFromGAS()">🔄 同步雲端</button>
+        <button class="btn btn-secondary" onclick="exportCSV()">📥 匯出 CSV</button>
+
         <div id="settingMsg" style="text-align: center; margin-top: 8px; font-size: 0.82rem; color: var(--bunshun-red); font-weight: 800;"></div>
       </div>
     </aside>
@@ -397,8 +557,93 @@
   <script>
     let base64Image = "";
     let analyzedData = null;
+    let toastTimer = null;
 
-    // 頁面載入時讀取本地儲存
+    // Toast 提示訊息
+    function showAlert(message, type = 'info') {
+      const toast = document.getElementById('toast-notification');
+      toast.textContent = message;
+      
+      if (type === 'error') {
+        toast.classList.add('error');
+      } else {
+        toast.classList.remove('error');
+      }
+
+      toast.classList.add('show');
+
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // 折疊系統 API 設定
+    function toggleApiSettings() {
+      const card = document.getElementById('apiSettingsCard');
+      const arrow = document.getElementById('apiToggleArrow');
+      if (card.style.display === 'none') {
+        card.style.display = 'block';
+        arrow.textContent = '▼';
+      } else {
+        card.style.display = 'none';
+        arrow.textContent = '▶';
+      }
+    }
+
+    // 拖放 (Drag & Drop) 邏輯處理
+    const dropZone = document.getElementById('dropZone');
+    const imageInput = document.getElementById('imageInput');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        imageInput.files = files;
+        handleFile(files[0]);
+      }
+    }
+
+    imageInput.addEventListener('change', function(e) {
+      if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    function handleFile(file) {
+      if (!file.type.startsWith('image/')) {
+        return showAlert('請選擇正確的圖片檔案！', 'error');
+      }
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        base64Image = event.target.result;
+        const preview = document.getElementById('imagePreview');
+        preview.src = event.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 載入本地設定
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('openrouterKey').value = localStorage.getItem('openrouterKey') || '';
       document.getElementById('deepseekKey').value = localStorage.getItem('deepseekKey') || '';
@@ -420,31 +665,16 @@
         localStorage.setItem(id, document.getElementById(id).value.trim());
       });
       renderDashboard();
-      const msg = document.getElementById('settingMsg');
-      msg.textContent = "✅ 設定已儲存完成！";
-      setTimeout(() => msg.textContent = "", 2500);
+      showAlert("✅ 設定已儲存完成！");
     }
-
-    document.getElementById('imageInput').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        base64Image = event.target.result;
-        const preview = document.getElementById('imagePreview');
-        preview.src = event.target.result;
-        preview.style.display = 'block';
-      };
-      reader.readAsDataURL(file);
-    });
 
     // 雙階段 AI 處理：Qwen-VL + DeepSeek
     async function processTwoStageWorkflow() {
       const openrouterKey = document.getElementById('openrouterKey').value.trim();
       const deepseekKey = document.getElementById('deepseekKey').value.trim();
 
-      if (!openrouterKey || !deepseekKey) return alert("請至右下角「系統 API 設定」填寫 API Key！");
-      if (!base64Image) return alert("請先拍攝或選擇照片！");
+      if (!openrouterKey || !deepseekKey) return showAlert("請點開「系統 API 設定」填寫 API Key！", 'error');
+      if (!base64Image) return showAlert("請先拍攝或上傳照片！", 'error');
 
       const analyzeBtn = document.getElementById('analyzeBtn');
       analyzeBtn.disabled = true;
@@ -515,7 +745,7 @@
         document.getElementById('saveBtn').style.display = 'block';
 
       } catch (err) {
-        alert("分析過程發生錯誤：" + err.message);
+        showAlert("分析過程發生錯誤：" + err.message, 'error');
       } finally {
         analyzeBtn.disabled = false;
         analyzeBtn.textContent = "🔴 開始精確養分分析";
@@ -541,14 +771,14 @@
         } catch (e) {}
       }
 
-      document.getElementById('saveStatus').textContent = "✅ 紀錄已寫入！儀表板與清單已同步更新。";
+      showAlert("✅ 紀錄已寫入！儀表板與清單已同步更新。");
       renderDashboard();
       renderHistory();
     }
 
     async function fetchFromGAS() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
-      if (!gasUrl) return alert("請先於右下方填入 Google Sheet Web App URL！");
+      if (!gasUrl) return showAlert("請先於系統 API 設定填入 Google Sheet Web App URL！", 'error');
 
       try {
         const res = await fetch(gasUrl);
@@ -557,10 +787,10 @@
           localStorage.setItem('nutritionHistory', JSON.stringify(result.data.reverse()));
           renderDashboard();
           renderHistory();
-          alert("✅ 已自 Google Sheet 同步最新進度！");
+          showAlert("✅ 已自 Google Sheet 同步最新進度！");
         }
       } catch (e) {
-        alert("連線失敗，請檢查 Web App 網址設定。");
+        showAlert("連線失敗，請檢查 Web App 網址設定。", 'error');
       }
     }
 
@@ -603,23 +833,49 @@
         container.innerHTML = '<p style="text-align:center; color:#888; font-weight:700; padding:10px 0;">尚無運送紀錄</p>';
         return;
       }
-      container.innerHTML = history.slice(0, 10).map(item => `
-        <div class="history-item">
+      container.innerHTML = history.slice(0, 10).map((item, index) => `
+        <div class="history-item" onclick="openModal(${index})">
           <div>
             <strong style="font-size:1rem;">${item.foodName || '未命名餐點'}</strong>
             <div style="font-size:0.75rem; color:#666; margin-top:2px;">${item.timestamp || ''}</div>
           </div>
           <div style="text-align:right;">
             <div style="font-weight:900; color:var(--bunshun-red); font-size:1.05rem;">${item.calories || 0} kcal</div>
-            <div style="font-size:0.75rem; color:#444;">蛋白質 ${item.protein || 0}g | 鈉 ${item.sodium || 0}mg</div>
+            <div style="font-size:0.75rem; color:#444; font-weight:800;">蛋白質 ${item.protein || 0}g</div>
           </div>
         </div>
       `).join('');
     }
 
+    // Modal 彈出視窗詳細備註邏輯
+    function openModal(index) {
+      const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
+      const item = history[index];
+      if (!item) return;
+
+      document.getElementById('modalFoodName').textContent = item.foodName || '未命名餐點';
+      document.getElementById('modalTimestamp').textContent = `運送時間：${item.timestamp || '未知'}`;
+      document.getElementById('modalMacros').innerHTML = `
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:var(--bunshun-gray); padding:10px; border:1px solid #ddd; font-weight:800; font-size:0.85rem;">
+          <div>熱量: <span style="color:var(--bunshun-red);">${item.calories || 0} kcal</span></div>
+          <div>蛋白質: ${item.protein || 0} g</div>
+          <div>碳水: ${item.carbs || 0} g</div>
+          <div>脂肪: ${item.fat || 0} g</div>
+          <div>膳食纖維: ${item.fiber || 0} g</div>
+          <div>鈉含量: ${item.sodium || 0} mg</div>
+        </div>
+      `;
+      document.getElementById('modalRawOutput').textContent = item.rawOutput || '尚無詳細備註文字內容。';
+      document.getElementById('detailModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('detailModal').classList.remove('active');
+    }
+
     function exportCSV() {
       const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
-      if (history.length === 0) return alert("沒有資料可以匯出！");
+      if (history.length === 0) return showAlert("沒有資料可以匯出！", 'error');
       let csv = "時間,菜式,熱量(kcal),蛋白質(g),碳水(g),脂肪(g),鈉(mg)\n";
       history.forEach(h => {
         csv += `"${h.timestamp || ''}","${h.foodName || ''}",${h.calories || 0},${h.protein || 0},${h.carbs || 0},${h.fat || 0},${h.sodium || 0}\n`;

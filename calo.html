@@ -219,7 +219,7 @@
       margin-bottom: 8px;
       letter-spacing: 0.5px;
     }
-    input[type="text"], input[type="password"], input[type="file"], input[type="number"] {
+    input[type="text"], input[type="password"], input[type="file"], input[type="number"], select, textarea {
       width: 100%;
       padding: 12px;
       border: 2px solid var(--bunshun-border);
@@ -227,8 +227,9 @@
       background: var(--bunshun-bg);
       color: var(--bunshun-text);
       border-radius: 0;
+      font-family: inherit;
     }
-    input:focus {
+    input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: var(--bunshun-red);
     }
@@ -494,6 +495,15 @@
           </div>
           <img id="imagePreview" alt="食物預覽">
         </div>
+        
+        <div class="form-group">
+          <label>⚡ AI 分析速度模式</label>
+          <select id="analysisSpeedMode">
+            <option value="deep">深度模式 (完整食材拆解、健康評估與調味建議)</option>
+            <option value="fast">極速模式 (僅精算熱量與三大營養素，快速寫入)</option>
+          </select>
+        </div>
+
         <button class="btn" id="analyzeBtn" onclick="processTwoStageWorkflow()">🔴 開始精確養分分析</button>
         <button class="btn btn-secondary" onclick="resetAnalysis()">🔄 重置目前照片與分析</button>
       </div>
@@ -546,12 +556,72 @@
         <ul class="news-list">
           <li class="news-item">
             <div class="news-date">2026.08.07</div>
-            <div class="news-title">【系統公告】更新架構引入唯一識別 Index (ID)，全面提升紀錄同步定位與刪除的精準度！</div>
+            <div class="news-title">【系統升級】全面整合 TDEE/BMR 計算器、自訂 AI Prompt 偏好、分析速度切換與完整備份恢復功能！</div>
           </li>
         </ul>
       </div>
 
-      <div class="section-header clickable" onclick="toggleApiSettings()">
+      <div class="section-header clickable" onclick="toggleSection('tdeeCard', 'tdeeToggleArrow')">
+        <h2 class="section-title">TDEE / BMR 計算器</h2>
+        <span id="tdeeToggleArrow" class="toggle-arrow">▶</span>
+      </div>
+      <div class="card" id="tdeeCard" style="display: none;">
+        <div class="form-group">
+          <label>生物體性別</label>
+          <select id="tdeeGender">
+            <option value="male">男性</option>
+            <option value="female">女性</option>
+          </select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group"><label>年齡 (歲)</label><input type="number" id="tdeeAge" value="25"></div>
+          <div class="form-group"><label>身高 (cm)</label><input type="number" id="tdeeHeight" value="170"></div>
+        </div>
+        <div class="form-group"><label>體重 (kg)</label><input type="number" id="tdeeWeight" value="65"></div>
+        <div class="form-group">
+          <label>每週活動量</label>
+          <select id="tdeeActivity">
+            <option value="1.2">久坐 / 無運動習慣</option>
+            <option value="1.375">輕度運動 (每週 1-3 天)</option>
+            <option value="1.55" selected>中度運動 (每週 3-5 天)</option>
+            <option value="1.725">高度運動 (每週 6-7 天)</option>
+            <option value="1.9">極高強度 (專業運動員/高體力勞動)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>營運目標</label>
+          <select id="tdeeGoal">
+            <option value="maintain">維持體重 (Maintain)</option>
+            <option value="fat_loss">減脂少熱量 (-20% kcal)</option>
+            <option value="muscle_gain">增肌多熱量 (+10% kcal)</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary" onclick="calculateTDEE()" style="margin-bottom: 12px; font-weight:900;">📐 計算並套用至每日目標</button>
+        <div id="tdeeResult" style="font-size:0.82rem; font-weight:800; color:var(--bunshun-subtext); line-height:1.5;"></div>
+      </div>
+
+      <div class="section-header clickable" onclick="toggleSection('promptCard', 'promptToggleArrow')">
+        <h2 class="section-title">自訂 AI 分析風格</h2>
+        <span id="promptToggleArrow" class="toggle-arrow">▶</span>
+      </div>
+      <div class="card" id="promptCard" style="display: none;">
+        <div class="form-group">
+          <label>預設 Prompt 模式</label>
+          <select id="promptPreset" onchange="applyPromptPreset()">
+            <option value="strict">嚴格估算油量與隱形糖</option>
+            <option value="fitness">健身增肌模式：著重蛋白質拆解</option>
+            <option value="takeout">外賣減脂模式：評估高鈉高油風險</option>
+            <option value="custom">完全自訂 Prompt</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>提示詞細節 (System Prompt)</label>
+          <textarea id="customPromptText" rows="4" style="resize: vertical;"></textarea>
+        </div>
+        <button class="btn btn-dark" onclick="savePromptSettings()">💾 儲存 AI 分析風格</button>
+      </div>
+
+      <div class="section-header clickable" onclick="toggleSection('apiSettingsCard', 'apiToggleArrow')">
         <h2 class="section-title">系統 API 設定</h2>
         <span id="apiToggleArrow" class="toggle-arrow">▶</span>
       </div>
@@ -566,9 +636,12 @@
         <div class="form-group" style="margin-bottom: 20px;"><label style="font-size:0.78rem;">鈉攝取上限 (mg)</label><input type="number" id="targetSodium" value="2000"></div>
         <button class="btn btn-dark" onclick="saveSettings()" style="margin-bottom: 16px;">儲存設定</button>
         <hr style="border: 0; border-top: 1px dashed var(--bunshun-border); margin: 18px 0;">
-        <label style="color: var(--bunshun-red); margin-bottom: 10px;">■ 資料數據操作</label>
+        <label style="color: var(--bunshun-red); margin-bottom: 10px;">■ 資料數據與安全備份</label>
         <button class="btn btn-secondary" onclick="fetchFromGAS()">🔄 同步雲端與 7 天進度</button>
         <button class="btn btn-secondary" onclick="exportCSV()">📥 匯出 CSV</button>
+        <button class="btn btn-secondary" onclick="exportBackupJSON()">💾 匯出完整備份 (JSON)</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('importJsonInput').click()">📤 匯入備份 (JSON)</button>
+        <input type="file" id="importJsonInput" accept=".json" style="display:none;" onchange="importBackupJSON(event)">
         <div id="settingMsg" style="text-align: center; margin-top: 8px; font-size: 0.82rem; color: var(--bunshun-red); font-weight: 800;"></div>
       </div>
     </aside>
@@ -578,7 +651,14 @@
     let base64Image = "";
     let analyzedData = null;
     let toastTimer = null;
-    let currentSelectedId = null; // 全面改以唯一 ID 作為定位標識
+    let currentSelectedId = null;
+
+    const PROMPT_PRESETS = {
+      strict: "請嚴格估算烹調用油、醬汁與隱形糖的熱量，對於外食與油炸食物採用上限標準進行計算，維持嚴格監控。",
+      fitness: "請著重於蛋白質成分拆解（動物性/植物性來源與胺基酸品質評估），強調三大營養素中的蛋白質比例，適合健身與增肌需求。",
+      takeout: "針對外賣菜色進行估算，特別鎖定高鈉、高飽和脂肪與劣質油脂風險，並提供去油降鈉的具體飲食建議。",
+      custom: ""
+    };
 
     function toggleTheme() {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -604,11 +684,28 @@
       toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3000);
     }
 
-    function toggleApiSettings() {
-      const card = document.getElementById('apiSettingsCard');
-      const arrow = document.getElementById('apiToggleArrow');
+    function toggleSection(cardId, arrowId) {
+      const card = document.getElementById(cardId);
+      const arrow = document.getElementById(arrowId);
       if (card.style.display === 'none') { card.style.display = 'block'; arrow.textContent = '▼'; }
       else { card.style.display = 'none'; arrow.textContent = '▶'; }
+    }
+
+    function checkMealReminders() {
+      const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
+      const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Hong_Kong" });
+      const todayLogs = history.filter(item => {
+        if (!item.timestamp) return false;
+        let d = new Date(item.timestamp);
+        return !isNaN(d.getTime()) && d.toLocaleDateString("en-CA", { timeZone: "Asia/Hong_Kong" }) === todayStr;
+      });
+
+      const currentHour = new Date().getHours();
+      if (todayLogs.length === 0 && currentHour >= 13 && currentHour < 19) {
+        showAlert("📢 警報：今日尚未登記午餐運送紀錄！白血球巡邏提示您記得補充養分！");
+      } else if (todayLogs.length <= 1 && currentHour >= 20) {
+        showAlert("📢 警報：晚間時段補給紀錄不足，請確保體內細胞獲得充足能源！");
+      }
     }
 
     window.addEventListener('scroll', () => {
@@ -667,8 +764,14 @@
       document.getElementById('targetProtein').value = localStorage.getItem('targetProtein') || 75;
       document.getElementById('targetSodium').value = localStorage.getItem('targetSodium') || 2000;
 
+      const savedPreset = localStorage.getItem('promptPreset') || 'strict';
+      document.getElementById('promptPreset').value = savedPreset;
+      document.getElementById('customPromptText').value = localStorage.getItem('customPromptText') || PROMPT_PRESETS[savedPreset];
+
       if (document.getElementById('gasUrl').value.trim()) { fetchFromGAS(); }
       else { renderDashboard(); renderSevenDaysHistory(); renderHistory(); }
+
+      setTimeout(checkMealReminders, 1200);
     });
 
     function saveSettings() {
@@ -679,11 +782,60 @@
       showAlert("✅ 設定已儲存完成！");
     }
 
+    function calculateTDEE() {
+      const gender = document.getElementById('tdeeGender').value;
+      const age = Number(document.getElementById('tdeeAge').value) || 25;
+      const height = Number(document.getElementById('tdeeHeight').value) || 170;
+      const weight = Number(document.getElementById('tdeeWeight').value) || 65;
+      const activity = Number(document.getElementById('tdeeActivity').value) || 1.55;
+      const goal = document.getElementById('tdeeGoal').value;
+
+      let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+      bmr += (gender === 'male') ? 5 : -161;
+
+      let tdee = bmr * activity;
+      let targetCal = tdee;
+
+      if (goal === 'fat_loss') targetCal *= 0.8;
+      else if (goal === 'muscle_gain') targetCal *= 1.1;
+
+      let targetProtein = (goal === 'muscle_gain' || goal === 'fat_loss') ? weight * 2.0 : weight * 1.5;
+
+      document.getElementById('tdeeResult').innerHTML = `
+        🧬 基礎代謝率 (BMR): <strong>${Math.round(bmr)} kcal</strong><br>
+        🔥 每日總消耗 (TDEE): <strong>${Math.round(tdee)} kcal</strong><br>
+        🎯 建議每日目標: <strong>${Math.round(targetCal)} kcal</strong> / 蛋白質 <strong>${Math.round(targetProtein)} g</strong>
+      `;
+
+      document.getElementById('targetCal').value = Math.round(targetCal);
+      document.getElementById('targetProtein').value = Math.round(targetProtein);
+      saveSettings();
+      showAlert("📐 已自動更新熱量與蛋白質目標！");
+    }
+
+    function applyPromptPreset() {
+      const preset = document.getElementById('promptPreset').value;
+      if (preset !== 'custom') {
+        document.getElementById('customPromptText').value = PROMPT_PRESETS[preset];
+      }
+    }
+
+    function savePromptSettings() {
+      const preset = document.getElementById('promptPreset').value;
+      const text = document.getElementById('customPromptText').value.trim();
+      localStorage.setItem('promptPreset', preset);
+      localStorage.setItem('customPromptText', text);
+      showAlert("💾 自訂 AI 分析風格已成功儲存！");
+    }
+
     async function processTwoStageWorkflow() {
       const openrouterKey = document.getElementById('openrouterKey').value.trim();
       const deepseekKey = document.getElementById('deepseekKey').value.trim();
       if (!openrouterKey || !deepseekKey) return showAlert("請點開「系統 API 設定」填寫 API Key！", 'error');
       if (!base64Image) return showAlert("請先拍攝或上傳照片！", 'error');
+
+      const speedMode = document.getElementById('analysisSpeedMode').value;
+      const customPrompt = localStorage.getItem('customPromptText') || PROMPT_PRESETS.strict;
 
       const analyzeBtn = document.getElementById('analyzeBtn');
       analyzeBtn.disabled = true;
@@ -706,14 +858,22 @@
         document.getElementById('stage1Status').textContent = "✅ 第一階段辨識完畢";
         document.getElementById('stage1Output').textContent = foodDescription;
 
-        document.getElementById('stage2Status').textContent = "正在精密計算營養數據...";
+        document.getElementById('stage2Status').textContent = `正在精密計算營養數據 (${speedMode === 'fast' ? '極速模式' : '深度模式'})...`;
+
+        let systemInstruction = "";
+        if (speedMode === 'fast') {
+          systemInstruction = `請僅以最精簡文字評估熱量與三大營養素，最後必須以<JSON>標籤封裝結構化數據：foodName, calories, protein, carbs, fat, fiber, sugar, sodium（純數字）。風格指示：${customPrompt}`;
+        } else {
+          systemInstruction = `請詳細分析食材組成、油鹽糖隱患與健康改善建議，並在結尾以<JSON>標籤封裝結構化數據：foodName, calories, protein, carbs, fat, fiber, sugar, sodium（純數字）。風格指示：${customPrompt}`;
+        }
+
         const res2 = await fetch("https://api.deepseek.com/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${deepseekKey}` },
           body: JSON.stringify({
             model: "deepseek-chat",
             messages: [
-              { role: "system", content: "請提供營養分析報告，並在結尾以<JSON>標籤封裝結構化數據：foodName, calories, protein, carbs, fat, fiber, sugar, sodium（純數字）。" },
+              { role: "system", content: systemInstruction },
               { role: "user", content: `分析食物資料：\n${foodDescription}` }
             ]
           })
@@ -738,7 +898,6 @@
       }
     }
 
-    // 產生或指定唯一識別 UUID 讓每一筆資料有獨立 Index[cite: 1]
     async function saveData() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
       analyzedData.id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'id_' + Date.now() + '_' + Math.floor(Math.random()*1000);
@@ -754,13 +913,12 @@
         } catch (e) {}
       }
 
-      showAlert("✅ 紀錄（ID已產生）成功寫入！今日進度與 7 天趨勢同步更新。");
+      showAlert("✅ 紀錄成功寫入！今日進度與 7 天趨勢同步更新。");
       resetAnalysis();
       if (gasUrl) fetchFromGAS();
       else { renderDashboard(); renderSevenDaysHistory(); renderHistory(); }
     }
 
-    // 刪除紀錄功能：透過傳送 Action 與該筆資料的 ID (Index) 給後端
     async function deleteCurrentItem() {
       if (!currentSelectedId) return;
       let history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
@@ -786,7 +944,7 @@
       }
 
       closeModal();
-      showAlert("🗑️ 已成功依據 ID 刪除該筆運送紀錄！");
+      showAlert("🗑️ 已成功刪除該筆運送紀錄！");
       if (gasUrl) fetchFromGAS();
       else { renderDashboard(); renderSevenDaysHistory(); renderHistory(); }
     }
@@ -932,7 +1090,6 @@
       }).join('');
     }
 
-    // 渲染歷史列表時以該筆物件的 ID 當做點擊事件傳回值[cite: 1]
     function renderHistory() {
       const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
       const container = document.getElementById('historyList');
@@ -954,7 +1111,6 @@
       `).join('');
     }
 
-    // Modal 改為接收唯一的 ID
     function openModal(id) {
       currentSelectedId = id;
       const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
@@ -994,6 +1150,51 @@
       link.href = URL.createObjectURL(blob);
       link.download = `cells_log_${new Date().toISOString().slice(0,10)}.csv`;
       link.click();
+    }
+
+    function exportBackupJSON() {
+      const backupData = {
+        history: JSON.parse(localStorage.getItem('nutritionHistory') || '[]'),
+        settings: {
+          targetCal: localStorage.getItem('targetCal'),
+          targetProtein: localStorage.getItem('targetProtein'),
+          targetSodium: localStorage.getItem('targetSodium'),
+          promptPreset: localStorage.getItem('promptPreset'),
+          customPromptText: localStorage.getItem('customPromptText')
+        }
+      };
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `cells_log_backup_${new Date().toISOString().slice(0,10)}.json`;
+      link.click();
+      showAlert("💾 備份 JSON 檔案已匯出！");
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.history && Array.isArray(data.history)) {
+            localStorage.setItem('nutritionHistory', JSON.stringify(data.history));
+          }
+          if (data.settings) {
+            if (data.settings.targetCal) localStorage.setItem('targetCal', data.settings.targetCal);
+            if (data.settings.targetProtein) localStorage.setItem('targetProtein', data.settings.targetProtein);
+            if (data.settings.targetSodium) localStorage.setItem('targetSodium', data.settings.targetSodium);
+            if (data.settings.promptPreset) localStorage.setItem('promptPreset', data.settings.promptPreset);
+            if (data.settings.customPromptText) localStorage.setItem('customPromptText', data.settings.customPromptText);
+          }
+          renderDashboard(); renderSevenDaysHistory(); renderHistory();
+          showAlert("📤 數據與設定已成功復原！");
+        } catch (err) {
+          showAlert("匯入備份失敗：無效的 JSON 檔案", 'error');
+        }
+      };
+      reader.readAsText(file);
     }
 
     function showDashboardSkeleton() {

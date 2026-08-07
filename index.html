@@ -8,6 +8,10 @@
   <meta name="apple-mobile-web-app-title" content="寶寶成長紀錄">
   <meta name="theme-color" content="#FF8B94">
   <title>小王子飲食成長紀錄</title>
+  
+  <!-- 內嵌 Web App Manifest (PWA 支援) -->
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22%E5%B0%8F%E7%8E%8B%E5%AD%90%E9%A3%B2%E9%A3%9F%E6%88%90%E9%95%B7%E7%B4%80%E9%8C%84%22%2C%22short_name%22%3A%22%E5%B0%8F%E7%8E%8B%E5%AD%90%E7%B4%80%E9%8C%84%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23fcf8f2%22%2C%22theme_color%22%3A%22%23FF8B94%22%7D">
+  
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/food-icon.png">
   <meta property="og:type" content="website">
   <meta property="og:title" content="小王子飲食成長紀錄">
@@ -261,6 +265,28 @@
       color: #2c2825;
       box-shadow: 3px 3px 0px var(--shadow-color);
     }
+    .chart-filter-group {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .chart-filter-btn {
+      flex: 1;
+      padding: 6px 4px;
+      font-size: 12px;
+      border: 2px solid var(--pencil-color);
+      border-radius: 10px;
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 2px 2px 0px var(--shadow-color);
+    }
+    .chart-filter-btn.active {
+      background: var(--accent-pink);
+      color: #2c2825;
+    }
     .chart-card {
       background: var(--log-bg);
       border: 2.5px solid var(--pencil-color);
@@ -449,7 +475,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 6px;
-      padding-right: 56px; /* 為右上角的 修改 + 刪除 兩顆按鈕留出空間 */
+      padding-right: 56px;
     }
     .log-date {
       font-size: 12px;
@@ -647,7 +673,7 @@
 </svg>
 <div class="card" id="mainCard">
   <div class="top-controls">
-    <button class="control-btn" id="refreshBtn" onclick="refreshData()" title="重新整理">🔄</button>
+    <button class="control-btn" id="refreshBtn" onclick="refreshData(true)" title="重新整理">🔄</button>
     <button class="control-btn" id="shotModeBtn" onclick="toggleScreenshotMode()" title="截圖模式">📸</button>
     <button class="control-btn" id="langBtn" onclick="toggleLanguage()" title="語言切換">🌐 EN</button>
     <button class="control-btn" id="themeBtn" onclick="toggleTheme()" title="深色/淺色">🌙</button>
@@ -750,6 +776,13 @@
         </div>
       </div>
       <div id="historyChartView" style="display:none;">
+        <!-- 圖表過濾篩選列 -->
+        <div class="chart-filter-group">
+          <button class="chart-filter-btn active" onclick="setChartRange(7, this)" id="range7Btn">7 天</button>
+          <button class="chart-filter-btn" onclick="setChartRange(30, this)" id="range30Btn">30 天</button>
+          <button class="chart-filter-btn" onclick="setChartRange(90, this)" id="range90Btn">90 天</button>
+          <button class="chart-filter-btn" onclick="setChartRange(0, this)" id="rangeAllBtn">全部</button>
+        </div>
         <div class="chart-card">
           <h3 class="chart-title" id="chartMilkTitle">🍼 每日飲奶量趨勢 (ml)</h3>
           <canvas id="milkChart"></canvas>
@@ -786,6 +819,45 @@
   </div>
 </div>
 <script>
+  // ================= 3. 離線暫存與 PWA 支援 (Service Worker) =================
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE_NAME = 'baby-tracker-v2';
+      const STATIC_ASSETS = [
+        'https://cdn.jsdelivr.net/npm/chart.js',
+        'https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Short+Stack&display=swap'
+      ];
+      self.addEventListener('install', event => {
+        event.waitUntil(
+          caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
+        );
+        self.skipWaiting();
+      });
+      self.addEventListener('activate', event => {
+        event.waitUntil(
+          caches.keys().then(keys => Promise.all(
+            keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+          ))
+        );
+        self.clients.claim();
+      });
+      self.addEventListener('fetch', event => {
+        if (event.request.url.includes('script.google.com')) return;
+        event.respondWith(
+          caches.match(event.request).then(response => {
+            return response || fetch(event.request).catch(() => {
+              return new Response('Offline mode');
+            });
+          })
+        );
+      });
+    `;
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    navigator.serviceWorker.register(URL.createObjectURL(blob))
+      .catch(err => console.log('SW 註冊失敗', err));
+  }
+
+  // ================= 設定與多語系 =================
   const GAS_URL = "https://script.google.com/macros/s/AKfycbys27VeeErb2tlxvyvX2Sf8SpweE4cxWHKZeSPmcPYieP1rYHS0-G5fslfPOBSc7ABy8w/exec";
   const i18n = {
     zh: {
@@ -848,6 +920,10 @@
       error_msg: "❌ 傳送失敗，請再試一次！",
       filterToday: "📅 今天",
       filterYesterday: "📅 昨天",
+      range7: "7 天",
+      range30: "30 天",
+      range90: "90 天",
+      rangeAll: "全部",
       meals: [
         { value: "配方奶", text: "🍼 配方奶" },
         { value: "早餐", text: "🥣 早餐" },
@@ -918,6 +994,10 @@
       error_msg: "❌ Failed to send, please try again!",
       filterToday: "📅 Today",
       filterYesterday: "📅 Yesterday",
+      range7: "7 Days",
+      range30: "30 Days",
+      range90: "90 Days",
+      rangeAll: "All",
       meals: [
         { value: "配方奶", text: "🍼 Formula Milk" },
         { value: "早餐", text: "🥣 Breakfast" },
@@ -929,18 +1009,21 @@
       ]
     }
   };
+
   let currentLang = localStorage.getItem('app_lang') || 'zh';
   let currentTheme = localStorage.getItem('app_theme') || 'light';
   let currentHistoryView = 'list';
   let isScreenshotMode = false;
-  let editingRowIndex = null; // ✏️ 當前正在修改的資料列索引
+  let editingRowIndex = null;
   let milkChartInstance = null;
   let mealPieChartInstance = null;
   let growthChartInstance = null;
+  let currentChartDays = 7; // 4. 圖表時間區間篩選：預設 7 天
   let customMsgs = {
     success_msg: i18n[currentLang].success_msg,
     error_msg: i18n[currentLang].error_msg
   };
+
   function getLocalDateString(daysOffset = 0) {
     const d = new Date();
     d.setDate(d.getDate() + daysOffset);
@@ -949,12 +1032,14 @@
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
+
   function initDefaultDates() {
     const todayStr = getLocalDateString(0);
     document.getElementById('date').value = todayStr;
     document.getElementById('shotDate').value = todayStr;
     document.getElementById('filterDate').value = todayStr;
   }
+
   window.onload = function() {
     initDefaultDates();
     applyTheme(currentTheme);
@@ -966,20 +1051,22 @@
     loadStats();
     loadLatestHW();
   };
-  function refreshData() {
+
+  // ================= 2. 效能與 API 整合優化 (快取優先與背景更新) =================
+  function refreshData(forceFetch = false) {
     const refreshBtn = document.getElementById('refreshBtn');
     refreshBtn.style.opacity = '0.5';
     refreshBtn.disabled = true;
-    loadStats();
-    loadLatestHW();
-    loadRecentFoods();
+    loadStats(forceFetch);
+    loadLatestHW(forceFetch);
+    loadRecentFoods(forceFetch);
     if (isScreenshotMode) {
       renderScreenshotCard();
     } else if (document.getElementById('sectionList').style.display !== 'none') {
       if (currentHistoryView === 'chart') {
-        renderCharts();
+        renderCharts(currentChartDays, forceFetch);
       } else {
-        loadPastLogs();
+        loadPastLogs(forceFetch);
       }
     }
     setTimeout(() => {
@@ -987,14 +1074,18 @@
       refreshBtn.disabled = false;
     }, 600);
   }
+
+  // ================= 1. 修正身高體重預設範圍 (Critical) =================
   function initHWDropdowns() {
     const heightSelect = document.getElementById('height');
     const weightSelect = document.getElementById('weight');
     const t = i18n[currentLang];
     const currentHeight = heightSelect.value;
     const currentWeight = weightSelect.value;
+    
     heightSelect.innerHTML = `<option value="">${t.defaultHeight}</option>`;
-    for (let h = 60.0; h <= 130.0; h += 0.5) {
+    // 修正身高為 40.0 cm ~ 130.0 cm，完整涵蓋初生嬰兒與幼兒童
+    for (let h = 40.0; h <= 130.0; h += 0.5) {
       const val = h.toFixed(1);
       const opt = document.createElement('option');
       opt.value = val;
@@ -1002,8 +1093,10 @@
       heightSelect.appendChild(opt);
     }
     if (currentHeight) heightSelect.value = currentHeight;
+    
     weightSelect.innerHTML = `<option value="">${t.defaultWeight}</option>`;
-    for (let w = 5.0; w <= 30.0; w += 0.1) {
+    // 修正體重為 2.0 kg ~ 35.0 kg，支援新生兒與早產寶寶記錄
+    for (let w = 2.0; w <= 35.0; w += 0.1) {
       const val = w.toFixed(1);
       const opt = document.createElement('option');
       opt.value = val;
@@ -1012,14 +1105,16 @@
     }
     if (currentWeight) weightSelect.value = currentWeight;
   }
+
   function toggleTheme() {
     currentTheme = currentTheme === 'light' ? 'dark' : 'light';
     localStorage.setItem('app_theme', currentTheme);
     applyTheme(currentTheme);
     if (currentHistoryView === 'chart' && !isScreenshotMode) {
-      renderCharts();
+      renderCharts(currentChartDays, false);
     }
   }
+
   function applyTheme(theme) {
     const themeBtn = document.getElementById('themeBtn');
     if (theme === 'dark') {
@@ -1030,6 +1125,7 @@
       themeBtn.innerText = "🌙";
     }
   }
+
   function toggleLanguage() {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
     localStorage.setItem('app_lang', currentLang);
@@ -1038,11 +1134,12 @@
     if (isScreenshotMode) {
       renderScreenshotCard();
     } else if (currentHistoryView === 'chart') {
-      renderCharts();
+      renderCharts(currentChartDays, false);
     } else {
       loadPastLogs();
     }
   }
+
   function applyLanguage(lang) {
     const t = i18n[lang];
     document.title = t.appTitle;
@@ -1081,14 +1178,23 @@
     document.getElementById('cancelEditBtn').innerText = t.cancelEditBtn;
     document.getElementById('filterTodayBtn').innerText = t.filterToday;
     document.getElementById('filterYesterdayBtn').innerText = t.filterYesterday;
+    
+    // 圖表篩選按鈕文字
+    document.getElementById('range7Btn').innerText = t.range7;
+    document.getElementById('range30Btn').innerText = t.range30;
+    document.getElementById('range90Btn').innerText = t.range90;
+    document.getElementById('rangeAllBtn').innerText = t.rangeAll;
+
     updateMealOptions();
   }
+
   function updateMealOptions() {
     const mealSelect = document.getElementById('meal');
     const filterMealSelect = document.getElementById('filterMeal');
     const selectedMealVal = mealSelect.value;
     const selectedFilterVal = filterMealSelect.value;
     const t = i18n[currentLang];
+    
     mealSelect.innerHTML = '';
     t.meals.forEach(m => {
       const opt = document.createElement('option');
@@ -1097,6 +1203,7 @@
       mealSelect.appendChild(opt);
     });
     if (selectedMealVal) mealSelect.value = selectedMealVal;
+    
     filterMealSelect.innerHTML = `<option value="全部">${t.allMeals}</option>`;
     t.meals.forEach(m => {
       const opt = document.createElement('option');
@@ -1106,12 +1213,12 @@
     });
     if (selectedFilterVal) filterMealSelect.value = selectedFilterVal;
   }
+
   function loadConfigs() {
     const cachedConfig = localStorage.getItem('app_config');
     if (cachedConfig) {
       try {
-        const data = JSON.parse(cachedConfig);
-        applyConfigData(data);
+        applyConfigData(JSON.parse(cachedConfig));
       } catch (e) {
         localStorage.removeItem('app_config');
       }
@@ -1126,6 +1233,7 @@
       })
       .catch(err => console.log('讀取設定檔失敗', err));
   }
+
   function applyConfigData(data) {
     if (!data) return;
     if (data.title_text) i18n.zh.appTitle = data.title_text;
@@ -1134,23 +1242,18 @@
     if (data.error_msg) customMsgs.error_msg = data.error_msg;
     applyLanguage(currentLang);
   }
+
   function autoSelectMealByTime() {
     const hour = new Date().getHours();
     const mealSelect = document.getElementById('meal');
-    if (hour >= 6 && hour < 9) {
-      mealSelect.value = "早餐";
-    } else if (hour >= 9 && hour < 12) {
-      mealSelect.value = "上午茶";
-    } else if (hour >= 12 && hour < 14) {
-      mealSelect.value = "午餐";
-    } else if (hour >= 14 && hour < 17) {
-      mealSelect.value = "下午茶";
-    } else if (hour >= 17 && hour < 21) {
-      mealSelect.value = "晚餐";
-    } else {
-      mealSelect.value = "宵夜";
-    }
+    if (hour >= 6 && hour < 9) mealSelect.value = "早餐";
+    else if (hour >= 9 && hour < 12) mealSelect.value = "上午茶";
+    else if (hour >= 12 && hour < 14) mealSelect.value = "午餐";
+    else if (hour >= 14 && hour < 17) mealSelect.value = "下午茶";
+    else if (hour >= 17 && hour < 21) mealSelect.value = "晚餐";
+    else mealSelect.value = "宵夜";
   }
+
   function switchTab(tab) {
     const sectionAdd = document.getElementById('sectionAdd');
     const sectionList = document.getElementById('sectionList');
@@ -1167,12 +1270,13 @@
       tabAddBtn.classList.remove('active');
       tabListBtn.classList.add('active');
       if (currentHistoryView === 'chart') {
-        renderCharts();
+        renderCharts(currentChartDays, false);
       } else {
         setFilterDate(0);
       }
     }
   }
+
   function switchHistoryView(view) {
     currentHistoryView = view;
     const listView = document.getElementById('historyListView');
@@ -1184,7 +1288,7 @@
       chartView.style.display = 'block';
       listBtn.classList.remove('active');
       chartBtn.classList.add('active');
-      renderCharts();
+      renderCharts(currentChartDays, false);
     } else {
       listView.style.display = 'block';
       chartView.style.display = 'none';
@@ -1193,6 +1297,7 @@
       loadPastLogs();
     }
   }
+
   function toggleScreenshotMode() {
     isScreenshotMode = !isScreenshotMode;
     const normalView = document.getElementById('normalView');
@@ -1209,6 +1314,7 @@
       shotModeBtn.style.background = 'var(--card-bg)';
     }
   }
+
   function renderScreenshotCard() {
     const targetDate = document.getElementById('shotDate').value;
     const container = document.getElementById('shotListContainer');
@@ -1266,198 +1372,268 @@
         container.innerHTML = `<div class="no-logs">${t.failLogs}</div>`;
       });
   }
+
   function parseMilkAmount(str) {
     if (!str) return 0;
     const match = str.match(/(\d+)\s*ml/i);
     return match ? parseInt(match[1], 10) : 0;
   }
-  function renderCharts() {
+
+  // ================= 4. 圖表時間區間篩選切換 =================
+  function setChartRange(days, btnElement) {
+    currentChartDays = days;
+    document.querySelectorAll('.chart-filter-btn').forEach(btn => btn.classList.remove('active'));
+    if (btnElement) btnElement.classList.add('active');
+    renderCharts(days, false);
+  }
+
+  // ================= 整合快取與篩選：統計圖表繪製 =================
+  function renderCharts(daysFilter = 7, forceFetch = false) {
+    const cachedLogs = localStorage.getItem('app_all_logs');
+    if (cachedLogs && !forceFetch) {
+      drawChartsWithLogs(JSON.parse(cachedLogs), daysFilter);
+    }
     fetch(GAS_URL + "?action=getLogs")
       .then(res => res.json())
       .then(logs => {
-        if (!logs || logs.length === 0) return;
-        const isDark = currentTheme === 'dark';
-        const textColor = isDark ? '#f3ece4' : '#2c2825';
-        const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-        Chart.defaults.font.family = "'Short Stack', 'Fredoka', cursive, sans-serif";
-        Chart.defaults.color = textColor;
-        const milkByDate = {};
-        const mealCounts = {};
-        const growthLogs = [];
-        const sortedLogs = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
-        sortedLogs.forEach(log => {
-          const milkVal = parseMilkAmount(log.food) || parseMilkAmount(log.calories);
-          if (!milkByDate[log.date]) milkByDate[log.date] = 0;
-          milkByDate[log.date] += milkVal;
-          const mealName = log.meal || '其他';
-          mealCounts[mealName] = (mealCounts[mealName] || 0) + 1;
-          if (log.height || log.weight) {
-            growthLogs.push({
-              date: log.date,
-              height: log.height ? parseFloat(log.height) : null,
-              weight: log.weight ? parseFloat(log.weight) : null
-            });
-          }
-        });
-        const dates = Object.keys(milkByDate);
-        const milkValues = dates.map(d => milkByDate[d]);
-        if (milkChartInstance) milkChartInstance.destroy();
-        const ctxMilk = document.getElementById('milkChart').getContext('2d');
-        milkChartInstance = new Chart(ctxMilk, {
-          type: 'bar',
-          data: {
-            labels: dates,
-            datasets: [{
-              label: '奶量 (ml)',
-              data: milkValues,
-              backgroundColor: '#9bf6ff',
-              borderColor: '#2c2825',
-              borderWidth: 2,
-              borderRadius: 8
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              x: { grid: { color: gridColor }, ticks: { color: textColor } },
-              y: { grid: { color: gridColor }, ticks: { color: textColor }, beginAtZero: true }
-            }
-          }
-        });
-        const mealLabels = Object.keys(mealCounts);
-        const mealValues = Object.values(mealCounts);
-        if (mealPieChartInstance) mealPieChartInstance.destroy();
-        const ctxMeal = document.getElementById('mealPieChart').getContext('2d');
-        mealPieChartInstance = new Chart(ctxMeal, {
-          type: 'doughnut',
-          data: {
-            labels: mealLabels,
-            datasets: [{
-              data: mealValues,
-              backgroundColor: ['#ff8b94', '#ffe66d', '#a8e6cf', '#9bf6ff', '#bdb2ff', '#ffc6ff', '#ffd6a5'],
-              borderColor: '#2c2825',
-              borderWidth: 2.5
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: 'bottom', labels: { color: textColor } }
-            }
-          }
-        });
-        const gDates = growthLogs.map(g => g.date);
-        const gHeights = growthLogs.map(g => g.height);
-        const gWeights = growthLogs.map(g => g.weight);
-        if (growthChartInstance) growthChartInstance.destroy();
-        const ctxGrowth = document.getElementById('growthChart').getContext('2d');
-        growthChartInstance = new Chart(ctxGrowth, {
-          type: 'line',
-          data: {
-            labels: gDates.length > 0 ? gDates : ['無資料'],
-            datasets: [
-              {
-                label: '身高 (cm)',
-                data: gHeights.length > 0 ? gHeights : [0],
-                borderColor: '#ff8b94',
-                backgroundColor: '#ff8b94',
-                borderWidth: 3,
-                tension: 0.3,
-                yAxisID: 'y'
-              },
-              {
-                label: '體重 (kg)',
-                data: gWeights.length > 0 ? gWeights : [0],
-                borderColor: '#a8e6cf',
-                backgroundColor: '#a8e6cf',
-                borderWidth: 3,
-                tension: 0.3,
-                yAxisID: 'y1'
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              x: { grid: { color: gridColor }, ticks: { color: textColor } },
-              y: {
-                type: 'linear',
-                display: true,
-                position: 'left',
-                title: { display: true, text: 'cm', color: textColor },
-                grid: { color: gridColor },
-                ticks: { color: textColor }
-              },
-              y1: {
-                type: 'linear',
-                display: true,
-                position: 'right',
-                title: { display: true, text: 'kg', color: textColor },
-                grid: { drawOnChartArea: false },
-                ticks: { color: textColor }
-              }
-            }
-          }
-        });
+        if (!logs) return;
+        localStorage.setItem('app_all_logs', JSON.stringify(logs));
+        drawChartsWithLogs(logs, daysFilter);
       })
       .catch(err => console.log('載入圖表數據失敗', err));
   }
+
+  function drawChartsWithLogs(logs, daysFilter) {
+    if (!logs || logs.length === 0) return;
+    const isDark = currentTheme === 'dark';
+    const textColor = isDark ? '#f3ece4' : '#2c2825';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+    Chart.defaults.font.family = "'Short Stack', 'Fredoka', cursive, sans-serif";
+    Chart.defaults.color = textColor;
+
+    // 依篩選區間過濾日期
+    let filteredLogs = [...logs];
+    if (daysFilter > 0) {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - daysFilter);
+      filteredLogs = logs.filter(l => new Date(l.date) >= cutoff);
+    }
+
+    const milkByDate = {};
+    const mealCounts = {};
+    const growthLogs = [];
+    
+    const sortedLogs = [...filteredLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
+    sortedLogs.forEach(log => {
+      const milkVal = parseMilkAmount(log.food) || parseMilkAmount(log.calories);
+      if (!milkByDate[log.date]) milkByDate[log.date] = 0;
+      milkByDate[log.date] += milkVal;
+      
+      const mealName = log.meal || '其他';
+      mealCounts[mealName] = (mealCounts[mealName] || 0) + 1;
+      
+      if (log.height || log.weight) {
+        growthLogs.push({
+          date: log.date,
+          height: log.height ? parseFloat(log.height) : null,
+          weight: log.weight ? parseFloat(log.weight) : null
+        });
+      }
+    });
+
+    // 奶量圖表
+    const dates = Object.keys(milkByDate);
+    const milkValues = dates.map(d => milkByDate[d]);
+    if (milkChartInstance) milkChartInstance.destroy();
+    const ctxMilk = document.getElementById('milkChart').getContext('2d');
+    milkChartInstance = new Chart(ctxMilk, {
+      type: 'bar',
+      data: {
+        labels: dates,
+        datasets: [{
+          label: '奶量 (ml)',
+          data: milkValues,
+          backgroundColor: '#9bf6ff',
+          borderColor: '#2c2825',
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { grid: { color: gridColor }, ticks: { color: textColor } },
+          y: { grid: { color: gridColor }, ticks: { color: textColor }, beginAtZero: true }
+        }
+      }
+    });
+
+    // 餐別比例圓餅圖
+    const mealLabels = Object.keys(mealCounts);
+    const mealValues = Object.values(mealCounts);
+    if (mealPieChartInstance) mealPieChartInstance.destroy();
+    const ctxMeal = document.getElementById('mealPieChart').getContext('2d');
+    mealPieChartInstance = new Chart(ctxMeal, {
+      type: 'doughnut',
+      data: {
+        labels: mealLabels,
+        datasets: [{
+          data: mealValues,
+          backgroundColor: ['#ff8b94', '#ffe66d', '#a8e6cf', '#9bf6ff', '#bdb2ff', '#ffc6ff', '#ffd6a5'],
+          borderColor: '#2c2825',
+          borderWidth: 2.5
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: textColor } }
+        }
+      }
+    });
+
+    // 身高體重成長線圖
+    const gDates = growthLogs.map(g => g.date);
+    const gHeights = growthLogs.map(g => g.height);
+    const gWeights = growthLogs.map(g => g.weight);
+    if (growthChartInstance) growthChartInstance.destroy();
+    const ctxGrowth = document.getElementById('growthChart').getContext('2d');
+    growthChartInstance = new Chart(ctxGrowth, {
+      type: 'line',
+      data: {
+        labels: gDates.length > 0 ? gDates : ['無資料'],
+        datasets: [
+          {
+            label: '身高 (cm)',
+            data: gHeights.length > 0 ? gHeights : [0],
+            borderColor: '#ff8b94',
+            backgroundColor: '#ff8b94',
+            borderWidth: 3,
+            tension: 0.3,
+            yAxisID: 'y'
+          },
+          {
+            label: '體重 (kg)',
+            data: gWeights.length > 0 ? gWeights : [0],
+            borderColor: '#a8e6cf',
+            backgroundColor: '#a8e6cf',
+            borderWidth: 3,
+            tension: 0.3,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { grid: { color: gridColor }, ticks: { color: textColor } },
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            title: { display: true, text: 'cm', color: textColor },
+            grid: { color: gridColor },
+            ticks: { color: textColor }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            title: { display: true, text: 'kg', color: textColor },
+            grid: { drawOnChartArea: false },
+            ticks: { color: textColor }
+          }
+        }
+      }
+    });
+  }
+
   function setFilterDate(daysOffset) {
     document.getElementById('filterDate').value = getLocalDateString(daysOffset);
     loadPastLogs();
   }
+
   function setQuickFood(text) {
     document.getElementById('food').value = text;
   }
+
   function setQuickMilk(amount) {
     const prefix = i18n[currentLang].formulaPrefix;
     document.getElementById('food').value = `${prefix} ${amount}`;
   }
-  function loadStats() {
+
+  // ================= 效能優化：記憶體快取與背景同步 =================
+  function loadStats(forceFetch = false) {
+    const cachedStats = localStorage.getItem('app_stats');
+    if (cachedStats && !forceFetch) {
+      const data = JSON.parse(cachedStats);
+      document.getElementById('statMilk').innerText = (data.totalMilk || 0) + " ml";
+      document.getElementById('statCount').innerText = (data.mealCount || 0) + i18n[currentLang].unitTimes;
+    }
     fetch(GAS_URL + "?action=getStats")
       .then(res => res.json())
       .then(data => {
+        localStorage.setItem('app_stats', JSON.stringify(data));
         document.getElementById('statMilk').innerText = (data.totalMilk || 0) + " ml";
         document.getElementById('statCount').innerText = (data.mealCount || 0) + i18n[currentLang].unitTimes;
       })
       .catch(err => console.log('載入統計失敗', err));
   }
-  function loadLatestHW() {
+
+  function loadLatestHW(forceFetch = false) {
+    const cachedHW = localStorage.getItem('app_latest_hw');
+    if (cachedHW && !forceFetch) {
+      const data = JSON.parse(cachedHW);
+      document.getElementById('hwValues').innerText = `${data.height} | ${data.weight}`;
+      document.getElementById('hwDate').innerText = `📅 ${data.date}`;
+    }
     fetch(GAS_URL + "?action=getLatestHW")
       .then(res => res.json())
       .then(data => {
         if (data) {
+          localStorage.setItem('app_latest_hw', JSON.stringify(data));
           document.getElementById('hwValues').innerText = `${data.height} | ${data.weight}`;
           document.getElementById('hwDate').innerText = `📅 ${data.date}`;
         }
       })
       .catch(err => console.log('載入最新身高體重失敗', err));
   }
-  function loadRecentFoods() {
+
+  function loadRecentFoods(forceFetch = false) {
+    const cachedFoods = localStorage.getItem('app_recent_foods');
+    if (cachedFoods && !forceFetch) {
+      renderRecentFoodsUI(JSON.parse(cachedFoods));
+    }
     fetch(GAS_URL + "?action=getRecent")
       .then(res => res.json())
       .then(foods => {
         if (foods && foods.length > 0) {
-          const datalist = document.getElementById('foodList');
-          const chipsContainer = document.getElementById('quickChips');
-          datalist.innerHTML = '';
-          chipsContainer.innerHTML = '';
-          foods.forEach(item => {
-            const opt = document.createElement('option');
-            opt.value = item;
-            datalist.appendChild(opt);
-            const chip = document.createElement('div');
-            chip.className = 'chip chip-item';
-            chip.innerText = item;
-            chip.onclick = function() { setQuickFood(item); };
-            chipsContainer.appendChild(chip);
-          });
-          document.getElementById('quickSection').style.display = 'block';
+          localStorage.setItem('app_recent_foods', JSON.stringify(foods));
+          renderRecentFoodsUI(foods);
         }
       })
       .catch(err => console.log('載入常用紀錄失敗', err));
   }
-  function loadPastLogs() {
+
+  function renderRecentFoodsUI(foods) {
+    const datalist = document.getElementById('foodList');
+    const chipsContainer = document.getElementById('quickChips');
+    datalist.innerHTML = '';
+    chipsContainer.innerHTML = '';
+    foods.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item;
+      datalist.appendChild(opt);
+      const chip = document.createElement('div');
+      chip.className = 'chip chip-item';
+      chip.innerText = item;
+      chip.onclick = function() { setQuickFood(item); };
+      chipsContainer.appendChild(chip);
+    });
+    document.getElementById('quickSection').style.display = 'block';
+  }
+
+  function loadPastLogs(forceFetch = false) {
     const fDate = document.getElementById('filterDate').value;
     const fMeal = document.getElementById('filterMeal').value;
     const t = i18n[currentLang];
@@ -1487,7 +1663,6 @@
           const matchedMeal = t.meals.find(m => m.value === log.meal);
           const displayMeal = matchedMeal ? matchedMeal.text : log.meal;
 
-          // ✏️ 新增編輯按鈕
           const editBtn = document.createElement('button');
           editBtn.className = 'btn-edit';
           editBtn.title = 'Edit';
@@ -1495,7 +1670,6 @@
           editBtn.onclick = () => editLog(log);
           item.appendChild(editBtn);
 
-          // 🗑️ 刪除按鈕
           const delBtn = document.createElement('button');
           delBtn.className = 'btn-delete';
           delBtn.title = 'Delete';
@@ -1532,46 +1706,43 @@
       });
   }
 
-  // ✏️ 點選編輯：載入該筆紀錄資料回表單
+  // ================= 1. 修正編輯模式：完整填回身高與體重數值 =================
   function editLog(log) {
     const t = i18n[currentLang];
     editingRowIndex = log.rowIndex;
     
-    // 切換回新增表單頁籤
     switchTab('add');
     
-    // 填回既有內容
     document.getElementById('date').value = log.date || getLocalDateString(0);
     if (log.meal) document.getElementById('meal').value = log.meal;
     document.getElementById('food').value = log.food || '';
+    
+    // 修正點：確保編輯時身高與體重欄位正確選中歷史資料
+    if (log.height) document.getElementById('height').value = log.height;
+    if (log.weight) document.getElementById('weight').value = log.weight;
+    
     document.getElementById('calories').value = log.calories || '';
     document.getElementById('notes').value = log.notes || '';
     
-    // 將按鈕更改為「更新」並顯示取消修改
     document.getElementById('submitBtn').innerText = t.updateBtn;
     document.getElementById('cancelEditBtn').style.display = 'block';
 
-    // 捲動至頁面頂部
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ✖ 取消修改狀態：還原表單
   function cancelEdit() {
     const t = i18n[currentLang];
     editingRowIndex = null;
     
-    // 清空欄位
     document.getElementById('food').value = '';
     document.getElementById('height').value = '';
     document.getElementById('weight').value = '';
     document.getElementById('calories').value = '';
     document.getElementById('notes').value = '';
     
-    // 還原為預設日期及時間餐別
     initDefaultDates();
     autoSelectMealByTime();
     
-    // 還原按鈕字眼並隱藏取消按鈕
     document.getElementById('submitBtn').innerText = t.submitBtn;
     document.getElementById('cancelEditBtn').style.display = 'none';
   }
@@ -1589,11 +1760,11 @@
       alert(t.deleteSuccess);
       setTimeout(() => {
         if (currentHistoryView === 'chart') {
-          renderCharts();
+          renderCharts(currentChartDays, true);
         } else {
-          loadPastLogs();
+          loadPastLogs(true);
         }
-        loadStats();
+        loadStats(true);
       }, 800);
     })
     .catch(() => alert(t.deleteFail));
@@ -1619,7 +1790,6 @@
     msg.className = '';
     msg.innerText = '';
     
-    // 判斷當前為「新增」還是「修改」模式
     const payload = {
       action: editingRowIndex ? "edit" : "add",
       rowIndex: editingRowIndex || undefined,
@@ -1642,16 +1812,17 @@
       btn.disabled = false;
       const wasEditing = (editingRowIndex !== null);
       
-      // 完成後自動清空修改模式
       cancelEdit();
       
       msg.className = 'success';
       msg.innerText = wasEditing ? t.editSuccess : customMsgs.success_msg; 
       
       setTimeout(() => {
-        loadRecentFoods();
-        loadStats();
-        loadLatestHW();
+        // 更新完成後強制刷新快取
+        loadRecentFoods(true);
+        loadStats(true);
+        loadLatestHW(true);
+        localStorage.removeItem('app_all_logs');
       }, 1000);
     })
     .catch(() => {

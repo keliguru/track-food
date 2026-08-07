@@ -939,7 +939,7 @@
       if (itemIndex === -1) return;
 
       const itemToDelete = history[itemIndex];
-      if (!confirm(`確定要刪除「${itemToDelete.foodName || '此筆紀錄'}」(ID: ${currentSelectedId.slice(0, 6)}...) 嗎？`)) return;
+      if (!confirm(`確定要刪除「${itemToDelete.foodName || '此筆紀錄'}」嗎？`)) return;
 
       history.splice(itemIndex, 1);
       localStorage.setItem('nutritionHistory', JSON.stringify(history));

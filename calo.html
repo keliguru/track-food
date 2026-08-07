@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Food & Health Log</title>
+  <title>工作細胞營運總署</title>
   
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/calo-icon.png">
   <meta property="og:type" content="website">
@@ -219,7 +219,7 @@
       margin-bottom: 8px;
       letter-spacing: 0.5px;
     }
-    input[type="text"], input[type="password"], input[type="file"], input[type="number"] {
+    input[type="text"], input[type="password"], input[type="file"], input[type="number"], select {
       width: 100%;
       padding: 12px;
       border: 2px solid var(--bunshun-border);
@@ -228,7 +228,7 @@
       color: var(--bunshun-text);
       border-radius: 0;
     }
-    input:focus {
+    input:focus, select:focus {
       outline: none;
       border-color: var(--bunshun-red);
     }
@@ -546,9 +546,52 @@
         <ul class="news-list">
           <li class="news-item">
             <div class="news-date">2026.08.07</div>
-            <div class="news-title">【系統公告】更新架構引入唯一識別 Index (ID)，全面提升紀錄同步定位與刪除的精準度！</div>
+            <div class="news-title">【系統公告】新增 TDEE / BMR 智慧計算總署模組，一鍵推算建議熱量與蛋白質！</div>
+          </li>
+          <li class="news-item">
+            <div class="news-date">2026.08.07</div>
+            <div class="news-title">【系統公告】新增 80% 警戒通知、一鍵清空快取及連線測試功能！</div>
           </li>
         </ul>
+      </div>
+
+      <!-- TDEE / BMR 自動計算器模組 -->
+      <div class="section-header clickable" onclick="toggleBmrCalculator()">
+        <h2 class="section-title">TDEE / BMR 自動計算器</h2>
+        <span id="bmrToggleArrow" class="toggle-arrow">▶</span>
+      </div>
+      <div class="card" id="bmrCalculatorCard" style="display: none;">
+        <div class="form-group">
+          <label>性別 (Gender)</label>
+          <select id="bmrGender">
+            <option value="male">男性</option>
+            <option value="female">女性</option>
+          </select>
+        </div>
+        <div class="form-group"><label>年齡 (Age)</label><input type="number" id="bmrAge" placeholder="例如：25"></div>
+        <div class="form-group"><label>身高 (Height, cm)</label><input type="number" id="bmrHeight" placeholder="例如：175"></div>
+        <div class="form-group"><label>體重 (Weight, kg)</label><input type="number" id="bmrWeight" placeholder="例如：70"></div>
+        <div class="form-group">
+          <label>每週運動頻率與強度</label>
+          <select id="bmrActivity">
+            <option value="1.2">久坐 / 幾乎不運動 (1.2)</option>
+            <option value="1.375">輕度運動 1-3 天/週 (1.375)</option>
+            <option value="1.55" selected>中度運動 3-5 天/週 (1.55)</option>
+            <option value="1.725">高度運動 6-7 天/週 (1.725)</option>
+            <option value="1.9">極高強度 / 專業運動員 (1.9)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>營養目標策略 (Goal)</label>
+          <select id="bmrGoal">
+            <option value="0" selected>維持體重 (Maintenance TDEE)</option>
+            <option value="-300">溫和減脂 (-300 kcal)</option>
+            <option value="-500">積極減脂 (-500 kcal)</option>
+            <option value="300">增肌期 (+300 kcal)</option>
+          </select>
+        </div>
+        <button class="btn btn-dark" onclick="calculateBMRAndTDEE()" style="margin-bottom: 12px;">⚡ 計算並自動套用目標</button>
+        <div id="bmrResultDisplay" style="font-size: 0.85rem; font-weight: 800; color: var(--bunshun-red); margin-top: 8px; line-height: 1.5;"></div>
       </div>
 
       <div class="section-header clickable" onclick="toggleApiSettings()">
@@ -558,17 +601,34 @@
       <div class="card" id="apiSettingsCard" style="display: none;">
         <div class="form-group"><label>OpenRouter API Key (Qwen-VL)</label><input type="password" id="openrouterKey" placeholder="sk-or-..."></div>
         <div class="form-group"><label>DeepSeek API Key (精算)</label><input type="password" id="deepseekKey" placeholder="sk-..."></div>
-        <div class="form-group"><label>Google Sheet GAS Web App URL</label><input type="text" id="gasUrl" placeholder="https://script.google.com/macros/s/..."></div>
+        
+        <div class="form-group">
+          <label>Google Sheet GAS Web App URL</label>
+          <input type="text" id="gasUrl" placeholder="https://script.google.com/macros/s/...">
+          <button class="btn btn-secondary" style="margin-top:8px; font-weight:800;" onclick="testGASConnection()">🔗 測試 Google Sheet 連線</button>
+        </div>
+
         <hr style="border: 0; border-top: 1px dashed var(--bunshun-border); margin: 18px 0;">
         <label style="color: var(--bunshun-red); margin-bottom: 10px;">■ 每日營養運送目標</label>
         <div class="form-group"><label style="font-size:0.78rem;">熱量目標 (kcal)</label><input type="number" id="targetCal" value="2000"></div>
         <div class="form-group"><label style="font-size:0.78rem;">蛋白質目標 (g)</label><input type="number" id="targetProtein" value="75"></div>
         <div class="form-group" style="margin-bottom: 20px;"><label style="font-size:0.78rem;">鈉攝取上限 (mg)</label><input type="number" id="targetSodium" value="2000"></div>
+        
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="autoSync" style="width:16px; height:16px; margin:0;">
+            <span style="font-size:0.85rem;">開啟網頁時自動同步雲端資料</span>
+          </label>
+        </div>
+
         <button class="btn btn-dark" onclick="saveSettings()" style="margin-bottom: 16px;">儲存設定</button>
+        
         <hr style="border: 0; border-top: 1px dashed var(--bunshun-border); margin: 18px 0;">
         <label style="color: var(--bunshun-red); margin-bottom: 10px;">■ 資料數據操作</label>
         <button class="btn btn-secondary" onclick="fetchFromGAS()">🔄 同步雲端與 7 天進度</button>
         <button class="btn btn-secondary" onclick="exportCSV()">📥 匯出 CSV</button>
+        <button class="btn btn-danger" style="margin-top:16px; background:#b91c1c;" onclick="clearLocalCache()">⚠️ 一鍵清空本地快取 (Reset)</button>
+        
         <div id="settingMsg" style="text-align: center; margin-top: 8px; font-size: 0.82rem; color: var(--bunshun-red); font-weight: 800;"></div>
       </div>
     </aside>
@@ -578,7 +638,7 @@
     let base64Image = "";
     let analyzedData = null;
     let toastTimer = null;
-    let currentSelectedId = null; // 全面改以唯一 ID 作為定位標識
+    let currentSelectedId = null;
 
     function toggleTheme() {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -607,6 +667,13 @@
     function toggleApiSettings() {
       const card = document.getElementById('apiSettingsCard');
       const arrow = document.getElementById('apiToggleArrow');
+      if (card.style.display === 'none') { card.style.display = 'block'; arrow.textContent = '▼'; }
+      else { card.style.display = 'none'; arrow.textContent = '▶'; }
+    }
+
+    function toggleBmrCalculator() {
+      const card = document.getElementById('bmrCalculatorCard');
+      const arrow = document.getElementById('bmrToggleArrow');
       if (card.style.display === 'none') { card.style.display = 'block'; arrow.textContent = '▼'; }
       else { card.style.display = 'none'; arrow.textContent = '▶'; }
     }
@@ -654,6 +721,95 @@
       showAlert("🔄 已成功重置當前分析狀態與上傳圖片！");
     }
 
+    // TDEE / BMR 計算邏輯與寫入 LOCAL STORAGE
+    function calculateBMRAndTDEE() {
+      const gender = document.getElementById('bmrGender').value;
+      const age = parseFloat(document.getElementById('bmrAge').value);
+      const height = parseFloat(document.getElementById('bmrHeight').value);
+      const weight = parseFloat(document.getElementById('bmrWeight').value);
+      const activity = parseFloat(document.getElementById('bmrActivity').value);
+      const goalOffset = parseFloat(document.getElementById('bmrGoal').value);
+
+      if (!age || !height || !weight || isNaN(age) || isNaN(height) || isNaN(weight)) {
+        return showAlert("請完整填寫有效的年齡、身高與體重數據！", "error");
+      }
+
+      // Mifflin-St Jeor 公式
+      let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+      if (gender === 'male') {
+        bmr += 5;
+      } else {
+        bmr -= 161;
+      }
+
+      const tdee = bmr * activity;
+      const targetCalories = Math.round(tdee + goalOffset);
+      const targetProtein = Math.round(weight * 1.8); // 建議攝取量：每公斤體重約 1.8g 蛋白質
+
+      // 自動寫入輸入框與 localStorage
+      document.getElementById('targetCal').value = targetCalories;
+      document.getElementById('targetProtein').value = targetProtein;
+
+      localStorage.setItem('targetCal', targetCalories);
+      localStorage.setItem('targetProtein', targetProtein);
+
+      // 同時記錄身體素質數值以便下次保留
+      localStorage.setItem('bmrGender', gender);
+      localStorage.setItem('bmrAge', age);
+      localStorage.setItem('bmrHeight', height);
+      localStorage.setItem('bmrWeight', weight);
+      localStorage.setItem('bmrActivity', activity);
+      localStorage.setItem('bmrGoal', goalOffset);
+
+      document.getElementById('bmrResultDisplay').innerHTML = `
+        ✅ 計算完成！<br>
+        • BMR 基礎代謝：${Math.round(bmr)} kcal<br>
+        • TDEE 每日總消耗：${Math.round(tdee)} kcal<br>
+        • 建議每日熱量目標：${targetCalories} kcal<br>
+        • 建議每日蛋白質目標：${targetProtein} g（已自動寫入並更新本地設定）
+      `;
+
+      renderDashboard();
+      renderSevenDaysHistory();
+      showAlert("⚡ TDEE / BMR 計算成功，目標已自動儲存至本地總署！");
+    }
+
+    // 測試 GAS 連線功能
+    async function testGASConnection() {
+      const gasUrl = document.getElementById('gasUrl').value.trim();
+      if (!gasUrl) return showAlert("請先填入 Google Sheet Web App URL！", "error");
+      
+      const btn = document.querySelector('button[onclick="testGASConnection()"]');
+      const originalText = btn.textContent;
+      btn.textContent = "⏳ 連線測試中...";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(gasUrl);
+        if (res.ok) {
+          showAlert("✅ 連線成功！API 網址有效且可正常訪問。");
+        } else {
+          showAlert(`⚠️ 網址有回應，但狀態碼異常 (${res.status})`, "error");
+        }
+      } catch (error) {
+        showAlert("❌ 連線失敗：網址錯誤或未開放公開存取權限。", "error");
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // 清空本地快取功能
+    function clearLocalCache() {
+      if (confirm("⚠️ 警告：這將清除所有綁定的 API Key、目標設定與未上傳的本地紀錄。\n確定要繼續嗎？")) {
+        if (confirm("🚨 二次確認：清除後將無法復原，是否確定清除？")) {
+          localStorage.clear();
+          alert("✅ 本地快取已完全清空，系統即將重新載入。");
+          location.reload();
+        }
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       if (localStorage.getItem('uiTheme') === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -667,14 +823,31 @@
       document.getElementById('targetProtein').value = localStorage.getItem('targetProtein') || 75;
       document.getElementById('targetSodium').value = localStorage.getItem('targetSodium') || 2000;
 
-      if (document.getElementById('gasUrl').value.trim()) { fetchFromGAS(); }
-      else { renderDashboard(); renderSevenDaysHistory(); renderHistory(); }
+      // 載入儲存的 BMR 計算器數值
+      if (localStorage.getItem('bmrGender')) document.getElementById('bmrGender').value = localStorage.getItem('bmrGender');
+      if (localStorage.getItem('bmrAge')) document.getElementById('bmrAge').value = localStorage.getItem('bmrAge');
+      if (localStorage.getItem('bmrHeight')) document.getElementById('bmrHeight').value = localStorage.getItem('bmrHeight');
+      if (localStorage.getItem('bmrWeight')) document.getElementById('bmrWeight').value = localStorage.getItem('bmrWeight');
+      if (localStorage.getItem('bmrActivity')) document.getElementById('bmrActivity').value = localStorage.getItem('bmrActivity');
+      if (localStorage.getItem('bmrGoal')) document.getElementById('bmrGoal').value = localStorage.getItem('bmrGoal');
+      
+      // 自動同步開關預設為開啟
+      const savedAutoSync = localStorage.getItem('autoSync');
+      document.getElementById('autoSync').checked = savedAutoSync !== 'false';
+
+      if (document.getElementById('gasUrl').value.trim() && document.getElementById('autoSync').checked) {
+        fetchFromGAS();
+      } else {
+        renderDashboard(); renderSevenDaysHistory(); renderHistory();
+      }
     });
 
     function saveSettings() {
       ['openrouterKey', 'deepseekKey', 'gasUrl', 'targetCal', 'targetProtein', 'targetSodium'].forEach(id => {
         localStorage.setItem(id, document.getElementById(id).value.trim());
       });
+      localStorage.setItem('autoSync', document.getElementById('autoSync').checked);
+      
       renderDashboard(); renderSevenDaysHistory();
       showAlert("✅ 設定已儲存完成！");
     }
@@ -713,7 +886,7 @@
           body: JSON.stringify({
             model: "deepseek-chat",
             messages: [
-              { role: "system", content: "請提供營養分析報告，並在結尾以<JSON>標籤封裝結構化數據：foodName, calories, protein, carbs, fat, fiber, sugar, sodium（純數字）。" },
+              { role: "system", content: "請提供專業營養分析報告，並在結尾以<JSON>標籤封裝結構化數據：foodName, calories, protein, carbs, fat, fiber, sugar, sodium（純數字）。" },
               { role: "user", content: `分析食物資料：\n${foodDescription}` }
             ]
           })
@@ -738,7 +911,6 @@
       }
     }
 
-    // 產生或指定唯一識別 UUID 讓每一筆資料有獨立 Index[cite: 1]
     async function saveData() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
       analyzedData.id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'id_' + Date.now() + '_' + Math.floor(Math.random()*1000);
@@ -754,13 +926,12 @@
         } catch (e) {}
       }
 
-      showAlert("✅ 紀錄（ID已產生）成功寫入！今日進度與 7 天趨勢同步更新。");
+      showAlert("✅ 紀錄成功寫入！今日進度與 7 天趨勢同步更新。");
       resetAnalysis();
-      if (gasUrl) fetchFromGAS();
+      if (gasUrl && document.getElementById('autoSync').checked) fetchFromGAS();
       else { renderDashboard(); renderSevenDaysHistory(); renderHistory(); }
     }
 
-    // 刪除紀錄功能：透過傳送 Action 與該筆資料的 ID (Index) 給後端
     async function deleteCurrentItem() {
       if (!currentSelectedId) return;
       let history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
@@ -786,8 +957,8 @@
       }
 
       closeModal();
-      showAlert("🗑️ 已成功依據 ID 刪除該筆運送紀錄！");
-      if (gasUrl) fetchFromGAS();
+      showAlert("🗑️ 已成功刪除該筆運送紀錄！");
+      if (gasUrl && document.getElementById('autoSync').checked) fetchFromGAS();
       else { renderDashboard(); renderSevenDaysHistory(); renderHistory(); }
     }
 
@@ -847,16 +1018,32 @@
       const targetSodium = Number(localStorage.getItem('targetSodium')) || 2000;
 
       const renderBar = (label, current, max, unit) => {
-        const isExceeded = current > max;
         const percent = Math.min(100, (current / max) * 100);
+        const isExceeded = current > max;
+        const isWarning = !isExceeded && (current >= max * 0.8);
+        
+        let statusHtml = '';
+        let barColor = 'var(--bunshun-text)';
+        let textColor = 'inherit';
+
+        if (isExceeded) {
+          statusHtml = '⚠️ <span style="color:var(--bunshun-red);">(已爆錶)</span>';
+          barColor = 'var(--bunshun-red)';
+          textColor = 'var(--bunshun-red)';
+        } else if (isWarning) {
+          statusHtml = '⚠️ <span style="color:#f59e0b; text-shadow: 1px 1px 0px rgba(0,0,0,0.1);">(即將達標警戒)</span>';
+          barColor = '#f59e0b';
+          textColor = '#f59e0b';
+        }
+
         return `
           <div class="progress-item">
             <div class="progress-label">
-              <span>${label} ${isExceeded ? '⚠️ <span style="color:var(--bunshun-red);">(已爆錶)</span>' : ''}</span>
-              <span style="${isExceeded ? 'color: var(--bunshun-red); font-weight: 900;' : ''}">${Math.round(current)} / ${max} ${unit}</span>
+              <span>${label} ${statusHtml}</span>
+              <span style="color: ${textColor}; font-weight: 900;">${Math.round(current)} / ${max} ${unit}</span>
             </div>
             <div class="progress-bar">
-              <div class="progress-fill" style="width: ${percent}%; ${isExceeded ? 'background: var(--bunshun-red);' : ''}"></div>
+              <div class="progress-fill" style="width: ${percent}%; background: ${barColor};"></div>
             </div>
           </div>
         `;
@@ -932,7 +1119,6 @@
       }).join('');
     }
 
-    // 渲染歷史列表時以該筆物件的 ID 當做點擊事件傳回值[cite: 1]
     function renderHistory() {
       const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
       const container = document.getElementById('historyList');
@@ -954,7 +1140,6 @@
       `).join('');
     }
 
-    // Modal 改為接收唯一的 ID
     function openModal(id) {
       currentSelectedId = id;
       const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');

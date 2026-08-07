@@ -281,12 +281,16 @@
       box-shadow: 4px 4px 0px var(--bunshun-border);
       transition: all 0.1s ease;
       border-radius: 0;
+      margin-bottom: 10px;
     }
     .btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--bunshun-border); }
     .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--bunshun-border); }
     
     .btn-dark { background: var(--bunshun-text); color: var(--bunshun-bg); }
-    .btn-secondary { background: var(--bunshun-gray); color: var(--bunshun-text); width: 100%; padding: 10px 12px; font-size: 0.85rem; font-weight: 800; display: inline-block; margin-bottom: 8px; }
+    .btn-secondary { background: var(--bunshun-gray); color: var(--bunshun-text); width: 100%; padding: 10px 12px; font-size: 0.85rem; font-weight: 800; display: inline-block; margin-bottom: 8px; box-shadow: 3px 3px 0px var(--bunshun-border); }
+    .btn-secondary:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0px var(--bunshun-border); }
+    .btn-secondary:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0px var(--bunshun-border); }
+
     .btn:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
 
     #imagePreview {
@@ -324,7 +328,6 @@
     .progress-bar { height: 14px; background: var(--bunshun-gray); border: 1px solid var(--bunshun-border); overflow: hidden; }
     .progress-fill { height: 100%; background: var(--bunshun-red); width: 0%; transition: width 0.4s ease; }
 
-    /* 新增：7天每日紀錄特別進度條式樣 */
     .day-progress-card {
       border: 1px solid var(--bunshun-border);
       padding: 14px;
@@ -432,9 +435,6 @@
       margin: 0 auto 16px auto;
     }
 	
-    /* =========================================================
-       骨架屏與載入中特報樣式 (Skeleton Screen & Loading Banner)
-       ========================================================= */
     @keyframes bunshun-pulse {
       0% { opacity: 1; }
       50% { opacity: 0.35; }
@@ -446,7 +446,6 @@
       pointer-events: none;
     }
 
-    /* 文春報刊風格：現場警示橫幅 */
     .loading-banner {
       background: var(--bunshun-text);
       color: var(--bunshun-bg);
@@ -466,7 +465,6 @@
       color: #ffffff;
     }
 
-    /* 骨架色塊與邊框 */
     .skeleton-box {
       background: var(--bunshun-gray);
       border: 1px solid var(--bunshun-border);
@@ -570,6 +568,10 @@
         <button class="btn" id="analyzeBtn" onclick="processTwoStageWorkflow()">
           🔴 開始精確養分分析
         </button>
+        <!-- 新增：重置按鈕 -->
+        <button class="btn btn-secondary" onclick="resetAnalysis()">
+          🔄 重置目前照片與分析
+        </button>
       </div>
 
       <!-- 辨識結果顯示區 -->
@@ -604,7 +606,7 @@
         <div id="dashboardProgress"></div>
       </div>
 
-      <!-- 區塊 2.5：前線過去 7 天營運進度（新增功能！） -->
+      <!-- 區塊 2.5：前線過去 7 天營運進度 -->
       <div class="section-header">
         <h2 class="section-title">過去 7 天營運報告 (7-DAY STRATEGIC PROGRESS)</h2>
       </div>
@@ -796,6 +798,26 @@
       reader.readAsDataURL(file);
     }
 
+    // 新增：重置目前辨識狀態與上傳照片
+    function resetAnalysis() {
+      base64Image = "";
+      analyzedData = null;
+      imageInput.value = "";
+      
+      const preview = document.getElementById('imagePreview');
+      preview.src = "";
+      preview.style.display = 'none';
+
+      document.getElementById('resultCard').style.display = 'none';
+      document.getElementById('stage1Status').textContent = "準備辨識中...";
+      document.getElementById('stage1Output').textContent = "";
+      document.getElementById('stage2Status').textContent = "等待數據...";
+      document.getElementById('stage2Output').textContent = "";
+      document.getElementById('saveBtn').style.display = 'none';
+
+      showAlert("🔄 已成功重置當前分析狀態與上傳圖片！");
+    }
+
     // 載入本地設定與主題
     window.addEventListener('DOMContentLoaded', () => {
       const savedTheme = localStorage.getItem('uiTheme');
@@ -933,6 +955,7 @@
       }
 
       showAlert("✅ 紀錄已寫入！今日進度與 7 天趨勢同步更新。");
+      resetAnalysis(); // 儲存後自動重置上傳畫面
       if (gasUrl) {
         fetchFromGAS();
       } else {
@@ -959,7 +982,6 @@
         showSevenDaysSkeleton();
         showHistorySkeleton();
 
-        // 1. 請求今日數據 (?action=today)
         const todayUrl = `${gasUrl}${gasUrl.includes('?') ? '&' : '?'}action=today`;
         const resToday = await fetch(todayUrl);
         const resultToday = await resToday.json();
@@ -970,7 +992,6 @@
           renderDashboard();
         }
 
-        // 2. 請求每日統計報告 (?action=dailySummary) -- 渲染 7 天報告！
         const summaryUrl = `${gasUrl}${gasUrl.includes('?') ? '&' : '?'}action=dailySummary`;
         const resSummary = await fetch(summaryUrl);
         const resultSummary = await resSummary.json();
@@ -981,7 +1002,6 @@
           renderSevenDaysHistory();
         }
 
-        // 3. 請求全部歷史細節
         const resAll = await fetch(gasUrl);
         const resultAll = await resAll.json();
 
@@ -1080,9 +1100,7 @@
       renderBar('今日鈉攝取上限 (Sodium)', totals.sodium, targetSodium, 'mg');
     }
 
-    // =========================================================================
-    // 🔴 核心升級功能：過去 7 天營運趨勢報告 (7-Day Strategic Progress)
-    // =========================================================================
+    // 過去 7 天營運趨勢報告
     function renderSevenDaysHistory(summaryData = null) {
       const container = document.getElementById('sevenDayHistory');
       const targetCal = Number(localStorage.getItem('targetCal')) || 2000;
@@ -1090,11 +1108,9 @@
 
       let daysList = [];
 
-      // 1. 如果 GAS 傳入了 dailySummary
       if (Array.isArray(summaryData) && summaryData.length > 0) {
         daysList = summaryData.slice(0, 7);
       } else {
-        // 2. 本地儲存備援方案：自行分組統計過去 7 天
         const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
         const map = {};
 
@@ -1122,12 +1138,10 @@
         return;
       }
 
-      // 將 7 天統計化為有感覺的每日進度圖表卡片
       container.innerHTML = daysList.map((day, idx) => {
         const calPercent = Math.min(100, (day.totalCalories / targetCal) * 100);
         const proPercent = Math.min(100, (day.totalProtein / targetProtein) * 100);
         
-        // 特色：達成度健康色與爆錶紅色警示
         const calColor = day.totalCalories > targetCal ? 'var(--bunshun-red)' : '#16a34a';
         const isExceeded = day.totalCalories > targetCal;
 
@@ -1143,7 +1157,6 @@
               </div>
             </div>
             
-            <!-- 每日卡路里條 -->
             <div style="margin-bottom:8px;">
               <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:800; margin-bottom:4px;">
                 <span>熱量 (Calories)</span>
@@ -1154,7 +1167,6 @@
               </div>
             </div>
 
-            <!-- 每日蛋白質條 -->
             <div>
               <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:800; margin-bottom:4px;">
                 <span>蛋白質 (Protein)</span>
@@ -1256,7 +1268,7 @@
       `;
     }
 
-    // 骨架屏：7 天過去紀錄報告（新增）
+    // 骨架屏：7 天過去紀錄報告
     function showSevenDaysSkeleton() {
       const container = document.getElementById('sevenDayHistory');
       container.innerHTML = `

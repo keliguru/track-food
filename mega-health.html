@@ -116,6 +116,16 @@
 	  -webkit-appearance: none;
 	  box-sizing: border-box;
 	}
+	/* 隱藏 Chrome, Safari 和 Opera 的卷軸 */
+	.no-scrollbar::-webkit-scrollbar {
+	  display: none;
+	}
+
+	/* 隱藏 IE, Edge 和 Firefox 的卷軸 */
+	.no-scrollbar {
+	  -ms-overflow-style: none;  /* IE and Edge */
+	  scrollbar-width: none;  /* Firefox */
+	}
   </style>
 </head>
 <body class="text-mega-slate min-h-screen pb-16 flex flex-col justify-between selection:bg-mega-soft selection:text-mega">
@@ -177,7 +187,7 @@
       <div id="megaControl" class="hidden bg-white rounded-2xl p-3 sm:p-4 shadow-mega border border-slate-200/80 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         
         <!-- Tabs (整合為常數呼叫) -->
-        <div class="flex border-b md:border-b-0 border-slate-100 gap-6 px-2 overflow-x-auto">
+        <div class="no-scrollbar flex border-b md:border-b-0 border-slate-100 gap-6 px-2 overflow-x-auto">
           <button id="tab-medical" onclick="switchTab(SHEETS.MEDICAL)" class="pb-3 md:pb-0 text-slate-500 font-medium text-sm flex items-center space-x-2 transition-all duration-200 whitespace-nowrap active-tab">
             <i data-lucide="stethoscope" class="w-4 h-4"></i>
             <span>就醫診斷 (MEDICAL)</span>

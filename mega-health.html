@@ -110,6 +110,12 @@
     .drawer-hidden .drawer-panel {
       transform: translateX(100%);
     }
+	input[type="datetime-local"] {
+	  min-height: 42px; /* 確保在手機上有足夠高度 */
+	  appearance: none;   /* 消除部分手機預設樣式 */
+	  -webkit-appearance: none;
+	  box-sizing: border-box;
+	}
   </style>
 </head>
 <body class="text-mega-slate min-h-screen pb-16 flex flex-col justify-between selection:bg-mega-soft selection:text-mega">

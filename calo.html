@@ -546,11 +546,11 @@
         <ul class="news-list">
           <li class="news-item">
             <div class="news-date">2026.08.07</div>
-            <div class="news-title">【系統公告】新增 TDEE / BMR 智慧計算總署模組，一鍵推算建議熱量與蛋白質！</div>
+            <div class="news-title">【系統公告】新增自訂 AI 分析風格與 Prompt 偏好設定功能（支援快速範本與 LocalStorage 記憶）！</div>
           </li>
           <li class="news-item">
             <div class="news-date">2026.08.07</div>
-            <div class="news-title">【系統公告】新增 80% 警戒通知、一鍵清空快取及連線測試功能！</div>
+            <div class="news-title">【系統公告】新增 TDEE / BMR 智慧計算總署模組，一鍵推算建議熱量與蛋白質！</div>
           </li>
         </ul>
       </div>
@@ -606,6 +606,22 @@
           <label>Google Sheet GAS Web App URL</label>
           <input type="text" id="gasUrl" placeholder="https://script.google.com/macros/s/...">
           <button class="btn btn-secondary" style="margin-top:8px; font-weight:800;" onclick="testGASConnection()">🔗 測試 Google Sheet 連線</button>
+        </div>
+
+        <hr style="border: 0; border-top: 1px dashed var(--bunshun-border); margin: 18px 0;">
+        <label style="color: var(--bunshun-red); margin-bottom: 10px;">■ 自訂 AI 分析風格 (Prompt 偏好)</label>
+        <div class="form-group">
+          <label style="font-size:0.78rem;">快速範本選擇</label>
+          <select id="promptPreset" onchange="applyPromptPreset()" style="margin-bottom:8px;">
+            <option value="">-- 自訂 / 無特定偏好 --</option>
+            <option value="嚴格估算油量與隱形糖">嚴格估算油量與隱形糖</option>
+            <option value="健身增肌模式：著重蛋白質拆解">健身增肌模式：著重蛋白質拆解</option>
+            <option value="外賣減脂模式">外賣減脂模式</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="font-size:0.78rem;">自訂 Prompt 補充指令</label>
+          <input type="text" id="customPromptStyle" placeholder="例如：嚴格估算油量與隱形糖">
         </div>
 
         <hr style="border: 0; border-top: 1px dashed var(--bunshun-border); margin: 18px 0;">
@@ -678,6 +694,14 @@
       else { card.style.display = 'none'; arrow.textContent = '▶'; }
     }
 
+    function applyPromptPreset() {
+      const preset = document.getElementById('promptPreset').value;
+      if (preset) {
+        document.getElementById('customPromptStyle').value = preset;
+        localStorage.setItem('customPromptStyle', preset);
+      }
+    }
+
     window.addEventListener('scroll', () => {
       const btn = document.getElementById('backToTopBtn');
       if (window.scrollY > 300) { btn.classList.add('show'); }
@@ -744,16 +768,14 @@
 
       const tdee = bmr * activity;
       const targetCalories = Math.round(tdee + goalOffset);
-      const targetProtein = Math.round(weight * 1.8); // 建議攝取量：每公斤體重約 1.8g 蛋白質
+      const targetProtein = Math.round(weight * 1.8);
 
-      // 自動寫入輸入框與 localStorage
       document.getElementById('targetCal').value = targetCalories;
       document.getElementById('targetProtein').value = targetProtein;
 
       localStorage.setItem('targetCal', targetCalories);
       localStorage.setItem('targetProtein', targetProtein);
 
-      // 同時記錄身體素質數值以便下次保留
       localStorage.setItem('bmrGender', gender);
       localStorage.setItem('bmrAge', age);
       localStorage.setItem('bmrHeight', height);
@@ -822,8 +844,8 @@
       document.getElementById('targetCal').value = localStorage.getItem('targetCal') || 2000;
       document.getElementById('targetProtein').value = localStorage.getItem('targetProtein') || 75;
       document.getElementById('targetSodium').value = localStorage.getItem('targetSodium') || 2000;
+      document.getElementById('customPromptStyle').value = localStorage.getItem('customPromptStyle') || '';
 
-      // 載入儲存的 BMR 計算器數值
       if (localStorage.getItem('bmrGender')) document.getElementById('bmrGender').value = localStorage.getItem('bmrGender');
       if (localStorage.getItem('bmrAge')) document.getElementById('bmrAge').value = localStorage.getItem('bmrAge');
       if (localStorage.getItem('bmrHeight')) document.getElementById('bmrHeight').value = localStorage.getItem('bmrHeight');
@@ -831,7 +853,6 @@
       if (localStorage.getItem('bmrActivity')) document.getElementById('bmrActivity').value = localStorage.getItem('bmrActivity');
       if (localStorage.getItem('bmrGoal')) document.getElementById('bmrGoal').value = localStorage.getItem('bmrGoal');
       
-      // 自動同步開關預設為開啟
       const savedAutoSync = localStorage.getItem('autoSync');
       document.getElementById('autoSync').checked = savedAutoSync !== 'false';
 
@@ -843,18 +864,20 @@
     });
 
     function saveSettings() {
-      ['openrouterKey', 'deepseekKey', 'gasUrl', 'targetCal', 'targetProtein', 'targetSodium'].forEach(id => {
+      ['openrouterKey', 'deepseekKey', 'gasUrl', 'targetCal', 'targetProtein', 'targetSodium', 'customPromptStyle'].forEach(id => {
         localStorage.setItem(id, document.getElementById(id).value.trim());
       });
       localStorage.setItem('autoSync', document.getElementById('autoSync').checked);
       
       renderDashboard(); renderSevenDaysHistory();
-      showAlert("✅ 設定已儲存完成！");
+      showAlert("✅ 設定與自訂 AI 風格已儲存完成！");
     }
 
     async function processTwoStageWorkflow() {
       const openrouterKey = document.getElementById('openrouterKey').value.trim();
       const deepseekKey = document.getElementById('deepseekKey').value.trim();
+      const customPromptStyle = document.getElementById('customPromptStyle').value.trim();
+
       if (!openrouterKey || !deepseekKey) return showAlert("請點開「系統 API 設定」填寫 API Key！", 'error');
       if (!base64Image) return showAlert("請先拍攝或上傳照片！", 'error');
 
@@ -880,13 +903,19 @@
         document.getElementById('stage1Output').textContent = foodDescription;
 
         document.getElementById('stage2Status').textContent = "正在精密計算營養數據...";
+        
+        let systemPrompt = "請提供專業營養分析報告，並在結尾以<JSON>標籤封裝結構化數據：foodName, calories, protein, carbs, fat, fiber, sugar, sodium（純數字）。";
+        if (customPromptStyle) {
+          systemPrompt += ` 【額外風格與 Prompt 偏好指引】：${customPromptStyle}`;
+        }
+
         const res2 = await fetch("https://api.deepseek.com/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${deepseekKey}` },
           body: JSON.stringify({
             model: "deepseek-chat",
             messages: [
-              { role: "system", content: "請提供專業營養分析報告，並在結尾以<JSON>標籤封裝結構化數據：foodName, calories, protein, carbs, fat, fiber, sugar, sodium（純數字）。" },
+              { role: "system", content: systemPrompt },
               { role: "user", content: `分析食物資料：\n${foodDescription}` }
             ]
           })

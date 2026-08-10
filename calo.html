@@ -1273,11 +1273,11 @@
 		  // 1. 過濾出當前使用者的紀錄
 		  let userHistory = history.filter(item => (item.userId || 'default_user') === currentUserId);
 		  
-		  // 2. 依 timestamp 進行排序：最新放最上方（降序排序）
+		  // 2. 依 timestamp 進行降序排序（最新放最上方）
 		  userHistory.sort((a, b) => {
 			const timeA = new Date(a.timestamp).getTime() || 0;
 			const timeB = new Date(b.timestamp).getTime() || 0;
-			return timeB - timeA; // 時間大的（較新的）排在前面
+			return timeB - timeA;
 		  });
 
 		  const container = document.getElementById('historyList');
@@ -1287,18 +1287,49 @@
 			return;
 		  }
 
-		  container.innerHTML = userHistory.slice(0, 10).map((item) => `
-			<div class="history-item" onclick="openModal('${item.id}')">
-			  <div>
-				<strong style="font-size:1rem;">${item.foodName || '未命名餐點'}</strong>
-				<div style="font-size:0.75rem; color:var(--bunshun-subtext); margin-top:2px;">${formatHKTTime(item.timestamp)}</div>
+		  // 3. 依照日期 (YYYY-MM-DD) 進行分組
+		  const groups = {};
+		  userHistory.forEach(item => {
+			let d = new Date(item.timestamp);
+			let dayStr = isNaN(d.getTime()) ? '未知日期' : new Intl.DateTimeFormat('en-CA', { 
+			  timeZone: 'Asia/Hong_Kong', 
+			  year: 'numeric', 
+			  month: '2-digit', 
+			  day: '2-digit' 
+			}).format(d);
+			
+			if (!groups[dayStr]) {
+			  groups[dayStr] = [];
+			}
+			groups[dayStr].push(item);
+		  });
+
+		  // 4. 將日期由新到舊排序並組合 HTML
+		  const sortedDays = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+		  container.innerHTML = sortedDays.map(day => {
+			const itemsHtml = groups[day].map(item => `
+			  <div class="history-item" onclick="openModal('${item.id}')">
+				<div>
+				  <strong style="font-size:1rem;">${item.foodName || '未命名餐點'}</strong>
+				  <div style="font-size:0.75rem; color:var(--bunshun-subtext); margin-top:2px;">${formatHKTTime(item.timestamp)}</div>
+				</div>
+				<div style="text-align:right;">
+				  <div style="font-weight:900; color:var(--bunshun-red); font-size:1.05rem;">${item.calories || 0} kcal</div>
+				  <div style="font-size:0.75rem; color:var(--bunshun-subtext); font-weight:800;">蛋白質 ${item.protein || 0}g</div>
+				</div>
 			  </div>
-			  <div style="text-align:right;">
-				<div style="font-weight:900; color:var(--bunshun-red); font-size:1.05rem;">${item.calories || 0} kcal</div>
-				<div style="font-size:0.75rem; color:var(--bunshun-subtext); font-weight:800;">蛋白質 ${item.protein || 0}g</div>
+			`).join('');
+
+			return `
+			  <div style="margin-bottom: 16px;">
+				<div style="font-size: 0.85rem; font-weight: 900; color: var(--bunshun-red); background: var(--bunshun-gray); padding: 6px 10px; border-bottom: 2px solid var(--bunshun-border); margin-bottom: 4px;">
+				  📅 ${day}
+				</div>
+				${itemsHtml}
 			  </div>
-			</div>
-		  `).join('');
+			`;
+		  }).join('');
 		}
 
     function openModal(id) {

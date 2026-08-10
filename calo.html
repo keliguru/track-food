@@ -556,11 +556,11 @@
         <ul class="news-list">
           <li class="news-item">
             <div class="news-date">2026.08.07</div>
-            <div class="news-title">【系統公告】新增 AI 修正菜色功能，可隨時輸入文字微調菜量、醬汁與隱形熱量！</div>
+            <div class="news-title">【系統公告】新增多使用者 (Multi-User) 獨立記錄支援，可自由切換不同使用者代號！</div>
           </li>
           <li class="news-item">
             <div class="news-date">2026.08.07</div>
-            <div class="news-title">【系統公告】新增自訂 AI 分析風格與 Prompt 偏好設定功能（支援快速範本與 LocalStorage 記憶）！</div>
+            <div class="news-title">【系統公告】新增 AI 修正菜色功能，可隨時輸入文字微調菜量、醬汁與隱形熱量！</div>
           </li>
         </ul>
       </div>
@@ -609,6 +609,12 @@
         <span id="apiToggleArrow" class="toggle-arrow">▶</span>
       </div>
       <div class="card" id="apiSettingsCard" style="display: none;">
+        <div class="form-group">
+          <label style="color: var(--bunshun-red);">■ 使用者代號 (User ID / Name)</label>
+          <input type="text" id="userIdSetting" placeholder="例如：alice, bob 或 default_user">
+          <span style="font-size: 0.75rem; color: var(--bunshun-subtext); margin-top: 4px; display: block;">切換不同代號可隔離與記錄各自的飲食清單</span>
+        </div>
+
         <div class="form-group"><label>OpenRouter API Key (Qwen-VL)</label><input type="password" id="openrouterKey" placeholder="sk-or-..."></div>
         <div class="form-group"><label>DeepSeek API Key (精算)</label><input type="password" id="deepseekKey" placeholder="sk-..."></div>
         
@@ -665,6 +671,11 @@
     let analyzedData = null;
     let toastTimer = null;
     let currentSelectedId = null;
+
+    function getCurrentUserId() {
+      const inputVal = document.getElementById('userIdSetting').value.trim();
+      return inputVal || localStorage.getItem('userId') || 'default_user';
+    }
 
     // 香港時間 24小時制格式化輔助函數
     function formatHKTTime(dateInput) {
@@ -862,6 +873,7 @@
         document.getElementById('themeIcon').textContent = '☀️';
         document.getElementById('themeText').textContent = '日間';
       }
+      document.getElementById('userIdSetting').value = localStorage.getItem('userId') || 'default_user';
       document.getElementById('openrouterKey').value = localStorage.getItem('openrouterKey') || '';
       document.getElementById('deepseekKey').value = localStorage.getItem('deepseekKey') || '';
       document.getElementById('gasUrl').value = localStorage.getItem('gasUrl') || '';
@@ -888,13 +900,18 @@
     });
 
     function saveSettings() {
-      ['openrouterKey', 'deepseekKey', 'gasUrl', 'targetCal', 'targetProtein', 'targetSodium', 'customPromptStyle'].forEach(id => {
-        localStorage.setItem(id, document.getElementById(id).value.trim());
+      ['userIdSetting', 'openrouterKey', 'deepseekKey', 'gasUrl', 'targetCal', 'targetProtein', 'targetSodium', 'customPromptStyle'].forEach(id => {
+        let val = document.getElementById(id).value.trim();
+        if (id === 'userIdSetting') {
+          localStorage.setItem('userId', val || 'default_user');
+        } else {
+          localStorage.setItem(id, val);
+        }
       });
       localStorage.setItem('autoSync', document.getElementById('autoSync').checked);
       
-      renderDashboard(); renderSevenDaysHistory();
-      showAlert("✅ 設定與自訂 AI 風格已儲存完成！");
+      renderDashboard(); renderSevenDaysHistory(); renderHistory();
+      showAlert("✅ 使用者設定與系統參數已儲存完成！");
     }
 
     async function processTwoStageWorkflow() {
@@ -1020,7 +1037,10 @@
 
     async function saveData() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
+      const currentUserId = getCurrentUserId();
+
       analyzedData.id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'id_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+      analyzedData.userId = currentUserId;
       analyzedData.timestamp = formatHKTTime(new Date());
 
       let history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
@@ -1033,7 +1053,7 @@
         } catch (e) {}
       }
 
-      showAlert("✅ 紀錄成功寫入！今日進度與 7 天趨勢同步更新。");
+      showAlert(`✅ 紀錄成功寫入 [${currentUserId}]！`);
       resetAnalysis();
       if (gasUrl && document.getElementById('autoSync').checked) fetchFromGAS();
       else { renderDashboard(); renderSevenDaysHistory(); renderHistory(); }
@@ -1071,35 +1091,45 @@
 
     async function fetchFromGAS() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
+      const currentUserId = getCurrentUserId();
       if (!gasUrl) return showAlert("請先於系統 API 設定填入 Google Sheet Web App URL！", 'error');
 
       try {
         showDashboardSkeleton(); showSevenDaysSkeleton(); showHistorySkeleton();
 
-        const resToday = await fetch(`${gasUrl}${gasUrl.includes('?') ? '&' : '?'}action=today`);
+        const sep = gasUrl.includes('?') ? '&' : '?';
+        const querySuffix = `&userId=${encodeURIComponent(currentUserId)}`;
+
+        const resToday = await fetch(`${gasUrl}${sep}action=today${querySuffix}`);
         const resultToday = await resToday.json();
         if (resultToday.status === "success" && Array.isArray(resultToday.data)) renderDashboard(resultToday.data);
-        else renderDashboard();
+        else renderDashboard([]);
 
-        const resSummary = await fetch(`${gasUrl}${gasUrl.includes('?') ? '&' : '?'}action=dailySummary`);
+        const resSummary = await fetch(`${gasUrl}${sep}action=dailySummary${querySuffix}`);
         const resultSummary = await resSummary.json();
         if (resultSummary.status === "success" && Array.isArray(resultSummary.data)) renderSevenDaysHistory(resultSummary.data);
-        else renderSevenDaysHistory();
+        else renderSevenDaysHistory([]);
 
-        const resAll = await fetch(gasUrl);
+        const resAll = await fetch(`${gasUrl}${sep}action=all${querySuffix}`);
         const resultAll = await resAll.json();
         if (resultAll.status === "success" && Array.isArray(resultAll.data)) {
-          localStorage.setItem('nutritionHistory', JSON.stringify(resultAll.data.reverse()));
+          // 合併或取代當前使用者的本地紀錄
+          let fullHistory = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
+          // 移除其他使用者的快取或保留，這裡過濾出不是當前用戶的，再補上雲端當前用戶的
+          fullHistory = fullHistory.filter(h => h.userId && h.userId !== currentUserId);
+          fullHistory = fullHistory.concat(resultAll.data);
+          localStorage.setItem('nutritionHistory', JSON.stringify(fullHistory));
           renderHistory();
         }
-        showAlert("✅ 雲端通訊完畢：所有報告與 7 天紀錄已同步！");
+        showAlert(`✅ 雲端通訊完畢：已同步 [${currentUserId}] 的資料！`);
       } catch (e) {
-        showAlert("連線失敗，改由本地前線儲存紀錄顯示中。", 'error');
+        showAlert("連線失敗，改由本地快取紀錄顯示中。", 'error');
         renderDashboard(); renderSevenDaysHistory(); renderHistory();
       }
     }
 
     function renderDashboard(externalData = null) {
+      const currentUserId = getCurrentUserId();
       let todayHistory = [];
       const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
@@ -1109,6 +1139,10 @@
         const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
         todayHistory = history.filter(item => {
           if (!item.timestamp) return false;
+          // 若有設定 userId 則嚴格比對，若無則預設為 default_user 或符合目前 ID
+          const itemUser = item.userId || 'default_user';
+          if (itemUser !== currentUserId) return false;
+
           let d = new Date(item.timestamp);
           if (isNaN(d.getTime())) return false;
           let itemDayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
@@ -1159,8 +1193,9 @@
       };
 
       document.getElementById('dashboardProgress').innerHTML = `
-        <div style="background: var(--bunshun-gray); padding: 12px; margin-bottom: 16px; border: 1px solid var(--bunshun-border); font-weight: 800; font-size: 0.88rem;">
-          📅 今日運送紀錄共 ${todayHistory.length} 筆
+        <div style="background: var(--bunshun-gray); padding: 12px; margin-bottom: 16px; border: 1px solid var(--bunshun-border); font-weight: 800; font-size: 0.88rem; display:flex; justify-content:space-between; align-items:center;">
+          <span>👤 當前使用者：<span style="color:var(--bunshun-red);">${currentUserId}</span></span>
+          <span>📅 今日紀錄 ${todayHistory.length} 筆</span>
         </div>
       ` + renderBar('今日熱量配額 (Calories)', totals.calories, targetCal, 'kcal') +
           renderBar('今日蛋白質進度 (Protein)', totals.protein, targetProtein, 'g') +
@@ -1169,16 +1204,19 @@
 
     function renderSevenDaysHistory(summaryData = null) {
       const container = document.getElementById('sevenDayHistory');
+      const currentUserId = getCurrentUserId();
       const targetCal = Number(localStorage.getItem('targetCal')) || 2000;
       const targetProtein = Number(localStorage.getItem('targetProtein')) || 75;
       let daysList = [];
 
-      if (Array.isArray(summaryData) && summaryData.length > 0) {
+      if (Array.isArray(summaryData)) {
         daysList = summaryData.slice(0, 7);
       } else {
         const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
         const map = {};
         history.forEach(item => {
+          const itemUser = item.userId || 'default_user';
+          if (itemUser !== currentUserId) return;
           if (!item.timestamp) return;
           let d = new Date(item.timestamp);
           if (isNaN(d.getTime())) return;
@@ -1192,7 +1230,7 @@
       }
 
       if (daysList.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:var(--bunshun-subtext); font-weight:700; padding:10px 0;">目前暫無足夠歷史報告數據</p>';
+        container.innerHTML = `<p style="text-align:center; color:var(--bunshun-subtext); font-weight:700; padding:10px 0;">[${currentUserId}] 目前暫無足夠歷史報告數據</p>`;
         return;
       }
 
@@ -1228,26 +1266,40 @@
       }).join('');
     }
 
-    function renderHistory() {
-      const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
-      const container = document.getElementById('historyList');
-      if (history.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:var(--bunshun-subtext); font-weight:700; padding:10px 0;">尚無運送紀錄</p>';
-        return;
-      }
-      container.innerHTML = history.slice(0, 10).map((item) => `
-        <div class="history-item" onclick="openModal('${item.id}')">
-          <div>
-            <strong style="font-size:1rem;">${item.foodName || '未命名餐點'}</strong>
-            <div style="font-size:0.75rem; color:var(--bunshun-subtext); margin-top:2px;">${formatHKTTime(item.timestamp)}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-weight:900; color:var(--bunshun-red); font-size:1.05rem;">${item.calories || 0} kcal</div>
-            <div style="font-size:0.75rem; color:var(--bunshun-subtext); font-weight:800;">蛋白質 ${item.protein || 0}g</div>
-          </div>
-        </div>
-      `).join('');
-    }
+	function renderHistory() {
+		  const currentUserId = getCurrentUserId();
+		  const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
+		  
+		  // 1. 過濾出當前使用者的紀錄
+		  let userHistory = history.filter(item => (item.userId || 'default_user') === currentUserId);
+		  
+		  // 2. 依 timestamp 進行排序：最新放最上方（降序排序）
+		  userHistory.sort((a, b) => {
+			const timeA = new Date(a.timestamp).getTime() || 0;
+			const timeB = new Date(b.timestamp).getTime() || 0;
+			return timeB - timeA; // 時間大的（較新的）排在前面
+		  });
+
+		  const container = document.getElementById('historyList');
+
+		  if (userHistory.length === 0) {
+			container.innerHTML = `<p style="text-align:center; color:var(--bunshun-subtext); font-weight:700; padding:10px 0;">[${currentUserId}] 尚無運送紀錄</p>`;
+			return;
+		  }
+
+		  container.innerHTML = userHistory.slice(0, 10).map((item) => `
+			<div class="history-item" onclick="openModal('${item.id}')">
+			  <div>
+				<strong style="font-size:1rem;">${item.foodName || '未命名餐點'}</strong>
+				<div style="font-size:0.75rem; color:var(--bunshun-subtext); margin-top:2px;">${formatHKTTime(item.timestamp)}</div>
+			  </div>
+			  <div style="text-align:right;">
+				<div style="font-weight:900; color:var(--bunshun-red); font-size:1.05rem;">${item.calories || 0} kcal</div>
+				<div style="font-size:0.75rem; color:var(--bunshun-subtext); font-weight:800;">蛋白質 ${item.protein || 0}g</div>
+			  </div>
+			</div>
+		  `).join('');
+		}
 
     function openModal(id) {
       currentSelectedId = id;
@@ -1256,7 +1308,7 @@
       if (!item) return;
 
       document.getElementById('modalFoodName').textContent = item.foodName || '未命名餐點';
-      document.getElementById('modalTimestamp').textContent = `運送時間：${formatHKTTime(item.timestamp)} (ID: ${String(item.id).slice(0, 8)}...)`;
+      document.getElementById('modalTimestamp').textContent = `使用者：${item.userId || 'default_user'} | 時間：${formatHKTTime(item.timestamp)}`;
       document.getElementById('modalMacros').innerHTML = `
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:var(--bunshun-gray); padding:10px; border:1px solid var(--bunshun-border); font-weight:800; font-size:0.85rem;">
           <div>熱量: <span style="color:var(--bunshun-red);">${item.calories || 0} kcal</span></div>
@@ -1277,16 +1329,19 @@
     }
 
     function exportCSV() {
+      const currentUserId = getCurrentUserId();
       const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
-      if (history.length === 0) return showAlert("沒有資料可以匯出！", 'error');
-      let csv = "ID,時間,菜式,熱量(kcal),蛋白質(g),碳水(g),脂肪(g),鈉(mg)\n";
-      history.forEach(h => {
-        csv += `"${h.id || ''}","${formatHKTTime(h.timestamp)}","${h.foodName || ''}",${h.calories || 0},${h.protein || 0},${h.carbs || 0},${h.fat || 0},${h.sodium || 0}\n`;
+      const userHistory = history.filter(item => (item.userId || 'default_user') === currentUserId);
+      if (userHistory.length === 0) return showAlert(`[${currentUserId}] 沒有資料可以匯出！`, 'error');
+      
+      let csv = "ID,使用者,時間,菜式,熱量(kcal),蛋白質(g),碳水(g),脂肪(g),鈉(mg)\n";
+      userHistory.forEach(h => {
+        csv += `"${h.id || ''}","${h.userId || ''}","${formatHKTTime(h.timestamp)}","${h.foodName || ''}",${h.calories || 0},${h.protein || 0},${h.carbs || 0},${h.fat || 0},${h.sodium || 0}\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `cells_log_${new Date().toISOString().slice(0,10)}.csv`;
+      link.download = `cells_log_${currentUserId}_${new Date().toISOString().slice(0,10)}.csv`;
       link.click();
     }
 

@@ -507,11 +507,21 @@
           <div id="stage1Status" class="status">準備辨識中...</div>
           <pre id="stage1Output"></pre>
         </div>
-        <div>
+        <div style="margin-bottom: 18px;">
           <span class="badge badge-dna">🧬 第二階段：營養精密解析</span>
           <div id="stage2Status" class="status">等待數據...</div>
           <pre id="stage2Output"></pre>
         </div>
+
+        <!-- AI 修正菜色功能區塊 -->
+        <div style="border-top: 1px dashed var(--bunshun-border); padding-top: 16px; margin-bottom: 16px;">
+          <label style="color: var(--bunshun-red); margin-bottom: 8px;">■ ✏️ AI 修正菜色與微調指令</label>
+          <div class="form-group" style="margin-bottom: 8px;">
+            <input type="text" id="correctionInput" placeholder="例如：其實沒有加美乃滋，飯量減半，醬汁少一半...">
+          </div>
+          <button class="btn btn-secondary" id="correctBtn" onclick="reprocessWithCorrection()" style="font-weight: 900;">✨ AI 重新校正與精算</button>
+        </div>
+
         <button class="btn btn-dark" id="saveBtn" style="margin-top: 16px; display: none;" onclick="saveData()">🧢 血小板：寫入今日運送紀錄與雲端表單</button>
         <div id="saveStatus" style="text-align: center; margin-top: 10px; font-weight: 800; font-size: 0.9rem;"></div>
       </div>
@@ -546,11 +556,11 @@
         <ul class="news-list">
           <li class="news-item">
             <div class="news-date">2026.08.07</div>
-            <div class="news-title">【系統公告】新增自訂 AI 分析風格與 Prompt 偏好設定功能（支援快速範本與 LocalStorage 記憶）！</div>
+            <div class="news-title">【系統公告】新增 AI 修正菜色功能，可隨時輸入文字微調菜量、醬汁與隱形熱量！</div>
           </li>
           <li class="news-item">
             <div class="news-date">2026.08.07</div>
-            <div class="news-title">【系統公告】新增 TDEE / BMR 智慧計算總署模組，一鍵推算建議熱量與蛋白質！</div>
+            <div class="news-title">【系統公告】新增自訂 AI 分析風格與 Prompt 偏好設定功能（支援快速範本與 LocalStorage 記憶）！</div>
           </li>
         </ul>
       </div>
@@ -656,6 +666,23 @@
     let toastTimer = null;
     let currentSelectedId = null;
 
+    // 香港時間 24小時制格式化輔助函數
+    function formatHKTTime(dateInput) {
+      if (!dateInput) return '未知時間';
+      const d = new Date(dateInput);
+      if (isNaN(d.getTime())) return dateInput;
+      return new Intl.DateTimeFormat('zh-HK', {
+        timeZone: 'Asia/Hong_Kong',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(d).replace(/\//g, '-');
+    }
+
     function toggleTheme() {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       if (isDark) {
@@ -741,11 +768,11 @@
       document.getElementById('stage1Output').textContent = "";
       document.getElementById('stage2Status').textContent = "等待數據...";
       document.getElementById('stage2Output').textContent = "";
+      document.getElementById('correctionInput').value = "";
       document.getElementById('saveBtn').style.display = 'none';
       showAlert("🔄 已成功重置當前分析狀態與上傳圖片！");
     }
 
-    // TDEE / BMR 計算邏輯與寫入 LOCAL STORAGE
     function calculateBMRAndTDEE() {
       const gender = document.getElementById('bmrGender').value;
       const age = parseFloat(document.getElementById('bmrAge').value);
@@ -758,7 +785,6 @@
         return showAlert("請完整填寫有效的年齡、身高與體重數據！", "error");
       }
 
-      // Mifflin-St Jeor 公式
       let bmr = (10 * weight) + (6.25 * height) - (5 * age);
       if (gender === 'male') {
         bmr += 5;
@@ -796,7 +822,6 @@
       showAlert("⚡ TDEE / BMR 計算成功，目標已自動儲存至本地總署！");
     }
 
-    // 測試 GAS 連線功能
     async function testGASConnection() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
       if (!gasUrl) return showAlert("請先填入 Google Sheet Web App URL！", "error");
@@ -821,7 +846,6 @@
       }
     }
 
-    // 清空本地快取功能
     function clearLocalCache() {
       if (confirm("⚠️ 警告：這將清除所有綁定的 API Key、目標設定與未上傳的本地紀錄。\n確定要繼續嗎？")) {
         if (confirm("🚨 二次確認：清除後將無法復原，是否確定清除？")) {
@@ -940,10 +964,64 @@
       }
     }
 
+    async function reprocessWithCorrection() {
+      const deepseekKey = document.getElementById('deepseekKey').value.trim();
+      const correctionText = document.getElementById('correctionInput').value.trim();
+      const customPromptStyle = document.getElementById('customPromptStyle').value.trim();
+
+      if (!deepseekKey) return showAlert("請先填入 DeepSeek API Key！", 'error');
+      if (!correctionText) return showAlert("請輸入您想要修正或調整的內容指令！", 'error');
+      if (!analyzedData) return showAlert("目前尚無可修正的分析數據！", 'error');
+
+      const btn = document.getElementById('correctBtn');
+      btn.disabled = true;
+      btn.textContent = "校正中...";
+      document.getElementById('stage2Status').textContent = "正在根據修正指令重新精算營養...";
+
+      try {
+        let systemPrompt = "請根據使用者提供的修正指令，對原有的餐點營養分析進行調整，並在結尾以<JSON>標籤封裝結構化數據：foodName, calories, protein, carbs, fat, fiber, sugar, sodium（純數字）。";
+        if (customPromptStyle) {
+          systemPrompt += ` 【額外風格與 Prompt 偏好指引】：${customPromptStyle}`;
+        }
+
+        const res2 = await fetch("https://api.deepseek.com/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${deepseekKey}` },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: `原分析內容與數據：\n${JSON.stringify(analyzedData)}\n\n使用者修正指令：${correctionText}` }
+            ]
+          })
+        });
+        const data2 = await res2.json();
+        const content = data2.choices[0].message.content;
+        const jsonMatch = content.match(/<JSON>([\s\S]*?)<\/JSON>/);
+        if (jsonMatch) {
+          const updatedData = JSON.parse(jsonMatch[1]);
+          updatedData.rawOutput = content.replace(/<JSON>[\s\S]*?<\/JSON>/, '').trim();
+          analyzedData = updatedData;
+        } else {
+          analyzedData.rawOutput = content;
+        }
+
+        document.getElementById('stage2Status').textContent = "✅ AI 修正與重新精算完畢";
+        document.getElementById('stage2Output').textContent = analyzedData.rawOutput;
+        document.getElementById('correctionInput').value = "";
+        showAlert("✨ 菜色與營養數據已成功透過 AI 修正更新！");
+      } catch (err) {
+        showAlert("修正過程發生錯誤：" + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "✨ 重新校正與精算";
+      }
+    }
+
     async function saveData() {
       const gasUrl = document.getElementById('gasUrl').value.trim();
       analyzedData.id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'id_' + Date.now() + '_' + Math.floor(Math.random()*1000);
-      analyzedData.timestamp = new Date().toLocaleString("zh-TW", { timeZone: "Asia/Hong_Kong" });
+      analyzedData.timestamp = formatHKTTime(new Date());
 
       let history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
       history.unshift(analyzedData);
@@ -1023,16 +1101,18 @@
 
     function renderDashboard(externalData = null) {
       let todayHistory = [];
+      const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+
       if (Array.isArray(externalData)) {
         todayHistory = externalData;
       } else {
         const history = JSON.parse(localStorage.getItem('nutritionHistory') || '[]');
-        const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Hong_Kong" });
         todayHistory = history.filter(item => {
           if (!item.timestamp) return false;
           let d = new Date(item.timestamp);
           if (isNaN(d.getTime())) return false;
-          return d.toLocaleDateString("en-CA", { timeZone: "Asia/Hong_Kong" }) === todayStr;
+          let itemDayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+          return itemDayStr === todayStr;
         });
       }
 
@@ -1102,7 +1182,7 @@
           if (!item.timestamp) return;
           let d = new Date(item.timestamp);
           if (isNaN(d.getTime())) return;
-          let dayStr = d.toLocaleDateString("en-CA", { timeZone: "Asia/Hong_Kong" });
+          let dayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
           if (!map[dayStr]) map[dayStr] = { date: dayStr, totalCalories: 0, totalProtein: 0, recordCount: 0 };
           map[dayStr].totalCalories += (Number(item.calories) || 0);
           map[dayStr].totalProtein += (Number(item.protein) || 0);
@@ -1159,7 +1239,7 @@
         <div class="history-item" onclick="openModal('${item.id}')">
           <div>
             <strong style="font-size:1rem;">${item.foodName || '未命名餐點'}</strong>
-            <div style="font-size:0.75rem; color:var(--bunshun-subtext); margin-top:2px;">${item.timestamp || '未知時間'}</div>
+            <div style="font-size:0.75rem; color:var(--bunshun-subtext); margin-top:2px;">${formatHKTTime(item.timestamp)}</div>
           </div>
           <div style="text-align:right;">
             <div style="font-weight:900; color:var(--bunshun-red); font-size:1.05rem;">${item.calories || 0} kcal</div>
@@ -1176,7 +1256,7 @@
       if (!item) return;
 
       document.getElementById('modalFoodName').textContent = item.foodName || '未命名餐點';
-      document.getElementById('modalTimestamp').textContent = `運送時間：${item.timestamp || '未知'} (ID: ${String(item.id).slice(0, 8)}...)`;
+      document.getElementById('modalTimestamp').textContent = `運送時間：${formatHKTTime(item.timestamp)} (ID: ${String(item.id).slice(0, 8)}...)`;
       document.getElementById('modalMacros').innerHTML = `
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:var(--bunshun-gray); padding:10px; border:1px solid var(--bunshun-border); font-weight:800; font-size:0.85rem;">
           <div>熱量: <span style="color:var(--bunshun-red);">${item.calories || 0} kcal</span></div>
@@ -1201,7 +1281,7 @@
       if (history.length === 0) return showAlert("沒有資料可以匯出！", 'error');
       let csv = "ID,時間,菜式,熱量(kcal),蛋白質(g),碳水(g),脂肪(g),鈉(mg)\n";
       history.forEach(h => {
-        csv += `"${h.id || ''}","${h.timestamp || ''}","${h.foodName || ''}",${h.calories || 0},${h.protein || 0},${h.carbs || 0},${h.fat || 0},${h.sodium || 0}\n`;
+        csv += `"${h.id || ''}","${formatHKTTime(h.timestamp)}","${h.foodName || ''}",${h.calories || 0},${h.protein || 0},${h.carbs || 0},${h.fat || 0},${h.sodium || 0}\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");

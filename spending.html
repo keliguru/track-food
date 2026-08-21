@@ -642,11 +642,6 @@
 
     <!-- View 2: CAP 圖專用熱感紙小票視圖 -->
     <div id="cap-view">
-      <div class="cap-action-bar">
-        <button class="download-cap-btn" onclick="downloadCapImage()">
-          <i class="fa-solid fa-download"></i> 下載截圖 (PNG)
-        </button>
-      </div>
 
       <div class="receipt-wrapper" style="width: 100%;">
         <div class="thermal-receipt" id="capture-receipt">
@@ -875,21 +870,6 @@
         } else {
           node.classList.remove('active');
         }
-      });
-    }
-
-    // CAP 圖一鍵下載功能
-    function downloadCapImage() {
-      const target = document.getElementById('capture-receipt');
-      html2canvas(target, {
-        scale: 2, // 高清 2 倍圖
-        useCORS: true,
-        backgroundColor: '#fffdf9'
-      }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `Expense-Receipt-${selectedYear}-${selectedMonth}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
       });
     }
 

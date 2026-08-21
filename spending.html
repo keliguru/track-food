@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Monthly Cost & Expenses</title>
+  
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/spending.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Monthly Cost & Expenses">
+  <meta property="og:description" content="個人每月開支統計與消費明細">
+  <meta property="og:image" content="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/spending.png"> 
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/keliguru/track-food/refs/heads/main/spending.png">
+  
+  <!-- FontAwesome & Google Fonts & html2canvas -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script type="text/javascript" src="https://me.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=lDH-J7ybhV6ZRSNOEIUKQxzeZLLDjeVQmXOAQ7l21myg27gB0_BR9ZGEI5T6TPnjw0whG__bzFDLQ0InQN76NPKJkciJVLLeu6jJH1_oak793T5uo7aYoVvZ7ffWCWCmzzWHC6Oj1MNGtgmdVeGreLM7Qbylmpo15LnFYspMTwgbbJrbbCCXnqA9GoaHjmYx1hLiAXdChqJH-W5Vg4sOS-SA5a8rbr96IT0yqnW1JjPKtxvHA0aDv-nM7ylY2QbTrxQiqVJ7brbGnHJ9YQEeG2VtrKuwVdDEE1VuiLQKUDM5MkwSaNisx3pGlJwfx3xFnzufZoflHcPvwFzLS3hs_Q" charset="UTF-8"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root {
+      --bg-gradient-start: #0088cc;
+      --bg-gradient-end: #0066a1;
+      --card-bg: #fcfbf9;
+      --text-main: #2b2d42;
+      --text-muted: #6c757d;
+      --accent-color: #0088cc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow-x: hidden;
+      padding-bottom: 70px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 頁面切換 Tab */
+    .view-tabs {
+      display: flex;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 4px;
+      margin: 16px 4px 0;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.7);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active {
+      background: #ffffff;
+      color: var(--accent-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* 頂部區域 */
+    .header-section {
+      padding: 16px 4px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .year-selector-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 6px;
+    }
+
+    .year-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .year-select {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .year-select option {
+      color: #333;
+      background: #fff;
+    }
+
+    /* 月份滾動條 */
+    .monthly-chart-container {
+      position: relative;
+      width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding: 8px 0;
+    }
+
+    .monthly-chart-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .monthly-chart {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      min-width: 520px;
+      padding: 0 12px;
+    }
+
+    .chart-line {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.25);
+      z-index: 1;
+    }
+
+    .month-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 2;
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.4);
+      margin-bottom: 6px;
+      transition: all 0.25s ease;
+    }
+
+    .month-node.active .dot {
+      background: #ffffff;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+      transform: scale(1.6);
+    }
+
+    .month-label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.65);
+      font-weight: 500;
+    }
+
+    .month-node.active .month-label {
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 4px 6px;
+    }
+
+    .date-display {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .total-container {
+      text-align: right;
+    }
+
+    .total-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      opacity: 0.75;
+      margin-bottom: 2px;
+    }
+
+    .total-display {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.8px;
+      line-height: 1;
+    }
+
+    .total-display .cents {
+      font-size: 20px;
+      opacity: 0.85;
+      font-weight: 600;
+    }
+
+    /* 經典小票卡片列表 */
+    .receipt-wrapper {
+      position: relative;
+      margin-top: 10px;
+      filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.2));
+    }
+
+    .receipt-container {
+      background: var(--card-bg);
+      border-radius: 12px 12px 0 0;
+      color: var(--text-main);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .receipt-header-decor {
+      height: 8px;
+      background: repeating-linear-gradient(
+        -45deg,
+        #e5e5e5,
+        #e5e5e5 10px,
+        #f2f2f2 10px,
+        #f2f2f2 20px
+      );
+      opacity: 0.5;
+    }
+
+    .receipt-list {
+      list-style: none;
+      padding: 4px 0;
+    }
+
+    .receipt-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+
+    .receipt-item:last-child {
+      border-bottom: none;
+    }
+
+    .item-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: #f0f4f8;
+      color: var(--accent-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .item-title {
+      flex: 1;
+      font-size: 15px;
+      color: var(--text-main);
+      font-weight: 600;
+      padding-left: 14px;
+      padding-right: 10px;
+      word-break: break-word;
+    }
+
+    .item-amount {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .item-amount .cents {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* 鋸齒邊緣 */
+    .sawtooth {
+      height: 16px;
+      background: var(--card-bg);
+      -webkit-mask-image: radial-gradient(circle, transparent 6px, black 7px);
+      -webkit-mask-size: 16px 20px;
+      -webkit-mask-position: -8px -10px;
+      mask-image: radial-gradient(circle, transparent 6px, black 7px);
+      mask-size: 16px 20px;
+      mask-position: -8px -10px;
+    }
+
+    /* --------------------------------------
+       專為 CAP 圖設計的簡約熱感小票 View
+    -------------------------------------- */
+    #cap-view {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 15px;
+    }
+
+    .cap-action-bar {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .download-cap-btn {
+      background: #ffffff;
+      color: #1e293b;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: all 0.2s ease;
+    }
+
+    .download-cap-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* 純文字/熱感紙風截圖區域 */
+    .thermal-receipt {
+      background: #fffdf9;
+      color: #111;
+      width: 100%;
+      padding: 28px 24px 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+      position: relative;
+    }
+
+    .thermal-receipt * {
+      font-family: 'Courier Prime', 'Courier New', Courier, monospace !important;
+    }
+
+    .thermal-header {
+      text-align: center;
+      border-bottom: 2px dashed #333;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+    }
+
+    .thermal-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .thermal-header p {
+      font-size: 12px;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    .thermal-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #444;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .thermal-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+
+    .thermal-table th {
+      font-size: 12px;
+      text-align: left;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #333;
+    }
+
+    .thermal-table th.amount-col {
+      text-align: right;
+    }
+
+    .thermal-table td {
+      font-size: 13px;
+      padding: 8px 0;
+      border-bottom: 1px dotted #e0e0e0;
+    }
+
+    .thermal-table td.amount-col {
+      text-align: right;
+      font-weight: 700;
+    }
+
+    .thermal-total-section {
+      border-top: 2px dashed #333;
+      padding-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 20px;
+    }
+
+    .thermal-total-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .thermal-total-amount {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .thermal-footer {
+      text-align: center;
+      border-top: 1px dashed #bbb;
+      padding-top: 16px;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .barcode {
+      font-family: monospace;
+      font-size: 18px;
+      letter-spacing: 4px;
+      margin-top: 6px;
+      font-weight: bold;
+    }
+
+    /* 狀態提示 */
+    .state-box {
+      text-align: center;
+      padding: 45px 20px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .state-box i {
+      font-size: 36px;
+      opacity: 0.4;
+    }
+
+    .state-box p {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* 右下角設定按鈕 */
+    .settings-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      z-index: 99;
+      transition: all 0.2s ease;
+    }
+
+    /* Modal 彈窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+      color: var(--text-main);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .modal-box h3 { font-size: 18px; font-weight: 700; }
+    .close-modal-btn { background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; }
+    .modal-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+    .modal-box input { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; margin-bottom: 18px; outline: none; }
+    .modal-box button.save-btn { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- View 切換 Tab -->
+    <div class="view-tabs">
+      <button class="tab-btn active" id="tab-app" onclick="switchView('app')">
+        <i class="fa-solid fa-list-check"></i> 應用列表
+      </button>
+      <button class="tab-btn" id="tab-cap" onclick="switchView('cap')">
+        <i class="fa-solid fa-receipt"></i> 截圖專用小票
+      </button>
+    </div>
+
+    <!-- Header 篩選區 -->
+    <div class="header-section">
+      <div class="year-selector-row">
+        <div class="year-badge">
+          <i class="fa-regular fa-calendar-days"></i>
+          <select id="year-select" class="year-select">
+            <!-- 動態注入年份選項 -->
+          </select>
+        </div>
+      </div>
+
+      <!-- 12 個月份過濾軸 -->
+      <div class="monthly-chart-container" id="chart-container">
+        <div class="monthly-chart">
+          <div class="chart-line"></div>
+          <div class="month-node" data-month="01"><div class="dot"></div><span class="month-label">1月</span></div>
+          <div class="month-node" data-month="02"><div class="dot"></div><span class="month-label">2月</span></div>
+          <div class="month-node" data-month="03"><div class="dot"></div><span class="month-label">3月</span></div>
+          <div class="month-node" data-month="04"><div class="dot"></div><span class="month-label">4月</span></div>
+          <div class="month-node" data-month="05"><div class="dot"></div><span class="month-label">5月</span></div>
+          <div class="month-node" data-month="06"><div class="dot"></div><span class="month-label">6月</span></div>
+          <div class="month-node" data-month="07"><div class="dot"></div><span class="month-label">7月</span></div>
+          <div class="month-node" data-month="08"><div class="dot"></div><span class="month-label">8月</span></div>
+          <div class="month-node" data-month="09"><div class="dot"></div><span class="month-label">9月</span></div>
+          <div class="month-node" data-month="10"><div class="dot"></div><span class="month-label">10月</span></div>
+          <div class="month-node" data-month="11"><div class="dot"></div><span class="month-label">11月</span></div>
+          <div class="month-node" data-month="12"><div class="dot"></div><span class="month-label">12月</span></div>
+        </div>
+      </div>
+
+      <!-- 顯示選擇的月份與總金額 -->
+      <div class="summary-row">
+        <div class="date-display" id="date-text">--月</div>
+        <div class="total-container">
+          <div class="total-label">Monthly Total</div>
+          <div class="total-display" id="total-text">$ 0<span class="cents">.00</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 1: 預設 APP 清單視圖 -->
+    <div id="app-view">
+      <div class="receipt-wrapper">
+        <div class="receipt-container">
+          <div class="receipt-header-decor"></div>
+          <ul class="receipt-list" id="receipt-list">
+            <li class="state-box">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              <p>載入數據中...</p>
+            </li>
+          </ul>
+        </div>
+        <div class="sawtooth"></div>
+      </div>
+    </div>
+
+    <!-- View 2: CAP 圖專用熱感紙小票視圖 -->
+    <div id="cap-view">
+      <div class="cap-action-bar">
+        <button class="download-cap-btn" onclick="downloadCapImage()">
+          <i class="fa-solid fa-download"></i> 下載截圖 (PNG)
+        </button>
+      </div>
+
+      <div class="receipt-wrapper" style="width: 100%;">
+        <div class="thermal-receipt" id="capture-receipt">
+          <div class="thermal-header">
+            <h2>EXPENSE RECEIPT</h2>
+            <p>MONTHLY STATEMENT</p>
+          </div>
+
+          <div class="thermal-meta">
+            <span>DATE: <strong id="cap-date">2026-08</strong></span>
+            <span>ITEMS: <strong id="cap-count">0</strong></span>
+          </div>
+
+          <table class="thermal-table">
+            <thead>
+              <tr>
+                <th>ITEM</th>
+                <th class="amount-col">AMOUNT</th>
+              </tr>
+            </thead>
+            <tbody id="cap-tbody">
+              <!-- 動態生成明細 -->
+            </tbody>
+          </table>
+
+          <div class="thermal-total-section">
+            <span class="thermal-total-title">TOTAL AMOUNT</span>
+            <span class="thermal-total-amount" id="cap-total">$0.00</span>
+          </div>
+
+          <div class="thermal-footer">
+            <p>*** THANK YOU FOR TRACKING ***</p>
+            <div class="barcode">||||| ||| ||||||| ||||</div>
+          </div>
+        </div>
+        <div class="sawtooth"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 浮動設定按鈕 -->
+  <button class="settings-btn" id="open-settings" aria-label="API 設定">
+    <i class="fa-solid fa-gear"></i>
+  </button>
+
+  <!-- Modal 彈窗 -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>API 設定</h3>
+        <button class="close-modal-btn" id="close-modal">&times;</button>
+      </div>
+      <p>請輸入您的 Google Apps Script Web App URL：</p>
+      <input type="text" id="api-input" placeholder="https://script.google.com/macros/s/.../exec">
+      <button class="save-btn" id="save-api">儲存並重新載入</button>
+    </div>
+  </div>
+
+  <script>
+    let rawExpenseData = [];
+    let selectedYear = new Date().getFullYear().toString();
+    let selectedMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+
+    function getIconClass(typeStr) {
+      if (!typeStr) return 'fa-solid fa-receipt';
+      const type = typeStr.toLowerCase();
+      if (type.includes('parc city') || type.includes('house') || type.includes('家用') || type.includes('租') || type.includes('電費') || type.includes('水費')) return 'fa-solid fa-house-chimney';
+      if (type.includes('car') || type.includes('park') || type.includes('泊車') || type.includes('隧道') || type.includes('汽油') || type.includes('油費')) return 'fa-solid fa-car-side';
+      if (type.includes('hsbc') || type.includes('dbs') || type.includes('a point') || type.includes('wakuwaku') || type.includes('card') || type.includes('卡')) return 'fa-solid fa-credit-card';
+      if (type.includes('sun life') || type.includes('insur') || type.includes('保險')) return 'fa-solid fa-shield-halved';
+      if (type.includes('cash') || type.includes('現金')) return 'fa-solid fa-money-bill-wave';
+      if (type.includes('hktvmall') || type.includes('shop') || type.includes('超市') || type.includes('買嘢')) return 'fa-solid fa-bag-shopping';
+      if (type.includes('drink') || type.includes('coffee') || type.includes('茶') || type.includes('咖啡')) return 'fa-solid fa-mug-hot';
+      if (type.includes('food') || type.includes('lunch') || type.includes('dine') || type.includes('食') || type.includes('餐')) return 'fa-solid fa-utensils';
+      if (type.includes('movie') || type.includes('戲') || type.includes('娛樂') || type.includes('game')) return 'fa-solid fa-film';
+      if (type.includes('bus') || type.includes('mtr') || type.includes('subway') || type.includes('交通') || type.includes('車費')) return 'fa-solid fa-bus';
+      if (type.includes('phone') || type.includes('mobile') || type.includes('網費') || type.includes('電話')) return 'fa-solid fa-mobile-screen-button';
+      return 'fa-solid fa-receipt';
+    }
+
+    function formatAmountHTML(amount) {
+      const numAmount = Number(amount) || 0;
+      const absoluteAmount = Math.abs(numAmount);
+      const parts = absoluteAmount.toFixed(2).split('.');
+      const integerPart = Number(parts[0]).toLocaleString();
+      const centsPart = parts[1];
+      const sign = numAmount < 0 ? '-' : '';
+      return `${sign}${integerPart}<span class="cents">.${centsPart}</span>`;
+    }
+
+    function formatAmountPlain(amount) {
+      const numAmount = Number(amount) || 0;
+      return numAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function getApiUrl() {
+      return localStorage.getItem('dailycost_api_url') || '';
+    }
+
+    // 視圖切換 (App List vs CAP圖小票)
+    function switchView(viewName) {
+      const appView = document.getElementById('app-view');
+      const capView = document.getElementById('cap-view');
+      const tabApp = document.getElementById('tab-app');
+      const tabCap = document.getElementById('tab-cap');
+
+      if (viewName === 'cap') {
+        appView.style.display = 'none';
+        capView.style.display = 'flex';
+        tabApp.classList.remove('active');
+        tabCap.classList.add('active');
+      } else {
+        appView.style.display = 'block';
+        capView.style.display = 'none';
+        tabApp.classList.add('active');
+        tabCap.classList.remove('active');
+      }
+    }
+
+    function setupYearSelector() {
+      const yearSelectEl = document.getElementById('year-select');
+      const yearsSet = new Set();
+      
+      rawExpenseData.forEach(item => {
+        if (item.Month && item.Month.includes('-')) {
+          const y = item.Month.split('-')[0];
+          if (y.length === 4) yearsSet.add(y);
+        }
+      });
+
+      if (yearsSet.size === 0) {
+        const currentY = new Date().getFullYear();
+        yearsSet.add(String(currentY));
+        yearsSet.add(String(currentY - 1));
+      }
+
+      const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+
+      if (!sortedYears.includes(selectedYear) && sortedYears.length > 0) {
+        selectedYear = sortedYears[0];
+      }
+
+      yearSelectEl.innerHTML = sortedYears.map(y => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y} 年</option>`).join('');
+
+      yearSelectEl.onchange = (e) => {
+        selectedYear = e.target.value;
+        renderFilteredData();
+      };
+    }
+
+    function renderFilteredData() {
+      const listEl = document.getElementById('receipt-list');
+      const totalEl = document.getElementById('total-text');
+      const dateEl = document.getElementById('date-text');
+
+      // CAP 圖元素
+      const capDateEl = document.getElementById('cap-date');
+      const capCountEl = document.getElementById('cap-count');
+      const capTbodyEl = document.getElementById('cap-tbody');
+      const capTotalEl = document.getElementById('cap-total');
+
+      const filtered = rawExpenseData.filter(item => {
+        if (!item.Month) return false;
+        if (item.Month.includes('-')) {
+          const [y, m] = item.Month.split('-');
+          return y === selectedYear && m === selectedMonth;
+        } else {
+          return item.Month === selectedMonth;
+        }
+      });
+
+      listEl.innerHTML = '';
+      capTbodyEl.innerHTML = '';
+      let total = 0;
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <li class="state-box">
+            <i class="fa-regular fa-folder-open"></i>
+            <p>${selectedYear} 年 ${selectedMonth} 月無消費紀錄</p>
+          </li>`;
+
+        capTbodyEl.innerHTML = `<tr><td colspan="2" style="text-align:center; color:#999; padding: 20px 0;">NO RECORD</td></tr>`;
+      } else {
+        filtered.forEach(item => {
+          const cost = Number(item.Cost) || 0;
+          total += cost;
+
+          // 1. App View List Item
+          const li = document.createElement('li');
+          li.className = 'receipt-item';
+          const iconClass = getIconClass(item.Type);
+          const formattedCost = formatAmountHTML(cost);
+          li.innerHTML = `
+            <div class="item-icon"><i class="${iconClass}"></i></div>
+            <div class="item-title">${item.Type || '未分類消費'}</div>
+            <div class="item-amount">${formattedCost}</div>
+          `;
+          listEl.appendChild(li);
+
+          // 2. Cap View Table Row
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.Type || 'EXPENSE'}</td>
+            <td class="amount-col">$${formatAmountPlain(cost)}</td>
+          `;
+          capTbodyEl.appendChild(tr);
+        });
+      }
+
+      // 更新 App View 總額與月份
+      totalEl.innerHTML = `$ ${formatAmountHTML(total)}`;
+      dateEl.innerText = `${selectedMonth} 月`;
+
+      // 更新 Cap View 資訊
+      capDateEl.innerText = `${selectedYear}-${selectedMonth}`;
+      capCountEl.innerText = filtered.length;
+      capTotalEl.innerText = `$${formatAmountPlain(total)}`;
+
+      // 更新 UI 月份高亮與自動平滑滾動
+      document.querySelectorAll('.month-node').forEach(node => {
+        if (node.getAttribute('data-month') === selectedMonth) {
+          node.classList.add('active');
+          node.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } else {
+          node.classList.remove('active');
+        }
+      });
+    }
+
+    // CAP 圖一鍵下載功能
+    function downloadCapImage() {
+      const target = document.getElementById('capture-receipt');
+      html2canvas(target, {
+        scale: 2, // 高清 2 倍圖
+        useCORS: true,
+        backgroundColor: '#fffdf9'
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Expense-Receipt-${selectedYear}-${selectedMonth}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+
+    async function fetchExpenses() {
+      const apiUrl = getApiUrl();
+      const listEl = document.getElementById('receipt-list');
+
+      if (!apiUrl) {
+        listEl.innerHTML = `
+          <li class="state-box">
+            <i class="fa-solid fa-gear"></i>
+            <p>請點擊右下角設定 API URL</p>
+          </li>`;
+        openModal();
+        return;
+      }
+
+      listEl.innerHTML = `
+        <li class="state-box">
+          <i class="fa-solid fa-circle-notch fa-spin"></i>
+          <p>載入數據中...</p>
+        </li>`;
+
+      try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        rawExpenseData = await response.json();
+
+        if (rawExpenseData.length > 0) {
+          const lastItem = rawExpenseData[rawExpenseData.length - 1];
+          if (lastItem.Month && lastItem.Month.includes('-')) {
+            const [y, m] = lastItem.Month.split('-');
+            selectedYear = y;
+            selectedMonth = m;
+          }
+        }
+
+        setupYearSelector();
+        renderFilteredData();
+
+      } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `
+          <li class="state-box" style="color: #ef4444;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <p>數據載入失敗，請確認 API URL 權限。</p>
+          </li>`;
+      }
+    }
+
+    document.querySelectorAll('.month-node').forEach(node => {
+      node.addEventListener('click', function() {
+        selectedMonth = this.getAttribute('data-month');
+        renderFilteredData();
+      });
+    });
+
+    const modal = document.getElementById('settings-modal');
+    const apiInput = document.getElementById('api-input');
+
+    function openModal() {
+      apiInput.value = getApiUrl();
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+    }
+
+    document.getElementById('open-settings').addEventListener('click', openModal);
+    document.getElementById('close-modal').addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+    });
+
+    document.getElementById('save-api').addEventListener('click', () => {
+      const url = apiInput.value.trim();
+      if (url) {
+        localStorage.setItem('dailycost_api_url', url);
+        closeModal();
+        fetchExpenses();
+      } else {
+        alert('請輸入有效的 URL');
+      }
+    });
+
+    fetchExpenses();
+  </script>
+</body>
+</html>
